@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
 from urllib.error import HTTPError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
@@ -39,6 +40,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("base_url", help="Deployed root, for example https://bootdisk.no/")
     parser.add_argument("--expected-entries", type=int, default=39)
+    parser.add_argument("--workers", type=int, default=12)
     args = parser.parse_args()
 
     fetch(args.base_url, "archive.html")
@@ -49,21 +51,28 @@ def main() -> None:
     if not isinstance(entries, list) or len(entries) != args.expected_entries:
         raise RuntimeError(f"Expected {args.expected_entries} entries, got {len(entries) if isinstance(entries, list) else 'invalid'}")
 
-    assets: set[str] = set()
-    for entry in entries:
+    def fetch_entry(entry: dict) -> tuple[str, dict]:
         entry_id = entry["entry"]
         document = json.loads(fetch(args.base_url, f"data/{entry_id.lower()}.json"))
         if document.get("entry") != entry_id:
             raise RuntimeError(f"Entry mismatch for {entry_id}")
-        assets.update(asset_paths(document))
+        return entry_id, document
 
-    for path in sorted(assets):
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        documents = list(executor.map(fetch_entry, entries))
+    assets = set().union(*(asset_paths(document) for _, document in documents))
+
+    def verify_asset(path: str) -> str:
         body = fetch(args.base_url, path)
         filename = path.rsplit("/", 1)[-1]
         expected_hash = filename.rsplit(".", 1)[0]
         actual_hash = hashlib.sha256(body).hexdigest()
         if actual_hash != expected_hash:
             raise RuntimeError(f"Content hash mismatch for {path}")
+        return path
+
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        list(executor.map(verify_asset, sorted(assets)))
 
     print(f"deployment entries: {len(entries)}")
     print(f"deployment assets: {len(assets)}")
