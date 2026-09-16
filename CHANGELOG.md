@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Legger til delbare søk, statusfiltre og sortering i arkivoversikten.
+- Lar brukeren nullstille filtrene uten å laste siden på nytt.
+- Legger til forrige/neste-navigasjon som følger den autoritative kildeindeksen.
+- Beholder den statiske, regenererbare arkitekturen og Catalog/Publish-grensene.
+
 ## 0.1.0
 
 Første stabile Bootdisk Web-utgivelse.

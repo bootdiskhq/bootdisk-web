@@ -8,7 +8,7 @@ Statisk presentasjonslag for det bevarte Bootdisk-arkivet. Catalog eier identite
 python -m unittest discover -s tests -v
 ```
 
-## Bygg 0.1 RC
+## Bygg en release
 
 Bygg først frontend-data fra de autoritative Catalog- og Publish-resultatene:
 
