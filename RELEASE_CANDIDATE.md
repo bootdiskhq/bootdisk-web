@@ -12,3 +12,5 @@ Denne kandidaten er den første komplette, statiske webpubliseringen av K-CD 15/
 - Hele testpakken og en produksjonsbygging skal være grønne.
 
 RC-en kan lastes opp direkte fra innholdet i `dist/bootdisk-web/`. Endelig `0.1.0` krever bare visuell kontroll på målserver og eventuelle blokkerende rettelser; nye funksjoner flyttes til neste versjon.
+
+Produksjonsvalideringen er dokumentert i [`docs/rc-validation.md`](docs/rc-validation.md).
