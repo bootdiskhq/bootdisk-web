@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- Samler frontendbygg, pakking og release-rapport i én kontrollert kommando.
+- Produserer deterministisk ZIP og maskinlesbar rapport med input- og output-hasher.
+- Legger til full HTTP-verifisering av poster, mediefiler, innholdshasher og 404.
+- Dokumenterer sikker Domeneshop-deploy, backup og komplett rollback.
+- Viser menneskelige programnavn i forrige/neste-navigasjonen og støtter piltaster.
+
 ## 0.3.0
 
 - Legger til eksplisitte last-, feil- og tomtilstander for datadrevne sider.
