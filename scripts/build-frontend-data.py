@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build disposable frontend entry documents from Catalog and Publish projections.
+"""Build disposable frontend documents from Catalog and Publish projections.
 
 Catalog remains authoritative for semantic identity. Publish remains authoritative for
 web assets. This script only joins both views through stable ingest entry ids and
@@ -24,13 +24,7 @@ def project_asset(asset: dict) -> dict:
         projected = dict(item)
         projected["public_path"] = public_path(projected.get("object_key"))
         derivatives.append(projected)
-    return {
-        "entry": asset.get("entry_source_id"),
-        "kind": asset.get("kind"),
-        "source_path": asset.get("source_path"),
-        "original": original,
-        "derivatives": derivatives,
-    }
+    return {"entry": asset.get("entry_source_id"), "kind": asset.get("kind"), "source_path": asset.get("source_path"), "original": original, "derivatives": derivatives}
 
 
 def main() -> None:
@@ -54,16 +48,12 @@ def main() -> None:
             assets_by_entry.setdefault(entry_id, []).append(asset)
 
     args.output.mkdir(parents=True, exist_ok=True)
-    written = 0
+    index = []
     for entry in catalog:
         entry_id = entry.get("entry")
         if not entry_id:
             continue
-        occurrence_hashes = {
-            occurrence["artifact_id"].removeprefix("artifact:sha256:")
-            for occurrence in entry.get("occurrences") or []
-            if str(occurrence.get("artifact_id", "")).startswith("artifact:sha256:")
-        }
+        occurrence_hashes = {occurrence["artifact_id"].removeprefix("artifact:sha256:") for occurrence in entry.get("occurrences") or [] if str(occurrence.get("artifact_id", "")).startswith("artifact:sha256:")}
         joined_assets = []
         for asset in assets_by_entry.get(entry_id, []):
             sha256 = (asset.get("original") or {}).get("sha256")
@@ -78,9 +68,15 @@ def main() -> None:
         document["assets"] = joined_assets
         target = args.output / f"{entry_id.lower()}.json"
         target.write_text(json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        written += 1
 
-    print(f"frontend entries: {written}")
+        software = (entry.get("software") or [{}])[0]
+        icon = next((asset for asset in joined_assets if asset.get("kind") == "icon"), None)
+        index.append({"entry": entry_id, "editorial_title": entry.get("editorial_title"), "curation_status": entry.get("curation_status"), "software_name": software.get("software_name"), "version": software.get("version"), "icon": icon})
+
+    # The index is also disposable presentation data. It intentionally contains only
+    # enough information to browse into an entry; detailed evidence stays per entry.
+    (args.output / "index.json").write_text(json.dumps({"publication": args.publication, "medium": args.medium, "entries": index}, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"frontend entries: {len(index)}")
 
 
 if __name__ == "__main__":
