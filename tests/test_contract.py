@@ -57,6 +57,23 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('document.querySelector("#page-description").content', javascript)
         self.assertIn('setAttribute("aria-busy", "false")', javascript)
 
+    def test_pages_support_keyboard_reduced_motion_and_no_script_states(self):
+        for name in ("index.html", "archive.html", "404.html"):
+            html = (ROOT / name).read_text(encoding="utf-8")
+            self.assertIn('class="skip-link" href="#main-content"', html)
+            self.assertIn('id="main-content"', html)
+            self.assertIn('href="accessibility.css"', html)
+        self.assertIn("<noscript>", (ROOT / "index.html").read_text(encoding="utf-8"))
+        self.assertIn("<noscript>", (ROOT / "archive.html").read_text(encoding="utf-8"))
+        css = (ROOT / "accessibility.css").read_text(encoding="utf-8")
+        self.assertIn("prefers-reduced-motion: reduce", css)
+
+    def test_entry_presents_human_status_and_descriptive_screenshot_alt(self):
+        javascript = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn('identified: "Identifisert"', javascript)
+        self.assertIn('pending: "Venter på identifisering"', javascript)
+        self.assertIn('screenshot.alt = `Skjermbilde fra ${name}`', javascript)
+
     def test_builder_emits_archive_index_without_inventing_identity(self):
         builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
         self.assertIn('args.output / "index.json"', builder)
@@ -86,6 +103,7 @@ class FrontendContractTests(unittest.TestCase):
         builder = (ROOT / "scripts" / "build-release.py").read_text(encoding="utf-8")
         self.assertIn('"archive-controls.css"', builder)
         self.assertIn('"entry-controls.css"', builder)
+        self.assertIn('"accessibility.css"', builder)
 
     def test_builder_replaces_stale_output_and_sorts_source_entries(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -1,0 +1,32 @@
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  padding: 10px 14px;
+  background: var(--cyan);
+  color: var(--bg);
+  font-weight: 700;
+  transform: translateY(-160%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.system-message {
+  margin: 24px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
+  }
+
+  .archive-card {
+    transition: none;
+  }
+}
