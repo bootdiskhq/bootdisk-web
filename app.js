@@ -19,6 +19,10 @@ function assetFor(assets, kind) {
   return assets.find(asset => asset.kind === kind);
 }
 
+function statusLabel(status) {
+  return { identified: "Identifisert", pending: "Venter på identifisering" }[status] ?? "Ukjent";
+}
+
 async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
@@ -38,7 +42,7 @@ async function render() {
   document.querySelector("#fact-version").textContent = version;
   document.querySelector("#fact-entry").textContent = entry.entry;
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
-  document.querySelector("#fact-status").textContent = entry.curation_status ?? "ukjent";
+  document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status);
   document.title = `${name}${software?.version ? ` ${version}` : ""} — Bootdisk`;
   document.querySelector("#page-description").content = `${name}${software?.version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
 
@@ -66,10 +70,13 @@ async function render() {
   if (iconImage?.public_path) {
     const iconElement = document.querySelector("#software-icon");
     iconElement.src = iconImage.public_path;
+    iconElement.alt = "";
     iconElement.hidden = false;
   }
   if (shotImage?.public_path) {
-    document.querySelector("#software-shot").src = shotImage.public_path;
+    const screenshot = document.querySelector("#software-shot");
+    screenshot.src = shotImage.public_path;
+    screenshot.alt = `Skjermbilde fra ${name}`;
     document.querySelector("#screenshot-frame").hidden = false;
   }
   document.querySelector("main").setAttribute("aria-busy", "false");
