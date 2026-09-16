@@ -34,6 +34,18 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('new URLSearchParams(window.location.search).get("entry")', javascript)
         self.assertIn('`data/${entryId}.json`', javascript)
 
+    def test_builder_emits_archive_index_without_inventing_identity(self):
+        builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
+        self.assertIn('args.output / "index.json"', builder)
+        self.assertIn('entry.get("editorial_title")', builder)
+        self.assertIn('software.get("software_name")', builder)
+        self.assertNotIn("software_name = editorial", builder)
+
+    def test_archive_links_back_to_generic_entry_renderer(self):
+        javascript = (ROOT / "archive.js").read_text(encoding="utf-8")
+        self.assertIn('index.html?entry=${encodeURIComponent(entry.entry)}', javascript)
+        self.assertIn('fetch("data/index.json")', javascript)
+
 
 if __name__ == "__main__":
     unittest.main()
