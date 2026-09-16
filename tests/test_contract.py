@@ -1,4 +1,7 @@
 import json
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -25,9 +28,9 @@ class FrontendContractTests(unittest.TestCase):
     def test_assets_remain_bound_to_same_ingest_entry(self):
         for asset in self.entry["assets"]:
             self.assertEqual(asset["entry"], self.entry["entry"])
-            self.assertTrue(asset["original"]["public_path"].startswith("/store/assets/sha256/"))
+            self.assertTrue(asset["original"]["public_path"].startswith("store/assets/sha256/"))
             for derivative in asset["derivatives"]:
-                self.assertTrue(derivative["public_path"].startswith("/store/derivatives/"))
+                self.assertTrue(derivative["public_path"].startswith("store/derivatives/"))
 
     def test_browser_selects_entry_document_from_query_parameter(self):
         javascript = (ROOT / "app.js").read_text(encoding="utf-8")
@@ -45,6 +48,35 @@ class FrontendContractTests(unittest.TestCase):
         javascript = (ROOT / "archive.js").read_text(encoding="utf-8")
         self.assertIn('index.html?entry=${encodeURIComponent(entry.entry)}', javascript)
         self.assertIn('fetch("data/index.json")', javascript)
+        self.assertNotIn("innerHTML", javascript)
+
+    def test_builder_replaces_stale_output_and_sorts_source_entries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog = root / "catalog.json"
+            publish = root / "publish.json"
+            output = root / "data"
+            output.mkdir()
+            (output / "k99.json").write_text("{}\n", encoding="utf-8")
+            catalog.write_text(
+                json.dumps([
+                    {"entry": "K10", "editorial_title": "Ten", "occurrences": [], "software": []},
+                    {"entry": "K2", "editorial_title": "Two", "occurrences": [], "software": []},
+                ]),
+                encoding="utf-8",
+            )
+            publish.write_text(json.dumps({"assets": []}), encoding="utf-8")
+
+            subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build-frontend-data.py"), str(catalog), str(publish), "--output", str(output)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertFalse((output / "k99.json").exists())
+            index = json.loads((output / "index.json").read_text(encoding="utf-8"))
+            self.assertEqual([item["entry"] for item in index["entries"]], ["K2", "K10"])
 
 
 if __name__ == "__main__":
