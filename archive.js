@@ -11,7 +11,41 @@ function card(entry) {
   const image = imageFor(entry.icon);
   const name = entry.software_name ?? entry.editorial_title ?? entry.entry;
   const secondary = entry.software_name && entry.editorial_title !== entry.software_name ? entry.editorial_title : null;
-  link.innerHTML = `<div class="archive-card-icon">${image?.public_path ? `<img src="${image.public_path}" alt="" width="32" height="32">` : "<span>?</span>"}</div><div class="archive-card-copy"><strong>${name}</strong>${entry.version ? `<span>versjon ${entry.version}</span>` : ""}${secondary ? `<small>${secondary}</small>` : ""}</div><span class="archive-entry">${entry.entry}</span>`;
+  const icon = document.createElement("div");
+  icon.className = "archive-card-icon";
+  if (image?.public_path) {
+    const img = document.createElement("img");
+    img.src = image.public_path;
+    img.alt = "";
+    img.width = 32;
+    img.height = 32;
+    icon.append(img);
+  } else {
+    const placeholder = document.createElement("span");
+    placeholder.textContent = "?";
+    icon.append(placeholder);
+  }
+
+  const copy = document.createElement("div");
+  copy.className = "archive-card-copy";
+  const strong = document.createElement("strong");
+  strong.textContent = name;
+  copy.append(strong);
+  if (entry.version) {
+    const version = document.createElement("span");
+    version.textContent = `versjon ${entry.version}`;
+    copy.append(version);
+  }
+  if (secondary) {
+    const sourceTitle = document.createElement("small");
+    sourceTitle.textContent = secondary;
+    copy.append(sourceTitle);
+  }
+
+  const sourceId = document.createElement("span");
+  sourceId.className = "archive-entry";
+  sourceId.textContent = entry.entry;
+  link.append(icon, copy, sourceId);
   return link;
 }
 
