@@ -23,6 +23,19 @@ function statusLabel(status) {
   return { identified: "Identifisert", pending: "Venter på identifisering" }[status] ?? "Ukjent";
 }
 
+function entryName(entry) {
+  return entry?.software_name ?? entry?.editorial_title ?? entry?.entry;
+}
+
+function bindArrowNavigation(previous, next) {
+  document.addEventListener("keydown", event => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const destination = event.key === "ArrowLeft" ? previous : event.key === "ArrowRight" ? next : null;
+    if (!destination) return;
+    window.location.href = `index.html?entry=${encodeURIComponent(destination.entry)}`;
+  });
+}
+
 async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
@@ -53,15 +66,20 @@ async function render() {
   if (previous) {
     const link = document.querySelector("#previous-entry");
     link.href = `index.html?entry=${encodeURIComponent(previous.entry)}`;
-    link.textContent = `← ${previous.entry}`;
+    link.textContent = `← ${entryName(previous)}`;
+    link.setAttribute("aria-label", `Forrige program: ${entryName(previous)} (${previous.entry})`);
+    link.title = previous.entry;
     link.hidden = false;
   }
   if (next) {
     const link = document.querySelector("#next-entry");
     link.href = `index.html?entry=${encodeURIComponent(next.entry)}`;
-    link.textContent = `${next.entry} →`;
+    link.textContent = `${entryName(next)} →`;
+    link.setAttribute("aria-label", `Neste program: ${entryName(next)} (${next.entry})`);
+    link.title = next.entry;
     link.hidden = false;
   }
+  bindArrowNavigation(previous, next);
 
   const icon = assetFor(entry.assets ?? [], "icon");
   const shot = assetFor(entry.assets ?? [], "screenshot");
