@@ -202,6 +202,15 @@ class FrontendContractTests(unittest.TestCase):
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(module.sha256(first), module.sha256(second))
 
+    def test_deployment_verifier_checks_documents_assets_hashes_and_404(self):
+        verifier = (ROOT / "scripts" / "verify-deployment.py").read_text(encoding="utf-8")
+        self.assertIn('fetch(args.base_url, "archive.html")', verifier)
+        self.assertIn('fetch(args.base_url, "data/index.json")', verifier)
+        self.assertIn('expected_status=404', verifier)
+        self.assertIn('f"data/{entry_id.lower()}.json"', verifier)
+        self.assertIn('hashlib.sha256(body).hexdigest()', verifier)
+        self.assertNotIn("ftp.domeneshop.no", verifier)
+
 
 if __name__ == "__main__":
     unittest.main()
