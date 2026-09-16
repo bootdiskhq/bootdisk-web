@@ -79,6 +79,7 @@ async function render() {
   const data = await response.json();
   const grid = document.querySelector("#archive-grid");
   const count = document.querySelector("#archive-count");
+  const empty = document.querySelector("#archive-empty");
   const search = document.querySelector("#archive-search");
   const status = document.querySelector("#archive-status");
   const sort = document.querySelector("#archive-sort");
@@ -92,6 +93,7 @@ async function render() {
   function update() {
     const entries = sortEntries(filterEntries(data.entries, search.value, status.value), sort.value);
     grid.replaceChildren(...entries.map(card));
+    empty.hidden = entries.length !== 0;
     count.textContent = `${entries.length} av ${data.entries.length} poster`;
     const next = new URLSearchParams();
     if (search.value.trim()) next.set("q", search.value.trim());
