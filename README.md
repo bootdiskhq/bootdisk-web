@@ -42,3 +42,11 @@ PYTHONPATH=/path/to/bootdisk-catalog python scripts/build-release-artifact.py PU
 ```
 
 Rapporten lagrer versjon, input-hasher, antall poster, antall publiserte filer og ZIP-ens SHA-256.
+
+Etter opplasting verifiseres hele den offentlige kjeden med:
+
+```sh
+python scripts/verify-deployment.py https://bootdisk.no/ --expected-entries 39
+```
+
+Se [`docs/domeneshop-deploy.md`](docs/domeneshop-deploy.md) for deploy- og rollback-prosedyren.
