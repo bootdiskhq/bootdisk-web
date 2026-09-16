@@ -40,6 +40,7 @@ async function render() {
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
   document.querySelector("#fact-status").textContent = entry.curation_status ?? "ukjent";
   document.title = `${name}${software?.version ? ` ${version}` : ""} — Bootdisk`;
+  document.querySelector("#page-description").content = `${name}${software?.version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
 
   const position = index.entries.findIndex(item => item.entry === entry.entry);
   if (position < 0) throw new Error(`Entry missing from archive index: ${entry.entry}`);
@@ -71,12 +72,17 @@ async function render() {
     document.querySelector("#software-shot").src = shotImage.public_path;
     document.querySelector("#screenshot-frame").hidden = false;
   }
+  document.querySelector("main").setAttribute("aria-busy", "false");
 }
 
 render().catch(error => {
   console.error(error);
   document.querySelector("#software-name").textContent = "Kunne ikke laste arkivpost";
   document.querySelector("#software-version").textContent = "Sjekk at frontend-data og /store er tilgjengelig.";
+  const alert = document.querySelector("#entry-error");
+  alert.textContent = "Arkivposten kunne ikke lastes.";
+  alert.hidden = false;
   document.querySelector(".window").hidden = true;
   document.querySelector(".entry-navigation").hidden = true;
+  document.querySelector("main").setAttribute("aria-busy", "false");
 });

@@ -5,6 +5,13 @@
   margin-top: 18px;
 }
 
+#entry-error {
+  margin: 32px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+}
+
 .entry-navigation a {
   padding: 12px 14px;
   border: 1px solid var(--line);

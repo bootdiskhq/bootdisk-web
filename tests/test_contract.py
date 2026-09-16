@@ -48,6 +48,15 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('index.entries[position + 1]', javascript)
         self.assertNotIn('Number(entry.entry.slice(1))', javascript)
 
+    def test_entry_reports_loading_errors_and_source_metadata_accessibly(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        javascript = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn('id="page-description"', html)
+        self.assertIn('aria-busy="true"', html)
+        self.assertIn('id="entry-error" role="alert"', html)
+        self.assertIn('document.querySelector("#page-description").content', javascript)
+        self.assertIn('setAttribute("aria-busy", "false")', javascript)
+
     def test_builder_emits_archive_index_without_inventing_identity(self):
         builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
         self.assertIn('args.output / "index.json"', builder)
@@ -70,6 +79,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('entry.curation_status === status', javascript)
         self.assertIn('new URLSearchParams(window.location.search)', javascript)
         self.assertIn('window.history.replaceState', javascript)
+        self.assertIn('id="archive-empty"', html)
+        self.assertIn('empty.hidden = entries.length !== 0', javascript)
 
     def test_release_includes_archive_filter_styles(self):
         builder = (ROOT / "scripts" / "build-release.py").read_text(encoding="utf-8")
