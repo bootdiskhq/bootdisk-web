@@ -48,6 +48,11 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('index.entries[position - 1]', javascript)
         self.assertIn('index.entries[position + 1]', javascript)
         self.assertNotIn('Number(entry.entry.slice(1))', javascript)
+        self.assertIn('entry?.software_name ?? entry?.editorial_title ?? entry?.entry', javascript)
+        self.assertIn('link.textContent = `← ${entryName(previous)}`', javascript)
+        self.assertIn('link.textContent = `${entryName(next)} →`', javascript)
+        self.assertIn('event.key === "ArrowLeft"', javascript)
+        self.assertIn('event.key === "ArrowRight"', javascript)
 
     def test_entry_reports_loading_errors_and_source_metadata_accessibly(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
