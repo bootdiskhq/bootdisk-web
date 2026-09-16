@@ -1,0 +1,34 @@
+.entry-navigation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.entry-navigation a {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: #0d161b;
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+.entry-navigation a:last-child {
+  text-align: right;
+}
+
+.entry-navigation a:hover,
+.entry-navigation a:focus-visible {
+  border-color: var(--cyan);
+  outline: none;
+}
+
+@media (max-width: 520px) {
+  .entry-navigation {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-navigation a:last-child {
+    text-align: left;
+  }
+}
