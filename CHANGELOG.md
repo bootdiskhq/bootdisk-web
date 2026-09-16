@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Legger til eksplisitte last-, feil- og tomtilstander for datadrevne sider.
+- Genererer detaljsidens beskrivelse og skjermbildetekst fra presentasjonsdata.
+- Legger til hopp-lenker, stabile hovedlandemerker og no-script-meldinger.
+- Respekterer brukerens preferanse for redusert bevegelse.
+- Presenterer kurateringsstatus med menneskevennlige norske navn.
+
 ## 0.2.0
 
 - Legger til delbare søk, statusfiltre og sortering i arkivoversikten.
