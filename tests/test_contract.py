@@ -209,6 +209,9 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('expected_status=404', verifier)
         self.assertIn('f"data/{entry_id.lower()}.json"', verifier)
         self.assertIn('hashlib.sha256(body).hexdigest()', verifier)
+        self.assertIn('ThreadPoolExecutor(max_workers=args.workers)', verifier)
+        self.assertIn('executor.map(fetch_entry, entries)', verifier)
+        self.assertIn('executor.map(verify_asset, sorted(assets))', verifier)
         self.assertNotIn("ftp.domeneshop.no", verifier)
 
 
