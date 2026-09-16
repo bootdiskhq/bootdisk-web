@@ -1,7 +1,11 @@
 /* Bootdisk Web deliberately consumes presentation data rather than archive internals.
  * The frontend is disposable: Catalog owns identity and Publish owns web assets. */
 function requestedEntry() {
-  const requested = new URLSearchParams(window.location.search).get("entry") ?? "K37";
+  const requested = new URLSearchParams(window.location.search).get("entry");
+  if (!requested) {
+    window.location.replace("archive.html");
+    return null;
+  }
   // Entry ids become filenames only after strict validation; source values never become paths.
   if (!/^K[0-9]+$/i.test(requested)) throw new Error(`Invalid entry id: ${requested}`);
   return requested.toLowerCase();
@@ -17,6 +21,7 @@ function assetFor(assets, kind) {
 
 async function render() {
   const entryId = requestedEntry();
+  if (!entryId) return;
   const dataUrl = `data/${entryId}.json`;
   const response = await fetch(dataUrl);
   if (!response.ok) throw new Error(`Cannot load ${dataUrl}: ${response.status}`);
