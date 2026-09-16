@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""Build a deploy directory, deterministic ZIP and machine-readable release report."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BUILD_PREVIEW = ROOT / "scripts" / "build-preview.py"
+BUILD_RELEASE = ROOT / "scripts" / "build-release.py"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def deterministic_zip(source: Path, target: Path) -> None:
+    with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        for path in sorted(item for item in source.rglob("*") if item.is_file()):
+            relative = Path(source.name) / path.relative_to(source)
+            info = zipfile.ZipInfo(relative.as_posix(), date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, path.read_bytes(), compresslevel=9)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("publish_root", type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--frontend-data", type=Path)
+    source.add_argument("--catalog-root", type=Path)
+    parser.add_argument("--ingest-manifest", type=Path)
+    parser.add_argument("--output", type=Path, default=ROOT / "dist")
+    parser.add_argument("--expected-entries", type=int, default=39)
+    args = parser.parse_args()
+    if args.catalog_root and not args.ingest_manifest:
+        parser.error("--ingest-manifest is required with --catalog-root")
+
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    output = args.output.expanduser().resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    release = output / f"bootdisk-web-{version}"
+    archive = output / f"bootdisk-web-{version}.zip"
+    report = output / f"bootdisk-web-{version}.json"
+
+    with tempfile.TemporaryDirectory(prefix="bootdisk-release-") as temporary:
+        data = args.frontend_data.expanduser().resolve() if args.frontend_data else Path(temporary) / "data"
+        if args.catalog_root:
+            subprocess.run([
+                sys.executable, str(BUILD_PREVIEW), str(args.catalog_root.expanduser()),
+                str(args.ingest_manifest.expanduser()), str(args.publish_root.expanduser() / "publish-manifest.json"),
+                "--output", str(data),
+            ], check=True)
+        subprocess.run([
+            sys.executable, str(BUILD_RELEASE), str(data), str(args.publish_root.expanduser()),
+            "--output", str(release), "--expected-entries", str(args.expected_entries),
+        ], check=True)
+
+    deterministic_zip(release, archive)
+    index = json.loads((release / "data" / "index.json").read_text(encoding="utf-8"))
+    payload = {
+        "schema": "bootdisk-web-release-0.1",
+        "version": version,
+        "entries": len(index["entries"]),
+        "store_files": sum(1 for path in (release / "store").rglob("*") if path.is_file()),
+        "zip": {"name": archive.name, "sha256": sha256(archive), "size": archive.stat().st_size},
+        "inputs": {
+            "ingest_manifest_sha256": sha256(args.ingest_manifest.expanduser()) if args.ingest_manifest else None,
+            "publish_manifest_sha256": sha256(args.publish_root.expanduser() / "publish-manifest.json"),
+        },
+    }
+    temporary = report.with_suffix(report.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, report)
+    print(f"release zip: {archive}")
+    print(f"release report: {report}")
+
+
+if __name__ == "__main__":
+    main()
