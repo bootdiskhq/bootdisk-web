@@ -38,6 +38,16 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('`data/${entryId}.json`', javascript)
         self.assertIn('window.location.replace("archive.html")', javascript)
 
+    def test_entry_navigation_follows_index_instead_of_guessing_ids(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        javascript = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn('id="previous-entry"', html)
+        self.assertIn('id="next-entry"', html)
+        self.assertIn('fetch("data/index.json")', javascript)
+        self.assertIn('index.entries[position - 1]', javascript)
+        self.assertIn('index.entries[position + 1]', javascript)
+        self.assertNotIn('Number(entry.entry.slice(1))', javascript)
+
     def test_builder_emits_archive_index_without_inventing_identity(self):
         builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
         self.assertIn('args.output / "index.json"', builder)
@@ -64,6 +74,7 @@ class FrontendContractTests(unittest.TestCase):
     def test_release_includes_archive_filter_styles(self):
         builder = (ROOT / "scripts" / "build-release.py").read_text(encoding="utf-8")
         self.assertIn('"archive-controls.css"', builder)
+        self.assertIn('"entry-controls.css"', builder)
 
     def test_builder_replaces_stale_output_and_sorts_source_entries(self):
         with tempfile.TemporaryDirectory() as directory:

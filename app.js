@@ -23,9 +23,10 @@ async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
   const dataUrl = `data/${entryId}.json`;
-  const response = await fetch(dataUrl);
+  const [response, indexResponse] = await Promise.all([fetch(dataUrl), fetch("data/index.json")]);
   if (!response.ok) throw new Error(`Cannot load ${dataUrl}: ${response.status}`);
-  const entry = await response.json();
+  if (!indexResponse.ok) throw new Error(`Cannot load archive index: ${indexResponse.status}`);
+  const [entry, index] = await Promise.all([response.json(), indexResponse.json()]);
   const software = entry.software?.[0];
   const name = software?.software_name ?? entry.editorial_title ?? entry.entry;
   const version = software?.version ?? "Uidentifisert versjon";
@@ -39,6 +40,23 @@ async function render() {
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
   document.querySelector("#fact-status").textContent = entry.curation_status ?? "ukjent";
   document.title = `${name}${software?.version ? ` ${version}` : ""} — Bootdisk`;
+
+  const position = index.entries.findIndex(item => item.entry === entry.entry);
+  if (position < 0) throw new Error(`Entry missing from archive index: ${entry.entry}`);
+  const previous = index.entries[position - 1];
+  const next = index.entries[position + 1];
+  if (previous) {
+    const link = document.querySelector("#previous-entry");
+    link.href = `index.html?entry=${encodeURIComponent(previous.entry)}`;
+    link.textContent = `← ${previous.entry}`;
+    link.hidden = false;
+  }
+  if (next) {
+    const link = document.querySelector("#next-entry");
+    link.href = `index.html?entry=${encodeURIComponent(next.entry)}`;
+    link.textContent = `${next.entry} →`;
+    link.hidden = false;
+  }
 
   const icon = assetFor(entry.assets ?? [], "icon");
   const shot = assetFor(entry.assets ?? [], "screenshot");
@@ -60,4 +78,5 @@ render().catch(error => {
   document.querySelector("#software-name").textContent = "Kunne ikke laste arkivpost";
   document.querySelector("#software-version").textContent = "Sjekk at frontend-data og /store er tilgjengelig.";
   document.querySelector(".window").hidden = true;
+  document.querySelector(".entry-navigation").hidden = true;
 });
