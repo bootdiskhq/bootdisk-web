@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import subprocess
 import sys
 import tempfile
@@ -177,6 +178,24 @@ class FrontendContractTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Unsafe asset public_path", result.stderr)
+
+    def test_release_artifact_zip_is_deterministic(self):
+        script = ROOT / "scripts" / "build-release-artifact.py"
+        spec = importlib.util.spec_from_file_location("release_artifact", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "bootdisk-web-test"
+            source.mkdir()
+            (source / "b.txt").write_text("second\n", encoding="utf-8")
+            (source / "a.txt").write_text("first\n", encoding="utf-8")
+            first = root / "first.zip"
+            second = root / "second.zip"
+            module.deterministic_zip(source, first)
+            module.deterministic_zip(source, second)
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+            self.assertEqual(module.sha256(first), module.sha256(second))
 
 
 if __name__ == "__main__":

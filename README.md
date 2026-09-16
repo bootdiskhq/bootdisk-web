@@ -29,3 +29,16 @@ python -m http.server --directory dist/bootdisk-web 8000
 ```
 
 Åpne `http://localhost:8000/`. Roten sender nettleseren til arkivoversikten; detaljsider bruker stabile lenker som `index.html?entry=K37`.
+
+## Bygg komplett releaseartefakt
+
+Én kommando kan bygge frontend-data, lukket deploymappe, deterministisk ZIP og en maskinlesbar JSON-rapport:
+
+```sh
+PYTHONPATH=/path/to/bootdisk-catalog python scripts/build-release-artifact.py PUBLISH_ROOT \
+  --catalog-root CATALOG_ROOT \
+  --ingest-manifest INGEST_MANIFEST \
+  --expected-entries 39
+```
+
+Rapporten lagrer versjon, input-hasher, antall poster, antall publiserte filer og ZIP-ens SHA-256.
