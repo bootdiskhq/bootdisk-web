@@ -39,12 +39,20 @@ async function render() {
   const shot = assetFor(entry.assets ?? [], "screenshot");
   const iconImage = derivative(icon) ?? icon?.original;
   const shotImage = derivative(shot) ?? shot?.original;
-  if (iconImage?.public_path) document.querySelector("#software-icon").src = iconImage.public_path;
-  if (shotImage?.public_path) document.querySelector("#software-shot").src = shotImage.public_path;
+  if (iconImage?.public_path) {
+    const iconElement = document.querySelector("#software-icon");
+    iconElement.src = iconImage.public_path;
+    iconElement.hidden = false;
+  }
+  if (shotImage?.public_path) {
+    document.querySelector("#software-shot").src = shotImage.public_path;
+    document.querySelector("#screenshot-frame").hidden = false;
+  }
 }
 
 render().catch(error => {
   console.error(error);
   document.querySelector("#software-name").textContent = "Kunne ikke laste arkivpost";
   document.querySelector("#software-version").textContent = "Sjekk at frontend-data og /store er tilgjengelig.";
+  document.querySelector(".window").hidden = true;
 });

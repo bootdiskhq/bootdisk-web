@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
+
+ENTRY_ID = re.compile(r"K[0-9]+", re.IGNORECASE)
 
 
 def public_path(object_key: str | None) -> str | None:
-    return f"/store/{object_key.lstrip('/')}" if object_key else None
+    return f"store/{object_key.lstrip('/')}" if object_key else None
 
 
 def project_asset(asset: dict) -> dict:
@@ -47,12 +50,19 @@ def main() -> None:
         if entry_id:
             assets_by_entry.setdefault(entry_id, []).append(asset)
 
-    args.output.mkdir(parents=True, exist_ok=True)
+    documents: dict[Path, str] = {}
     index = []
+    seen_entries: set[str] = set()
     for entry in catalog:
         entry_id = entry.get("entry")
         if not entry_id:
             continue
+        if not isinstance(entry_id, str) or not ENTRY_ID.fullmatch(entry_id):
+            raise SystemExit(f"Invalid source entry id: {entry_id!r}")
+        entry_id = entry_id.upper()
+        if entry_id in seen_entries:
+            raise SystemExit(f"Duplicate source entry id: {entry_id}")
+        seen_entries.add(entry_id)
         occurrence_hashes = {occurrence["artifact_id"].removeprefix("artifact:sha256:") for occurrence in entry.get("occurrences") or [] if str(occurrence.get("artifact_id", "")).startswith("artifact:sha256:")}
         joined_assets = []
         for asset in assets_by_entry.get(entry_id, []):
@@ -67,7 +77,7 @@ def main() -> None:
         document["medium"] = args.medium
         document["assets"] = joined_assets
         target = args.output / f"{entry_id.lower()}.json"
-        target.write_text(json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        documents[target] = json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
         software = (entry.get("software") or [{}])[0]
         icon = next((asset for asset in joined_assets if asset.get("kind") == "icon"), None)
@@ -75,7 +85,20 @@ def main() -> None:
 
     # The index is also disposable presentation data. It intentionally contains only
     # enough information to browse into an entry; detailed evidence stays per entry.
-    (args.output / "index.json").write_text(json.dumps({"publication": args.publication, "medium": args.medium, "entries": index}, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    index.sort(key=lambda item: int(item["entry"][1:]))
+    documents[args.output / "index.json"] = json.dumps({"publication": args.publication, "medium": args.medium, "entries": index}, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+    # Only replace generated JSON after every input and join has validated. This
+    # prevents a failed build from leaving a half-written presentation tree, while
+    # removing stale entry documents from earlier source revisions.
+    args.output.mkdir(parents=True, exist_ok=True)
+    for stale in args.output.glob("*.json"):
+        if stale not in documents:
+            stale.unlink()
+    for target, content in documents.items():
+        temporary = target.with_suffix(target.suffix + ".tmp")
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(target)
     print(f"frontend entries: {len(index)}")
 
 
