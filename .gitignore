@@ -1,0 +1,3 @@
+# Local preview binds generated Publish output here. Published artifacts never belong
+# in the frontend repository; they remain rebuildable output of bootdisk-publish.
+/store
