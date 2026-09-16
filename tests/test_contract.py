@@ -36,6 +36,7 @@ class FrontendContractTests(unittest.TestCase):
         javascript = (ROOT / "app.js").read_text(encoding="utf-8")
         self.assertIn('new URLSearchParams(window.location.search).get("entry")', javascript)
         self.assertIn('`data/${entryId}.json`', javascript)
+        self.assertIn('window.location.replace("archive.html")', javascript)
 
     def test_builder_emits_archive_index_without_inventing_identity(self):
         builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
@@ -77,6 +78,51 @@ class FrontendContractTests(unittest.TestCase):
             self.assertFalse((output / "k99.json").exists())
             index = json.loads((output / "index.json").read_text(encoding="utf-8"))
             self.assertEqual([item["entry"] for item in index["entries"]], ["K2", "K10"])
+
+    def test_release_builder_copies_only_referenced_assets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            frontend = root / "data"
+            publish = root / "publish"
+            output = root / "release"
+            frontend.mkdir()
+            asset_path = Path("store/assets/sha256/aa/icon.bin")
+            (publish / asset_path).parent.mkdir(parents=True)
+            (publish / asset_path).write_bytes(b"icon")
+            unreferenced = publish / "store/assets/sha256/bb/private.bin"
+            unreferenced.parent.mkdir(parents=True)
+            unreferenced.write_bytes(b"do not publish")
+            (frontend / "index.json").write_text(json.dumps({"entries": [{"entry": "K1"}]}), encoding="utf-8")
+            (frontend / "k1.json").write_text(json.dumps({"entry": "K1", "assets": [{"original": {"public_path": asset_path.as_posix()}}]}), encoding="utf-8")
+
+            subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish), "--output", str(output), "--expected-entries", "1"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual((output / asset_path).read_bytes(), b"icon")
+            self.assertFalse((output / "store/assets/sha256/bb/private.bin").exists())
+            self.assertTrue((output / "404.html").is_file())
+
+    def test_release_builder_rejects_asset_path_traversal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            frontend = root / "data"
+            publish = root / "publish"
+            frontend.mkdir()
+            publish.mkdir()
+            (frontend / "index.json").write_text(json.dumps({"entries": [{"entry": "K1"}]}), encoding="utf-8")
+            (frontend / "k1.json").write_text(json.dumps({"entry": "K1", "assets": [{"original": {"public_path": "store/../secret"}}]}), encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish), "--output", str(root / "release"), "--expected-entries", "1"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Unsafe asset public_path", result.stderr)
 
 
 if __name__ == "__main__":
