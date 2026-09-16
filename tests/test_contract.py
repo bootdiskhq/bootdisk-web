@@ -51,6 +51,20 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('fetch("data/index.json")', javascript)
         self.assertNotIn("innerHTML", javascript)
 
+    def test_archive_filters_are_shareable_and_preserve_source_truth(self):
+        html = (ROOT / "archive.html").read_text(encoding="utf-8")
+        javascript = (ROOT / "archive.js").read_text(encoding="utf-8")
+        self.assertIn('id="archive-status"', html)
+        self.assertIn('id="archive-sort"', html)
+        self.assertIn('id="archive-reset"', html)
+        self.assertIn('entry.curation_status === status', javascript)
+        self.assertIn('new URLSearchParams(window.location.search)', javascript)
+        self.assertIn('window.history.replaceState', javascript)
+
+    def test_release_includes_archive_filter_styles(self):
+        builder = (ROOT / "scripts" / "build-release.py").read_text(encoding="utf-8")
+        self.assertIn('"archive-controls.css"', builder)
+
     def test_builder_replaces_stale_output_and_sorts_source_entries(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

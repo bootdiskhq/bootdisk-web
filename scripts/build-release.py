@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
-STATIC_FILES = ("index.html", "archive.html", "404.html", "styles.css", "app.js", "archive.js", "VERSION")
+STATIC_FILES = ("index.html", "archive.html", "404.html", "styles.css", "archive-controls.css", "app.js", "archive.js", "VERSION")
 
 
 def checked_asset_path(value: object) -> PurePosixPath:
