@@ -4,6 +4,30 @@ function imageFor(asset) {
   return asset?.derivatives?.find(item => item.kind === "thumbnail") ?? asset?.original;
 }
 
+function normalized(value) {
+  return String(value ?? "").toLocaleLowerCase("no");
+}
+
+function filterEntries(entries, query, status) {
+  const needle = normalized(query.trim());
+  return entries.filter(entry => {
+    const matchesStatus = status === "all" || entry.curation_status === status;
+    const haystack = [entry.entry, entry.editorial_title, entry.software_name, entry.version].map(normalized).join(" ");
+    return matchesStatus && haystack.includes(needle);
+  });
+}
+
+function sortEntries(entries, sort) {
+  return [...entries].sort((left, right) => {
+    if (sort === "name") {
+      const leftName = left.software_name ?? left.editorial_title ?? left.entry;
+      const rightName = right.software_name ?? right.editorial_title ?? right.entry;
+      return leftName.localeCompare(rightName, "no", { sensitivity: "base" });
+    }
+    return Number(left.entry.slice(1)) - Number(right.entry.slice(1));
+  });
+}
+
 function card(entry) {
   const link = document.createElement("a");
   link.className = "archive-card";
@@ -56,15 +80,36 @@ async function render() {
   const grid = document.querySelector("#archive-grid");
   const count = document.querySelector("#archive-count");
   const search = document.querySelector("#archive-search");
+  const status = document.querySelector("#archive-status");
+  const sort = document.querySelector("#archive-sort");
+  const reset = document.querySelector("#archive-reset");
+  const parameters = new URLSearchParams(window.location.search);
+  search.value = parameters.get("q") ?? "";
+  status.value = ["identified", "pending"].includes(parameters.get("status")) ? parameters.get("status") : "all";
+  sort.value = parameters.get("sort") === "name" ? "name" : "source";
   document.querySelector("#archive-source").textContent = `${data.publication} · ${data.medium}`;
 
   function update() {
-    const needle = search.value.trim().toLocaleLowerCase("no");
-    const entries = data.entries.filter(entry => [entry.entry, entry.editorial_title, entry.software_name, entry.version].filter(Boolean).join(" ").toLocaleLowerCase("no").includes(needle));
+    const entries = sortEntries(filterEntries(data.entries, search.value, status.value), sort.value);
     grid.replaceChildren(...entries.map(card));
     count.textContent = `${entries.length} av ${data.entries.length} poster`;
+    const next = new URLSearchParams();
+    if (search.value.trim()) next.set("q", search.value.trim());
+    if (status.value !== "all") next.set("status", status.value);
+    if (sort.value !== "source") next.set("sort", sort.value);
+    const query = next.toString();
+    window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   }
   search.addEventListener("input", update);
+  status.addEventListener("change", update);
+  sort.addEventListener("change", update);
+  reset.addEventListener("click", () => {
+    search.value = "";
+    status.value = "all";
+    sort.value = "source";
+    update();
+    search.focus();
+  });
   update();
 }
 
