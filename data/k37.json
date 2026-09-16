@@ -1,5 +1,7 @@
 {
   "entry": "K37",
+  "publication": "KOMPUTER FOR ALLE",
+  "medium": "K-CD 15/2001",
   "editorial_title": "WinAmp 2.76",
   "curation_status": "identified",
   "software": [{"software_id":"software:winamp","software_name":"Winamp","release_id":"release:winamp:2.76","version":"2.76"}],
