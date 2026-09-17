@@ -36,6 +36,19 @@ function bindArrowNavigation(previous, next) {
   });
 }
 
+function setMetadata(name, version, entry) {
+  const title = `${name}${version ? ` ${version}` : ""} — Bootdisk`;
+  const description = `${name}${version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
+  const url = new URL("index.html", "https://bootdisk.no/");
+  url.searchParams.set("entry", entry.entry);
+  document.title = title;
+  document.querySelector("#page-description").content = description;
+  document.querySelector("#canonical-url").href = url.href;
+  document.querySelector("#og-title").content = title;
+  document.querySelector("#og-description").content = description;
+  document.querySelector("#og-url").content = url.href;
+}
+
 async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
@@ -56,8 +69,7 @@ async function render() {
   document.querySelector("#fact-entry").textContent = entry.entry;
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
   document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status);
-  document.title = `${name}${software?.version ? ` ${version}` : ""} — Bootdisk`;
-  document.querySelector("#page-description").content = `${name}${software?.version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
+  setMetadata(name, software?.version, entry);
 
   const position = index.entries.findIndex(item => item.entry === entry.entry);
   if (position < 0) throw new Error(`Entry missing from archive index: ${entry.entry}`);

@@ -56,3 +56,5 @@ Den stabile 1.0-kontrakten mellom de genererte dataene og presentasjonslaget er 
 ```sh
 python scripts/frontend_contract.py build/data --expected-entries 39
 ```
+
+Offentlige, stabile lenker og metadata er dokumentert i [`docs/url-contract.md`](docs/url-contract.md). Sitemap og `robots.txt` genereres automatisk av releasebygget.
