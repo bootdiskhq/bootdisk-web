@@ -307,6 +307,20 @@ class FrontendContractTests(unittest.TestCase):
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(module.sha256(first), module.sha256(second))
 
+    def test_release_artifact_projection_hash_is_deterministic(self):
+        script = ROOT / "scripts" / "build-release-artifact.py"
+        spec = importlib.util.spec_from_file_location("release_artifact_hash", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as first_directory, tempfile.TemporaryDirectory() as second_directory:
+            first = Path(first_directory)
+            second = Path(second_directory)
+            (first / "nested").mkdir()
+            (second / "nested").mkdir()
+            (first / "nested" / "entry.json").write_text("{}\n", encoding="utf-8")
+            (second / "nested" / "entry.json").write_text("{}\n", encoding="utf-8")
+            self.assertEqual(module.sha256_tree(first), module.sha256_tree(second))
+
     def test_deployment_verifier_checks_documents_assets_hashes_and_404(self):
         verifier = (ROOT / "scripts" / "verify-deployment.py").read_text(encoding="utf-8")
         self.assertIn('fetch(args.base_url, "archive.html")', verifier)
