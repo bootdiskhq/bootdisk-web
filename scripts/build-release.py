@@ -8,6 +8,8 @@ import shutil
 import tempfile
 from pathlib import Path, PurePosixPath
 
+from frontend_contract import validate_frontend_data
+
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_FILES = ("index.html", "archive.html", "404.html", "styles.css", "accessibility.css", "archive-controls.css", "entry-controls.css", "app.js", "archive.js", "VERSION")
 
@@ -38,11 +40,8 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
     if output in {Path("/").resolve(), ROOT.resolve(), publish_root, frontend_data}:
         raise ValueError(f"Refusing unsafe output directory: {output}")
 
-    index = json.loads((frontend_data / "index.json").read_text(encoding="utf-8"))
-    entries = index.get("entries")
-    if not isinstance(entries, list) or len(entries) != expected_entries:
-        actual = len(entries) if isinstance(entries, list) else "invalid"
-        raise ValueError(f"Expected {expected_entries} index entries, got {actual}")
+    index = validate_frontend_data(frontend_data, expected_entries)
+    entries = index["entries"]
     entry_ids = [item.get("entry") for item in entries]
     if len(set(entry_ids)) != len(entry_ids) or any(not isinstance(item, str) for item in entry_ids):
         raise ValueError("Index entry ids must be unique strings")
