@@ -25,6 +25,17 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def sha256_tree(root: Path) -> str:
+    """Hash relative paths and file hashes so a generated projection has one identity."""
+    digest = hashlib.sha256()
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(sha256(path).encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
 def deterministic_zip(source: Path, target: Path) -> None:
     with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for path in sorted(item for item in source.rglob("*") if item.is_file()):
@@ -67,6 +78,7 @@ def main() -> None:
             sys.executable, str(BUILD_RELEASE), str(data), str(args.publish_root.expanduser()),
             "--output", str(release), "--expected-entries", str(args.expected_entries),
         ], check=True)
+        frontend_data_sha256 = sha256_tree(data)
 
     deterministic_zip(release, archive)
     index = json.loads((release / "data" / "index.json").read_text(encoding="utf-8"))
@@ -77,6 +89,7 @@ def main() -> None:
         "store_files": sum(1 for path in (release / "store").rglob("*") if path.is_file()),
         "zip": {"name": archive.name, "sha256": sha256(archive), "size": archive.stat().st_size},
         "inputs": {
+            "frontend_data_sha256": frontend_data_sha256,
             "ingest_manifest_sha256": sha256(args.ingest_manifest.expanduser()) if args.ingest_manifest else None,
             "publish_manifest_sha256": sha256(args.publish_root.expanduser() / "publish-manifest.json"),
         },

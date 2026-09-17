@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0-rc1
+
+- Fryser og dokumenterer frontend-datakontrakten for 1.0-serien.
+- Validerer kildeposter, kildekontekst, kurateringsstatus, ressursbindinger, stier og SHA-256 før releasepakking.
+- Dokumenterer stabile offentlige URL-er med K-ID som varig identifikator.
+- Legger til canonical- og delingsmetadata, `robots.txt` og komplett sitemap.
+- Utvider produksjonsverifikasjonen til å kreve samsvar mellom sitemap og alle kildeposter.
+- Avgrenser kandidaten til den komplette, regenererbare publiseringen av K-CD 15/2001.
+
 ## 0.4.0
 
 - Samler frontendbygg, pakking og release-rapport i én kontrollert kommando.
