@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- Promoterer den produksjonsgodkjente `1.0.0-rc1`-kandidaten uten funksjonelle endringer.
+- Bekrefter komplett produksjonsverifikasjon av 39 kildeposter, 136 filer og 40 sitemap-adresser.
+- Bekrefter arkiv, detaljsider, søk og navigasjon visuelt på desktop og mobil.
+
 ## 1.0.0-rc1
 
 - Fryser og dokumenterer frontend-datakontrakten for 1.0-serien.

@@ -22,9 +22,9 @@ Bootdisk Web forblir et lett, statisk og fullt regenererbart presentasjonslag. C
 
 ## 1.0 — Stabil offentlig kontrakt
 
-- Produksjonsverifisert på `bootdisk.no` på mobil og desktop.
-- Stabile URL-er og dokumentert frontend-datakontrakt.
-- Ingen blokkerende tilgjengelighets-, integritets- eller deployfeil.
-- Nye medier kan bygges uten håndredigering av frontend-kode.
+- [x] Produksjonsverifisert på `bootdisk.no` på mobil og desktop.
+- [x] Stabile URL-er og dokumentert frontend-datakontrakt.
+- [x] Ingen blokkerende tilgjengelighets-, integritets- eller deployfeil.
+- [x] Nye medier kan bygges uten håndredigering av frontend-kode.
 
 Rammeverksbytte og større visuell redesign er ikke et 1.0-krav. Bred kuratering kan fortsette uavhengig av webplattformens stabilitet.
