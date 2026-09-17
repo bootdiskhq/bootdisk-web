@@ -27,6 +27,11 @@ function entryName(entry) {
   return entry?.software_name ?? entry?.editorial_title ?? entry?.entry;
 }
 
+function preferredDescription(software, language = "nb-NO") {
+  const descriptions = software?.descriptions ?? [];
+  return descriptions.find(item => item.language === language)?.text ?? descriptions[0]?.text;
+}
+
 function bindArrowNavigation(previous, next) {
   document.addEventListener("keydown", event => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -36,9 +41,9 @@ function bindArrowNavigation(previous, next) {
   });
 }
 
-function setMetadata(name, version, entry) {
+function setMetadata(name, version, entry, curatedDescription) {
   const title = `${name}${version ? ` ${version}` : ""} — Bootdisk`;
-  const description = `${name}${version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
+  const description = curatedDescription ?? `${name}${version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
   const url = new URL("index.html", "https://bootdisk.no/");
   url.searchParams.set("entry", entry.entry);
   document.title = title;
@@ -60,16 +65,19 @@ async function render() {
   const software = entry.software?.[0];
   const name = software?.software_name ?? entry.editorial_title ?? entry.entry;
   const version = software?.version ?? "Uidentifisert versjon";
+  const description = preferredDescription(software);
 
   document.querySelector("#source-context").textContent = `${entry.publication ?? "KOMPUTER FOR ALLE"} · ${entry.medium ?? "K-CD 15/2001"} · ${entry.entry}`;
   document.querySelector("#software-name").textContent = name;
   document.querySelector("#software-version").textContent = software?.version ? `versjon ${version}` : version;
+  const descriptionElement = document.querySelector("#software-description");
+  if (description) descriptionElement.textContent = description;
   document.querySelector("#fact-name").textContent = name;
   document.querySelector("#fact-version").textContent = version;
   document.querySelector("#fact-entry").textContent = entry.entry;
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
   document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status);
-  setMetadata(name, software?.version, entry);
+  setMetadata(name, software?.version, entry, description);
 
   const position = index.entries.findIndex(item => item.entry === entry.entry);
   if (position < 0) throw new Error(`Entry missing from archive index: ${entry.entry}`);

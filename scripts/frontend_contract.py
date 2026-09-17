@@ -38,6 +38,18 @@ def validate_asset(asset: object, entry_id: str, context: str) -> None:
         require(SHA256.fullmatch(str(candidate.get("sha256", ""))) is not None, f"{context}.{name}: invalid sha256")
 
 
+def validate_software(software: object, context: str) -> None:
+    require(isinstance(software, dict), f"{context}: software must be an object")
+    descriptions = software.get("descriptions", [])
+    require(isinstance(descriptions, list), f"{context}.descriptions must be an array")
+    for position, description in enumerate(descriptions):
+        label = f"{context}.descriptions[{position}]"
+        require(isinstance(description, dict), f"{label} must be an object")
+        require(isinstance(description.get("description_id"), str), f"{label}: missing description_id")
+        require(isinstance(description.get("language"), str), f"{label}: missing language")
+        require(isinstance(description.get("text"), str) and description["text"].strip(), f"{label}: text must be non-empty")
+
+
 def validate_frontend_data(root: Path, expected_entries: int | None = None) -> dict:
     index_path = root / "index.json"
     require(index_path.is_file(), "Missing index.json")
@@ -72,6 +84,8 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
         require(document.get("medium") == index["medium"], f"{path.name}: medium mismatch")
         require(document.get("curation_status") in CURATION_STATUSES, f"{path.name}: invalid curation_status")
         require(isinstance(document.get("software"), list), f"{path.name}: software must be an array")
+        for position, software in enumerate(document["software"]):
+            validate_software(software, f"{path.name}.software[{position}]")
         require(isinstance(document.get("assets"), list), f"{path.name}: assets must be an array")
         for position, asset in enumerate(document["assets"]):
             validate_asset(asset, entry_id, f"{path.name}.assets[{position}]")

@@ -1,5 +1,10 @@
 # Frontend-datakontrakt 1.0
 
+Identifisert programvare kan ha `descriptions`, en liste med kuraterte
+`description_id`, `language` og ikke-tom `text`. Feltet er valgfritt for eldre og
+uidentifiserte poster. Nettvisningen foretrekker `nb-NO` og beholder sin generiske
+tekst når ingen kuratert beskrivelse finnes.
+
 Bootdisk Web leser bare genererte presentasjonsdata. Catalog eier programvareidentitet og evidens, mens Publish eier publiserte filer. Kontrakten nedenfor fryses for 1.0-serien slik at presentasjonslaget kan slettes og bygges på nytt uten håndredigering.
 
 ## `data/index.json`

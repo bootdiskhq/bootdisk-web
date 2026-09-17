@@ -18,6 +18,9 @@ class FrontendContractTests(unittest.TestCase):
         self.assertEqual(self.entry["entry"], "K37")
         self.assertEqual(self.entry["software"][0]["software_id"], "software:winamp")
         self.assertEqual(self.entry["software"][0]["version"], "2.76")
+        self.assertEqual(
+            self.entry["software"][0]["descriptions"][0]["language"], "nb-NO"
+        )
         self.assertEqual({asset["kind"] for asset in self.entry["assets"]}, {"icon", "screenshot"})
 
     def test_source_context_is_data_not_page_markup(self):
@@ -91,6 +94,14 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('identified: "Identifisert"', javascript)
         self.assertIn('pending: "Venter på identifisering"', javascript)
         self.assertIn('screenshot.alt = `Skjermbilde fra ${name}`', javascript)
+
+    def test_entry_prefers_curated_norwegian_description_with_safe_fallback(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        javascript = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn('id="software-description"', html)
+        self.assertIn('function preferredDescription(software, language = "nb-NO")', javascript)
+        self.assertIn('if (description) descriptionElement.textContent = description', javascript)
+        self.assertNotIn("innerHTML", javascript)
 
     def test_builder_emits_archive_index_without_inventing_identity(self):
         builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
