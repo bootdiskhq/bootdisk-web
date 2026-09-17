@@ -117,15 +117,30 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("validate_frontend_data(frontend_data, expected_entries)", builder)
         self.assertIn("Frontend-datakontrakt 1.0", contract)
 
-    def test_frontend_contract_accepts_current_generated_data(self):
+    def test_frontend_contract_accepts_complete_projection(self):
         script = ROOT / "scripts" / "frontend_contract.py"
-        result = subprocess.run(
-            [sys.executable, str(script), str(ROOT / "build" / "data"), "--expected-entries", "39"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        self.assertIn("frontend contract: 39 entries valid", result.stdout)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "index.json").write_text(json.dumps({
+                "publication": "Test",
+                "medium": "Test medium",
+                "entries": [{"entry": "K1", "curation_status": "identified"}],
+            }), encoding="utf-8")
+            (root / "k1.json").write_text(json.dumps({
+                "entry": "K1",
+                "publication": "Test",
+                "medium": "Test medium",
+                "curation_status": "identified",
+                "software": [],
+                "assets": [],
+            }), encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(script), str(root), "--expected-entries", "1"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertIn("frontend contract: 1 entries valid", result.stdout)
 
     def test_frontend_contract_rejects_cross_entry_asset(self):
         script = ROOT / "scripts" / "frontend_contract.py"
