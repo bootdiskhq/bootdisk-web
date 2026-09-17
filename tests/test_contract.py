@@ -111,6 +111,48 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('"entry-controls.css"', builder)
         self.assertIn('"accessibility.css"', builder)
 
+    def test_release_builder_runs_stable_frontend_contract(self):
+        builder = (ROOT / "scripts" / "build-release.py").read_text(encoding="utf-8")
+        contract = (ROOT / "docs" / "frontend-data-contract.md").read_text(encoding="utf-8")
+        self.assertIn("validate_frontend_data(frontend_data, expected_entries)", builder)
+        self.assertIn("Frontend-datakontrakt 1.0", contract)
+
+    def test_frontend_contract_accepts_current_generated_data(self):
+        script = ROOT / "scripts" / "frontend_contract.py"
+        result = subprocess.run(
+            [sys.executable, str(script), str(ROOT / "build" / "data"), "--expected-entries", "39"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("frontend contract: 39 entries valid", result.stdout)
+
+    def test_frontend_contract_rejects_cross_entry_asset(self):
+        script = ROOT / "scripts" / "frontend_contract.py"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "index.json").write_text(json.dumps({
+                "publication": "Test",
+                "medium": "Test medium",
+                "entries": [{"entry": "K1", "curation_status": "identified"}],
+            }), encoding="utf-8")
+            (root / "k1.json").write_text(json.dumps({
+                "entry": "K1",
+                "publication": "Test",
+                "medium": "Test medium",
+                "curation_status": "identified",
+                "software": [],
+                "assets": [{
+                    "entry": "K2",
+                    "kind": "icon",
+                    "original": {"public_path": "store/icon", "sha256": "a" * 64},
+                    "derivatives": [],
+                }],
+            }), encoding="utf-8")
+            result = subprocess.run([sys.executable, str(script), str(root)], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("asset entry must equal K1", result.stderr)
+
     def test_builder_replaces_stale_output_and_sorts_source_entries(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -152,8 +194,24 @@ class FrontendContractTests(unittest.TestCase):
             unreferenced = publish / "store/assets/sha256/bb/private.bin"
             unreferenced.parent.mkdir(parents=True)
             unreferenced.write_bytes(b"do not publish")
-            (frontend / "index.json").write_text(json.dumps({"entries": [{"entry": "K1"}]}), encoding="utf-8")
-            (frontend / "k1.json").write_text(json.dumps({"entry": "K1", "assets": [{"original": {"public_path": asset_path.as_posix()}}]}), encoding="utf-8")
+            (frontend / "index.json").write_text(json.dumps({
+                "publication": "Test",
+                "medium": "Test medium",
+                "entries": [{"entry": "K1", "curation_status": "identified"}],
+            }), encoding="utf-8")
+            (frontend / "k1.json").write_text(json.dumps({
+                "entry": "K1",
+                "publication": "Test",
+                "medium": "Test medium",
+                "curation_status": "identified",
+                "software": [],
+                "assets": [{
+                    "entry": "K1",
+                    "kind": "icon",
+                    "original": {"public_path": asset_path.as_posix(), "sha256": "a" * 64},
+                    "derivatives": [],
+                }],
+            }), encoding="utf-8")
 
             subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish), "--output", str(output), "--expected-entries", "1"],
@@ -173,8 +231,24 @@ class FrontendContractTests(unittest.TestCase):
             publish = root / "publish"
             frontend.mkdir()
             publish.mkdir()
-            (frontend / "index.json").write_text(json.dumps({"entries": [{"entry": "K1"}]}), encoding="utf-8")
-            (frontend / "k1.json").write_text(json.dumps({"entry": "K1", "assets": [{"original": {"public_path": "store/../secret"}}]}), encoding="utf-8")
+            (frontend / "index.json").write_text(json.dumps({
+                "publication": "Test",
+                "medium": "Test medium",
+                "entries": [{"entry": "K1", "curation_status": "identified"}],
+            }), encoding="utf-8")
+            (frontend / "k1.json").write_text(json.dumps({
+                "entry": "K1",
+                "publication": "Test",
+                "medium": "Test medium",
+                "curation_status": "identified",
+                "software": [],
+                "assets": [{
+                    "entry": "K1",
+                    "kind": "icon",
+                    "original": {"public_path": "store/../secret", "sha256": "a" * 64},
+                    "derivatives": [],
+                }],
+            }), encoding="utf-8")
 
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish), "--output", str(root / "release"), "--expected-entries", "1"],

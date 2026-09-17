@@ -50,3 +50,9 @@ python scripts/verify-deployment.py https://bootdisk.no/ --expected-entries 39
 ```
 
 Se [`docs/domeneshop-deploy.md`](docs/domeneshop-deploy.md) for deploy- og rollback-prosedyren.
+
+Den stabile 1.0-kontrakten mellom de genererte dataene og presentasjonslaget er dokumentert i [`docs/frontend-data-contract.md`](docs/frontend-data-contract.md). Den kan kontrolleres separat med:
+
+```sh
+python scripts/frontend_contract.py build/data --expected-entries 39
+```
