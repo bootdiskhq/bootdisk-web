@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,6 +63,17 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('id="entry-error" role="alert"', html)
         self.assertIn('document.querySelector("#page-description").content', javascript)
         self.assertIn('setAttribute("aria-busy", "false")', javascript)
+
+    def test_public_pages_expose_canonical_and_sharing_metadata(self):
+        detail = (ROOT / "index.html").read_text(encoding="utf-8")
+        archive = (ROOT / "archive.html").read_text(encoding="utf-8")
+        missing = (ROOT / "404.html").read_text(encoding="utf-8")
+        javascript = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn('id="canonical-url" rel="canonical"', detail)
+        self.assertIn('property="og:title"', detail)
+        self.assertIn('document.querySelector("#canonical-url").href = url.href', javascript)
+        self.assertIn('<link rel="canonical" href="https://bootdisk.no/archive.html">', archive)
+        self.assertIn('name="robots" content="noindex"', missing)
 
     def test_pages_support_keyboard_reduced_motion_and_no_script_states(self):
         for name in ("index.html", "archive.html", "404.html"):
@@ -238,6 +250,10 @@ class FrontendContractTests(unittest.TestCase):
             self.assertEqual((output / asset_path).read_bytes(), b"icon")
             self.assertFalse((output / "store/assets/sha256/bb/private.bin").exists())
             self.assertTrue((output / "404.html").is_file())
+            self.assertIn("Sitemap: https://bootdisk.no/sitemap.xml", (output / "robots.txt").read_text(encoding="utf-8"))
+            sitemap = ET.parse(output / "sitemap.xml")
+            urls = [node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
+            self.assertEqual(urls, ["https://bootdisk.no/archive.html", "https://bootdisk.no/index.html?entry=K1"])
 
     def test_release_builder_rejects_asset_path_traversal(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -301,6 +317,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('ThreadPoolExecutor(max_workers=args.workers)', verifier)
         self.assertIn('executor.map(fetch_entry, entries)', verifier)
         self.assertIn('executor.map(verify_asset, sorted(assets))', verifier)
+        self.assertIn('fetch(args.base_url, "sitemap.xml")', verifier)
+        self.assertIn('sitemap_urls != expected_urls', verifier)
         self.assertNotIn("ftp.domeneshop.no", verifier)
 
 

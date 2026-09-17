@@ -6,12 +6,14 @@ import argparse
 import json
 import shutil
 import tempfile
+from xml.sax.saxutils import escape
 from pathlib import Path, PurePosixPath
 
 from frontend_contract import validate_frontend_data
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_FILES = ("index.html", "archive.html", "404.html", "styles.css", "accessibility.css", "archive-controls.css", "entry-controls.css", "app.js", "archive.js", "VERSION")
+DEFAULT_BASE_URL = "https://bootdisk.no/"
 
 
 def checked_asset_path(value: object) -> PurePosixPath:
@@ -33,7 +35,17 @@ def referenced_assets(document: dict) -> set[PurePosixPath]:
     return paths
 
 
-def package(frontend_data: Path, publish_root: Path, output: Path, expected_entries: int) -> None:
+def discovery_files(stage: Path, entry_ids: list[str], base_url: str) -> None:
+    base_url = base_url.rstrip("/") + "/"
+    urls = [f"{base_url}archive.html", *(f"{base_url}index.html?entry={entry_id}" for entry_id in entry_ids)]
+    sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    sitemap += "".join(f"  <url><loc>{escape(url)}</loc></url>\n" for url in urls)
+    sitemap += "</urlset>\n"
+    (stage / "sitemap.xml").write_text(sitemap, encoding="utf-8")
+    (stage / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {base_url}sitemap.xml\n", encoding="utf-8")
+
+
+def package(frontend_data: Path, publish_root: Path, output: Path, expected_entries: int, base_url: str = DEFAULT_BASE_URL) -> None:
     frontend_data = frontend_data.resolve()
     publish_root = publish_root.resolve()
     output = output.resolve()
@@ -66,6 +78,7 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
         (stage / "data").mkdir(parents=True)
         for name in STATIC_FILES:
             shutil.copy2(ROOT / name, stage / name)
+        discovery_files(stage, entry_ids, base_url)
         shutil.copy2(frontend_data / "index.json", stage / "data" / "index.json")
         for source, _ in documents:
             shutil.copy2(source, stage / "data" / source.name)
@@ -88,8 +101,9 @@ def main() -> None:
     parser.add_argument("publish_root", type=Path, help="Directory containing store/")
     parser.add_argument("--output", type=Path, default=ROOT / "dist" / "bootdisk-web")
     parser.add_argument("--expected-entries", type=int, default=39)
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     args = parser.parse_args()
-    package(args.frontend_data, args.publish_root, args.output, args.expected_entries)
+    package(args.frontend_data, args.publish_root, args.output, args.expected_entries, args.base_url)
 
 
 if __name__ == "__main__":
