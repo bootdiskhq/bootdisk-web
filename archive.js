@@ -11,7 +11,8 @@ function normalized(value) {
 function filterEntries(entries, query, status) {
   const needle = normalized(query.trim());
   return entries.filter(entry => {
-    const matchesStatus = status === "all" || entry.curation_status === status;
+    const effectiveStatus = entry.identification_status === "interpreted" ? "interpreted" : entry.curation_status;
+    const matchesStatus = status === "all" || effectiveStatus === status;
     const haystack = [entry.entry, entry.editorial_title, entry.software_name, entry.version].map(normalized).join(" ");
     return matchesStatus && haystack.includes(needle);
   });
@@ -55,10 +56,15 @@ function card(entry) {
   const strong = document.createElement("strong");
   strong.textContent = name;
   copy.append(strong);
-  if (entry.version) {
+  if (entry.version && entry.version !== "unknown") {
     const version = document.createElement("span");
     version.textContent = `versjon ${entry.version}`;
     copy.append(version);
+  }
+  if (entry.identification_status === "interpreted") {
+    const note = document.createElement("small");
+    note.textContent = "Foreløpig identifisering";
+    copy.append(note);
   }
   if (secondary) {
     const sourceTitle = document.createElement("small");
@@ -86,7 +92,7 @@ async function render() {
   const reset = document.querySelector("#archive-reset");
   const parameters = new URLSearchParams(window.location.search);
   search.value = parameters.get("q") ?? "";
-  status.value = ["identified", "pending"].includes(parameters.get("status")) ? parameters.get("status") : "all";
+  status.value = ["identified", "interpreted", "pending"].includes(parameters.get("status")) ? parameters.get("status") : "all";
   sort.value = parameters.get("sort") === "name" ? "name" : "source";
   document.querySelector("#archive-source").textContent = `${data.publication} · ${data.medium}`;
 

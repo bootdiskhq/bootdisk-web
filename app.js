@@ -19,7 +19,8 @@ function assetFor(assets, kind) {
   return assets.find(asset => asset.kind === kind);
 }
 
-function statusLabel(status) {
+function statusLabel(status, identificationStatus) {
+  if (identificationStatus === "interpreted") return "Foreløpig identifisering";
   return { identified: "Identifisert", pending: "Venter på identifisering" }[status] ?? "Ukjent";
 }
 
@@ -64,20 +65,23 @@ async function render() {
   const [entry, index] = await Promise.all([response.json(), indexResponse.json()]);
   const software = entry.software?.[0];
   const name = software?.software_name ?? entry.editorial_title ?? entry.entry;
-  const version = software?.version ?? "Uidentifisert versjon";
+  const knownVersion = software?.version && software.version !== "unknown" ? software.version : null;
+  const version = knownVersion ?? "Ukjent versjon";
   const description = preferredDescription(software);
 
   document.querySelector("#source-context").textContent = `${entry.publication ?? "KOMPUTER FOR ALLE"} · ${entry.medium ?? "K-CD 15/2001"} · ${entry.entry}`;
   document.querySelector("#software-name").textContent = name;
-  document.querySelector("#software-version").textContent = software?.version ? `versjon ${version}` : version;
+  document.querySelector("#software-version").textContent = knownVersion ? `versjon ${version}` : version;
   const descriptionElement = document.querySelector("#software-description");
   if (description) descriptionElement.textContent = description;
   document.querySelector("#fact-name").textContent = name;
   document.querySelector("#fact-version").textContent = version;
   document.querySelector("#fact-entry").textContent = entry.entry;
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
-  document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status);
-  setMetadata(name, software?.version, entry, description);
+  document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status, software?.status);
+  setMetadata(name, knownVersion, entry, description);
+  document.querySelector("#fact-kind").textContent = ({application: "Program", game: "Spill", course: "Kurs / veiledning", image_collection: "Bildesamling", font_collection: "Skriftpakke", reference: "Oppslagsverk"})[software?.content_kind] ?? "Ukjent";
+  document.querySelector("#fact-distribution").textContent = ({full: "Fullversjon", demo: "Demo", trial: "Prøveversjon", update: "Oppdatering", unknown: "Ukjent"})[software?.distribution_kind] ?? "Ukjent";
 
   const position = index.entries.findIndex(item => item.entry === entry.entry);
   if (position < 0) throw new Error(`Entry missing from archive index: ${entry.entry}`);
@@ -87,7 +91,7 @@ async function render() {
     const link = document.querySelector("#previous-entry");
     link.href = `index.html?entry=${encodeURIComponent(previous.entry)}`;
     link.textContent = `← ${entryName(previous)}`;
-    link.setAttribute("aria-label", `Forrige program: ${entryName(previous)} (${previous.entry})`);
+    link.setAttribute("aria-label", `Forrige post: ${entryName(previous)} (${previous.entry})`);
     link.title = previous.entry;
     link.hidden = false;
   }
@@ -95,7 +99,7 @@ async function render() {
     const link = document.querySelector("#next-entry");
     link.href = `index.html?entry=${encodeURIComponent(next.entry)}`;
     link.textContent = `${entryName(next)} →`;
-    link.setAttribute("aria-label", `Neste program: ${entryName(next)} (${next.entry})`);
+    link.setAttribute("aria-label", `Neste post: ${entryName(next)} (${next.entry})`);
     link.title = next.entry;
     link.hidden = false;
   }
