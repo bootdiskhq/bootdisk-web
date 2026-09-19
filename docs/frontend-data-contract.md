@@ -39,3 +39,13 @@ python scripts/frontend_contract.py build/data --expected-entries 39
 ```
 
 `build-release.py` kjører samme port automatisk før den kopierer data eller filer til en deploymappe. Dermed kan en ugyldig eller halvferdig projeksjon ikke pakkes som release.
+
+## 1.1 optional interpretation metadata
+
+Software projections may provide `content_kind`, `distribution_kind`, `package_id`
+and `status`. Index summaries may additionally provide `identification_status`,
+`content_kind` and `distribution_kind`. An interpreted identity is displayed as
+provisional and has a separate browsing filter. This does not change the existing
+`curation_status` enum. Missing optional fields retain the 1.0 fallback behavior.
+The version value `unknown` is displayed as unknown in details and omitted from
+page titles and overview version labels.

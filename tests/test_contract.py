@@ -1,4 +1,5 @@
 import json
+import shutil
 import importlib.util
 import subprocess
 import sys
@@ -103,6 +104,27 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('if (description) descriptionElement.textContent = description', javascript)
         self.assertNotIn("innerHTML", javascript)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js is required for browser logic test")
+    def test_provisional_filter_does_not_count_interpretations_as_confirmed(self):
+        script = r"""
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const context = vm.createContext({});
+vm.runInContext(fs.readFileSync('archive.js', 'utf8').split('async function render()')[0], context);
+const entries = [
+  {entry:'K1', curation_status:'identified', identification_status:'curated'},
+  {entry:'K12', curation_status:'identified', identification_status:'interpreted'},
+  {entry:'K3', curation_status:'pending'}
+];
+const ids = status => Array.from(context.filterEntries(entries, '', status), e => e.entry);
+assert.deepEqual(ids('identified'), ['K1']);
+assert.deepEqual(ids('interpreted'), ['K12']);
+assert.deepEqual(ids('pending'), ['K3']);
+assert.equal(ids('all').length, 3);
+"""
+        subprocess.run([shutil.which("node"), "-e", script], cwd=ROOT, check=True)
+
     def test_builder_emits_archive_index_without_inventing_identity(self):
         builder = (ROOT / "scripts" / "build-frontend-data.py").read_text(encoding="utf-8")
         self.assertIn('args.output / "index.json"', builder)
@@ -122,7 +144,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('id="archive-status"', html)
         self.assertIn('id="archive-sort"', html)
         self.assertIn('id="archive-reset"', html)
-        self.assertIn('entry.curation_status === status', javascript)
+        self.assertIn('effectiveStatus === status', javascript)
         self.assertIn('new URLSearchParams(window.location.search)', javascript)
         self.assertIn('window.history.replaceState', javascript)
         self.assertIn('id="archive-empty"', html)

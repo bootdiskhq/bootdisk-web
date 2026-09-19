@@ -1,3 +1,9 @@
+# 1.1.0-rc1
+
+- Vis innholdstype og distribusjonsutgave fra Catalog.
+- Merk foreløpige identifikasjoner i oversikt og detaljvisning.
+- Vis ukjent versjon på norsk; utelat den fra sidetittel og oversiktskort.
+
 # Changelog
 
 ## 1.0.0
