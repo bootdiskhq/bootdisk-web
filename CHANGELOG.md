@@ -1,5 +1,8 @@
 # Upubliserte endringer
 
+- Vis CD-kategori og lisens som lesbare kildebelegg, forklar avhukingen og åpne
+  kildevalgene når tidligere klassifisering trenger ny kontroll.
+
 - Vis ukjent versjon som «Ikke oppgitt» i kurateringen; behold katalogens lagringsformat.
 
 - Kildebelegg viser lesbar kildetype, filnavn og tekstutdrag ved avkryssingen.

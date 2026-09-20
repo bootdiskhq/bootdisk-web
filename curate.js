@@ -42,6 +42,8 @@ function evidenceContent(item, index) {
   const record = observation && typeof observation === "object" ? observation : {};
   const titles = {
     "normalized.title": "Tittel på CD-en",
+    "normalized.categories": "Kategori på CD-en",
+    "raw.Licens": "Lisens oppgitt på CD-en",
     "normalized.description": "Omtale på CD-en",
     file_content_review: "Gjennomgang av fil",
     payload_observation: "Tekst funnet i fil",
@@ -226,7 +228,8 @@ function bootstrap(fixture, liveAdapter = null) {
     const acceptedLine = element("p", "claim-accepted");
     acceptedLine.append(element("span", null, "Akseptert nå: "));
     acceptedLine.append(element("strong", null, accepted ? claimValueText(spec.field, accepted.value) : "ingen akseptert verdi"));
-    if (accepted) acceptedLine.append(element("span", null, ` — ${ASSESSMENT_LABELS[accepted.assessment] ?? accepted.assessment}`));
+    const needsReview = state.entry.issues.some(issue => issue.field === spec.field && issue.code === "classification_review_required");
+    if (accepted) acceptedLine.append(element("span", null, ` — ${needsReview ? "Tidligere belagt · må kontrolleres" : (ASSESSMENT_LABELS[accepted.assessment] ?? accepted.assessment)}`));
     wrapper.append(acceptedLine);
 
     const label = element("label", null, spec.label);
@@ -303,7 +306,7 @@ function bootstrap(fixture, liveAdapter = null) {
     wrapper.append(assessment);
 
     const detail = element("details", "claim-detail");
-    detail.open = claim.assessment === "unresolved" || Boolean(String(claim.reason ?? "").trim());
+    detail.open = needsReview || claim.assessment === "unresolved" || Boolean(String(claim.reason ?? "").trim());
     detail.append(element("summary", null, "Begrunnelse og kildebelegg"));
     const detailBody = element("div");
 
@@ -321,7 +324,13 @@ function bootstrap(fixture, liveAdapter = null) {
 
     if (state.entry.evidence.length) {
       const evidenceGroup = element("fieldset", "evidence-choice");
-      evidenceGroup.append(element("legend", null, "Kildebelegg for denne påstanden"));
+      evidenceGroup.append(element("legend", null, "Hvilke kilder støtter vurderingen din?"));
+      evidenceGroup.append(element("p", "evidence-meta", "Avhuking knytter kilden til dette feltet. Den endrer ikke verdien eller gjør vurderingen automatisk belagt."));
+      if (spec.field === "content_kind" || spec.field === "distribution_kind") {
+        evidenceGroup.append(element("p", "evidence-meta", spec.field === "content_kind"
+          ? "CD-kategorien er originalens ordlyd. Forklar hvordan den eller annet kildebelegg støtter innholdstypen."
+          : "Freeware og Shareware er lisensopplysninger. De fastslår ikke alene om utgaven er full, demo eller prøveversjon."));
+      }
       for (const [index, item] of state.entry.evidence.entries()) {
         const option = element("div", "evidence-option");
         const input = element("input");
