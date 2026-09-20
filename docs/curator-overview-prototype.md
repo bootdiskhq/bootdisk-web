@@ -11,8 +11,10 @@ kurateringsflyten i `curate.html`, og tar imot kuratoren tilbake på samme sted.
 | Arbeidsordre | `docs/claude-curator-overview-work-order.md` |
 | Dokumenter | ADR-004, ADR-005, ADR-006, `curator-contract-v1.md`, `local-curator-service.md` |
 
-Arbeidsordren oppga `39965560…` som Web-utgangspunkt. Den commit-en er nå nest siste
-på main; siste er arbeidsordren selv (#34). Grenen er bygget på `4999251…`.
+Arbeidsordren oppga `39965560…` som Web-utgangspunkt. Grenen ble bygget på `4999251…`
+(arbeidsordren selv, #34) og har siden fått main flettet inn til og med `afa087a…` (#35).
+`curator-labels.js` gjorde de norske etikettene til en avhengighet for `curate.js`, så
+testen fra #35 laster dem nå i sin VM-kontekst slik siden gjør.
 
 ## Start prøvevisningen
 
@@ -203,7 +205,7 @@ samordnet avklaring, og kommer i tillegg til de fem i
 python -m unittest discover -s tests -v
 ```
 
-61 tester kjører uten Playwright; 77 med. Nytt i denne leveransen er 15 atferdstester i
+62 tester kjører uten Playwright; 78 med. Nytt i denne leveransen er 15 atferdstester i
 `tests/test_overview.py` og 8 nettleserkontroller i `tests/test_overview_browser.py`.
 Nettleserkontrollene hoppes over uten Playwright, som på CI. Kjør dem lokalt med:
 
