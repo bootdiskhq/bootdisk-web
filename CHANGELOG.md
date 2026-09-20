@@ -26,6 +26,13 @@
 
 # Changelog
 
+## Unreleased — local 1.2 integration
+
+- Connect curator to the durable Catalog service through an explicit live adapter.
+- Show local-workspace mode, history and defer reasons; hide fixture simulations.
+- Unlock controls after decisions and refresh accepted labels after undo.
+
+
 ## 1.0.0
 
 - Promoterer den produksjonsgodkjente `1.0.0-rc1`-kandidaten uten funksjonelle endringer.

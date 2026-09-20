@@ -358,6 +358,7 @@ function createCuratorController(options) {
       }
       return run().then(receipt => {
         state.busy = false;
+        emit();
         return receipt;
       }, error => {
         state.busy = false;
@@ -434,6 +435,7 @@ function createCuratorController(options) {
         const keptDraft = clone(state.draft);
         state.entry = receipt.entry;
         state.draft = keptDraft;
+        state.draftToken += 1;
         state.status = dirty() ? "dirty" : "idle";
         return loadQueue().then(() => {
           emit();
