@@ -1,5 +1,8 @@
 # Upubliserte endringer
 
+- Vis identiske CD-omtaler én gang under «Omtale på CD-en», med eksisterende
+  kildevalg bevart og begge tekniske referanser tilgjengelige.
+
 - Vis beskrivelsen som skrivebeskyttet original CD-omtale når Catalog har
   tilbakeført originalteksten. Vis tilbakeføringen i beslutningshistorikken.
 
