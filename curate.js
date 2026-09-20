@@ -36,6 +36,48 @@ function element(tag, className, text) {
   return node;
 }
 
+// Keep provenance IDs intact for saving, but lead with what a person can assess.
+function evidenceContent(item, index) {
+  const observation = item.observation;
+  const record = observation && typeof observation === "object" ? observation : {};
+  const titles = {
+    "normalized.title": "Tittel på CD-en",
+    "normalized.description": "Omtale på CD-en",
+    file_content_review: "Gjennomgang av fil",
+    payload_observation: "Tekst funnet i fil",
+  };
+  const title = titles[item.field] ?? "Kildeobservasjon";
+  const text = typeof observation === "string" ? observation
+    : [record.summary, record.text].filter(value => typeof value === "string" && value.trim()).join("\n\n");
+  const context = [item.source_ref?.path, record.member].filter(Boolean).join(" → ");
+  return {
+    title: `Kilde ${index + 1}: ${title}`,
+    context: context || `CD-oppføring ${item.source_ref?.entry ?? ""}`,
+    text: text || "Denne observasjonen har ikke et lesbart tekstutdrag. Tekniske detaljer alene bekrefter ikke påstanden.",
+  };
+}
+
+function evidenceDetails(item) {
+  const details = element("details", "evidence-technical");
+  details.append(element("summary", null, "Tekniske detaljer"));
+  details.append(element("pre", null, JSON.stringify(item, null, 2)));
+  return details;
+}
+
+function evidencePreview(item, index) {
+  const content = evidenceContent(item, index);
+  const block = element("div", "evidence-readable");
+  block.append(element("strong", null, content.title), element("span", "evidence-meta", content.context));
+  const limit = 280;
+  block.append(element("span", "evidence-excerpt", content.text.length > limit ? `${content.text.slice(0, limit)}…` : content.text));
+  if (content.text.length > limit) {
+    const full = element("details", "evidence-full");
+    full.append(element("summary", null, "Les hele tekstutdraget"), element("p", "evidence-excerpt", content.text));
+    block.append(full);
+  }
+  return block;
+}
+
 /* What a claim's editable control displays, as opposed to the read-only summary text. */
 function claimControlValue(field, value) {
   if (field === "identity") return value?.name ?? "";
@@ -275,8 +317,8 @@ function bootstrap(fixture, liveAdapter = null) {
     if (state.entry.evidence.length) {
       const evidenceGroup = element("fieldset", "evidence-choice");
       evidenceGroup.append(element("legend", null, "Kildebelegg for denne påstanden"));
-      for (const item of state.entry.evidence) {
-        const option = element("span", "evidence-option");
+      for (const [index, item] of state.entry.evidence.entries()) {
+        const option = element("div", "evidence-option");
         const input = element("input");
         input.type = "checkbox";
         input.id = `evidence-${spec.field}-${item.id}`;
@@ -290,8 +332,13 @@ function bootstrap(fixture, liveAdapter = null) {
         });
         const optionLabel = element("label");
         optionLabel.htmlFor = input.id;
-        optionLabel.append(element("code", null, item.id), element("span", null, ` ${item.field}`));
-        option.append(input, optionLabel);
+        const content = evidenceContent(item, index);
+        optionLabel.textContent = content.title;
+        const body = element("div");
+        const preview = evidencePreview(item, index);
+        preview.firstChild.remove();
+        body.append(optionLabel, preview, evidenceDetails(item));
+        option.append(input, body);
         evidenceGroup.append(option);
       }
       detailBody.append(evidenceGroup);
@@ -345,19 +392,9 @@ function bootstrap(fixture, liveAdapter = null) {
     }));
 
     nodes.evidenceCount.textContent = String(entry.evidence.length);
-    nodes.evidence.replaceChildren(...entry.evidence.map(item => {
+    nodes.evidence.replaceChildren(...entry.evidence.map((item, index) => {
       const node = element("li");
-      node.append(element("span", "evidence-id", item.id));
-      node.append(element("span", "evidence-meta", `${item.field} · ${item.source_ref.entry}${item.source_ref.path ? ` · ${item.source_ref.path}` : ""}`));
-      if (item.observation && typeof item.observation === "object") {
-        const list = element("dl", "evidence-observation");
-        for (const [key, value] of Object.entries(item.observation)) {
-          list.append(element("dt", null, key), element("dd", null, String(value)));
-        }
-        node.append(list);
-      } else {
-        node.append(element("span", "evidence-observation", String(item.observation ?? "")));
-      }
+      node.append(evidencePreview(item, index), evidenceDetails(item));
       return node;
     }));
 
