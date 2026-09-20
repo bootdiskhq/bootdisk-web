@@ -1,5 +1,8 @@
 # Arbeidsordre til Claude: lokal kuratering i Bootdisk 1.2
 
+> Historisk arbeidsordre: første detaljflyt er levert. Ny oppgave er
+> [skalerbar kurateringsoversikt](claude-curator-overview-work-order.md).
+
 Du skal implementere første frontend-leveranse for en rask kurateringsflyt.
 Stian skal kunne undersøke kildebelegg, rette eller godkjenne en oppføring og gå
 videre uten hjelp fra en agent, terminal eller håndredigering av JSON.
