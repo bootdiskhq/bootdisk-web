@@ -8,6 +8,9 @@
 - Rettet etter gjennomgang av PR #27: lagringssvar er bundet til sin egen kildepost,
   gjenforsøk sender den opprinnelige forespørselen for alle skriveoperasjoner, og en
   avvist nettleserlagring meldes som mislykket skriving i stedet for lagret kladd.
+- Rettet etter gjennomgang av PR #28: «Bruk forslaget» oppdaterer feltet og
+  kildebelegget med én gang, så skjemaet aldri viser en annen verdi enn den som
+  ville blitt godkjent.
 
 # 1.1.0-rc2
 

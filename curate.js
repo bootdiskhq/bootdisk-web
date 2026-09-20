@@ -36,6 +36,13 @@ function element(tag, className, text) {
   return node;
 }
 
+/* What a claim's editable control displays, as opposed to the read-only summary text. */
+function claimControlValue(field, value) {
+  if (field === "identity") return value?.name ?? "";
+  if (field === "description") return value?.text ?? "";
+  return value ?? "";
+}
+
 function claimValueText(field, value) {
   if (field === "identity") return `${value?.name ?? ""}${value?.software_id ? ` (${value.software_id})` : " (ny eller ukjent ID)"}`;
   if (field === "description") return value?.text ?? "";
@@ -117,6 +124,10 @@ function bootstrap(fixture) {
     simulateMedia: document.querySelector("#simulate-media"),
     simulateReset: document.querySelector("#simulate-reset"),
   };
+
+  /* Every claim control is registered so a draft change made in code (using a proposal,
+   * reconciling a conflict) can be reflected without rebuilding the form under the caret. */
+  const claimControls = new Map();
 
   let renderedDraftToken = null;
   let renderedEntryId = null;
@@ -205,6 +216,8 @@ function bootstrap(fixture) {
     }
     control.id = controlId;
     wrapper.append(control);
+    const registry = { value: control, assessment: {}, reason: null, evidence: new Map(), detail: null };
+    claimControls.set(spec.field, registry);
 
     if (spec.field === "identity") {
       wrapper.append(element("p", "claim-accepted", claim.value?.software_id
@@ -223,6 +236,7 @@ function bootstrap(fixture) {
       input.id = `assessment-${spec.field}-${value}`;
       input.value = value;
       input.checked = claim.assessment === value;
+      registry.assessment[value] = input;
       input.addEventListener("change", () => {
         if (input.checked) controller.editClaim(spec.field, { assessment: value });
       });
@@ -246,6 +260,8 @@ function bootstrap(fixture) {
     reason.rows = 2;
     reason.value = claim.reason ?? "";
     reason.addEventListener("input", () => controller.editClaim(spec.field, { reason: reason.value }));
+    registry.reason = reason;
+    registry.detail = detail;
     detailBody.append(reasonLabel, reason);
 
     if (state.entry.evidence.length) {
@@ -257,6 +273,7 @@ function bootstrap(fixture) {
         input.type = "checkbox";
         input.id = `evidence-${spec.field}-${item.id}`;
         input.checked = (claim.evidence_ids ?? []).includes(item.id);
+        registry.evidence.set(item.id, input);
         input.addEventListener("change", () => {
           const current = new Set(controller.state.draft.claims[spec.field].evidence_ids ?? []);
           if (input.checked) current.add(item.id);
@@ -282,7 +299,12 @@ function bootstrap(fixture) {
       const use = element("button", null, "Bruk forslaget");
       use.type = "button";
       /* A proposal is never accepted automatically; the assessment stays the curator's. */
-      use.addEventListener("click", () => controller.useProposal(proposal));
+      use.addEventListener("click", () => {
+        controller.useProposal(proposal);
+        const registered = claimControls.get(spec.field);
+        if (registered?.detail) registered.detail.open = true;
+        registered?.value?.focus();
+      });
       box.append(document.createElement("br"), use);
       wrapper.append(box);
     }
@@ -345,6 +367,35 @@ function bootstrap(fixture) {
       node.append(element("span", null, issue.message));
       return node;
     }));
+  }
+
+  /* The form must never show a different claim than the one that would be approved. Every
+   * control is reconciled with the draft, except the one the curator is typing in. */
+  function syncClaimControls(state) {
+    if (!state.draft) return;
+    const active = document.activeElement;
+    for (const [field, registry] of claimControls) {
+      const claim = state.draft.claims[field];
+      if (!claim) continue;
+
+      const shown = String(claimControlValue(field, claim.value));
+      if (registry.value && registry.value !== active && registry.value.value !== shown) {
+        registry.value.value = shown;
+      }
+      for (const [assessment, input] of Object.entries(registry.assessment)) {
+        const checked = claim.assessment === assessment;
+        if (input.checked !== checked) input.checked = checked;
+      }
+      const reason = claim.reason ?? "";
+      if (registry.reason && registry.reason !== active && registry.reason.value !== reason) {
+        registry.reason.value = reason;
+      }
+      const chosen = new Set(claim.evidence_ids ?? []);
+      for (const [id, input] of registry.evidence) {
+        const checked = chosen.has(id);
+        if (input.checked !== checked) input.checked = checked;
+      }
+    }
   }
 
   function renderStatus(state) {
@@ -424,6 +475,7 @@ function bootstrap(fixture) {
     if (state.draftToken !== renderedDraftToken) {
       renderedDraftToken = state.draftToken;
       renderEntryDetail(state);
+      claimControls.clear();
       nodes.form.replaceChildren(...FIELD_SPECS.map(spec => renderClaimField(spec, state)));
       nodes.deferForm.hidden = true;
       nodes.deferReason.value = "";
@@ -435,6 +487,7 @@ function bootstrap(fixture) {
       firstRender = false;
     } else {
       renderEntryDetail(state);
+      syncClaimControls(state);
     }
     renderStatus(state);
   }

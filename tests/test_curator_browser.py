@@ -125,6 +125,55 @@ class CuratorBrowserTests(unittest.TestCase):
             self.assertTrue(page.locator("#save-state[role='status'][aria-live='polite']").count())
             self.assertTrue(page.locator("#decision-error[role='alert']").count())
 
+    def test_using_a_proposal_shows_exactly_what_would_be_approved(self):
+        """Review #28: the form must never display a different claim than the draft holds."""
+        with self.curator() as page:
+            page.click(".queue-item:has-text('Cpu-Z') button")
+            page.wait_for_function("document.querySelector('#entry-id').textContent === 'K23'")
+
+            page.fill("#claim-version", "9.99")
+            page.click('.claim-field:has(#claim-version) .claim-proposal button')
+
+            # The proposal is 1.10 supported by the two payload observations only.
+            self.assertEqual(page.input_value("#claim-version"), "1.10", "the field shows the applied proposal")
+            checked = page.eval_on_selector_all(
+                '#claim-form input[id^="evidence-version-"]',
+                "nodes => nodes.filter(n => n.checked).map(n => n.id.replace('evidence-version-', ''))",
+            )
+            self.assertEqual(checked, ["K23-e3", "K23-e4"], "the evidence boxes match the proposal")
+
+            # A proposal is never accepted on the curator's behalf.
+            self.assertTrue(page.is_checked("#assessment-version-accepted") or page.is_checked("#assessment-version-unresolved"))
+
+            # What the screen shows is what survives a save and a reload.
+            page.wait_for_selector("#save-state[data-status='saved']")
+            page.reload(wait_until="networkidle")
+            page.wait_for_selector("#entry-heading:not(:empty)")
+            self.assertEqual(page.input_value("#claim-version"), "1.10", "the saved draft matches what was shown")
+            reloaded = page.eval_on_selector_all(
+                '#claim-form input[id^="evidence-version-"]',
+                "nodes => nodes.filter(n => n.checked).map(n => n.id.replace('evidence-version-', ''))",
+            )
+            self.assertEqual(reloaded, ["K23-e3", "K23-e4"])
+
+    def test_typing_is_never_interrupted_by_a_redraw(self):
+        """The reconciliation must not touch the control the curator is typing in."""
+        with self.curator() as page:
+            page.click(".queue-item:has-text('Cpu-Z') button")
+            page.wait_for_function("document.querySelector('#entry-id').textContent === 'K23'")
+
+            page.click("#claim-version")
+            page.keyboard.press("Control+a")
+            page.keyboard.type("2.05")
+            # Let autosave land while the field still has focus.
+            page.wait_for_selector("#save-state[data-status='saved']")
+            self.assertEqual(page.input_value("#claim-version"), "2.05", "the typed value survived the save render")
+            self.assertEqual(page.evaluate("document.activeElement.id"), "claim-version", "focus stayed put")
+
+            # Continue typing at the caret; nothing was reset behind the curator's back.
+            page.keyboard.type("b")
+            self.assertEqual(page.input_value("#claim-version"), "2.05b")
+
     def test_a_session_without_browser_storage_says_so(self):
         """Review #27 P3: an ephemeral session is explicit, never an implied saved draft."""
         page = self.browser.new_page(viewport={"width": 1280, "height": 900})

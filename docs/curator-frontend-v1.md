@@ -68,6 +68,16 @@ samme innhold — for `saveDraft`, `approve`, `defer` og `undo`. Det er dette so
 tidsavbrudd etter en utført skriving trygt: tjenesten svarer med den opprinnelige
 kvitteringen i stedet for å beslutte to ganger.
 
+## Skjemaet og kladden
+
+Skjemakontrollene bygges om bare når kladden byttes ut i sin helhet — ny oppføring,
+løst konflikt — slik at markøren ikke flyttes mens noen skriver. Alle andre
+oppdateringer avstemmer hver kontroll mot kladden, uten å røre den kontrollen som har
+fokus. Det gjelder også endringer som skjer i kode: trykker kuratoren «Bruk forslaget»,
+viser feltet og avkryssingen for kildebelegg straks det som faktisk ville blitt
+godkjent. Vurderingen er fortsatt et eget, eksplisitt valg; et forslag godkjenner
+ingenting av seg selv.
+
 ## Kontraktobservasjoner
 
 Ingenting av dette er løst ved å endre Catalog-dokumentene. Punktene er forslag til
