@@ -80,3 +80,11 @@ leveransen, og [frontend v1](docs/curator-frontend-v1.md) beskriver filene,
 hurtigtastene og kontraktobservasjonene. Datakontrakt og ADR-er eies av
 `bootdisk-catalog`; ekte kataloglagring bygges separat. Kurateringsverktøyet inngår
 ikke i den offentlige statiske releasen.
+
+## Ekte lokal kuratering
+
+Start Catalogs lokale tjeneste med dette repoet som `--web-root`, og åpne
+`http://127.0.0.1:8772/curate.html?mode=local`. Se
+[oppsettet](https://github.com/bootdiskhq/bootdisk-catalog/blob/main/docs/local-curator-service.md).
+Denne modusen lagrer i arbeidsområdet på disk og faller aldri tilbake til prøvedata
+ved feil. Den publiserer ikke til bootdisk.no.

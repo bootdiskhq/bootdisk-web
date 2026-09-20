@@ -120,3 +120,15 @@ en samordnet avklaring.
 - Historikk på disk, sikkerhetskopi/gjenoppretting av gjennomgangsområdet.
 - Opprinnelseskontroll og sesjonstoken for skriving mot loopback.
 - Integrasjon og Stians selvstendige prøve av ti ulike oppføringer.
+
+## Live integration
+
+`curate-live-adapter.js` implements the same seven methods against Catalog's local
+service. `?mode=local` explicitly selects it; default static preview stays fixtures.
+Connection/session failures preserve error state rather than switching adapters.
+The live banner, hidden simulation panel, entry history and defer reason distinguish
+real workspace decisions from browser-only examples. The public release allowlist
+is unchanged and excludes this adapter and the curator.
+
+Integration also fixes rendering after successful mutations: the final unlocked
+state is emitted, and undo refreshes accepted-value labels while retaining the draft.

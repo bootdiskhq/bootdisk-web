@@ -55,8 +55,8 @@ function byteText(size) {
   return typeof size === "number" ? `${size.toLocaleString("nb-NO")} byte` : "ukjent størrelse";
 }
 
-function bootstrap(fixture) {
-  const adapter = createFixtureAdapter({
+function bootstrap(fixture, liveAdapter = null) {
+  const adapter = liveAdapter ?? createFixtureAdapter({
     fixture,
     storage: (() => {
       try {
@@ -69,6 +69,14 @@ function bootstrap(fixture) {
     })(),
   });
   const controller = createCuratorController({ adapter });
+  if (!adapter.fixtureMode) {
+    const banner = document.querySelector('#fixture-banner');
+    banner.replaceChildren(element('strong', null, 'Lokal kuratering – ekte katalogdata.'),
+      element('span', null, 'Kladder og beslutninger lagres på denne maskinen. Godkjenning publiserer ikke på bootdisk.no.'));
+    document.querySelector('#simulate-reset').closest('details').hidden = true;
+    document.querySelector('footer').lastElementChild.textContent = 'lokal kuratering · varig arbeidsområde';
+    document.querySelector('.brand').href = 'curate.html?mode=local';
+  }
 
   if (!adapter.durable) {
     /* A session that cannot keep anything says so; it never implies a draft will survive
@@ -354,6 +362,14 @@ function bootstrap(fixture) {
     }));
 
     const history = entry.history ?? [];
+    let deferNote = nodes.entryView.querySelector('[data-defer-reason]');
+    if (!deferNote) {
+      deferNote = element('p');
+      deferNote.dataset.deferReason = '';
+      nodes.form.before(deferNote);
+    }
+    deferNote.hidden = !entry.defer_reason;
+    deferNote.textContent = entry.defer_reason ? 'Utsatt: ' + entry.defer_reason : '';
     nodes.historyCount.textContent = String(history.length);
     nodes.history.replaceChildren(...history.map(event => element("li", null, [
       event.kind === "approve" ? "Godkjent" : event.kind === "undo" ? "Angret" : "Utsatt",
@@ -461,8 +477,10 @@ function bootstrap(fixture) {
     nodes.notice.hidden = !state.notice;
     if (state.notice) nodes.notice.textContent = state.notice;
 
-    nodes.simulateFault.value = adapter.simulation.armed() ?? "";
-    nodes.simulateMedia.value = state.entry ? (adapter.simulation.overlays()[state.entry.key.entry] ?? "") : "";
+    if (adapter.simulation) {
+      nodes.simulateFault.value = adapter.simulation.armed() ?? "";
+      nodes.simulateMedia.value = state.entry ? (adapter.simulation.overlays()[state.entry.key.entry] ?? "") : "";
+    }
   }
 
   function render(state) {
@@ -570,15 +588,17 @@ function bootstrap(fixture) {
 }
 
 if (typeof document !== "undefined") {
-  fetch(FIXTURE_URL)
-    .then(response => {
+  const localMode = new URLSearchParams(window.location.search).get('mode') === 'local';
+  if (localMode) document.querySelector('#fixture-banner').textContent = 'Lokal kuratering – kobler til arbeidsområdet …';
+  const startup = localMode
+    ? createLiveAdapter().then(adapter => bootstrap(null, adapter))
+    : fetch(FIXTURE_URL).then(response => {
       if (!response.ok) throw new Error(`Fant ikke prøvedataene (${response.status}).`);
       return response.json();
-    })
-    .then(bootstrap)
-    .catch(error => {
-      const fatal = document.querySelector("#curate-fatal");
-      fatal.hidden = false;
-      fatal.textContent = `Kunne ikke laste prøvedataene: ${error.message}`;
-    });
+    }).then(fixture => bootstrap(fixture));
+  startup.catch(error => {
+    const fatal = document.querySelector('#curate-fatal');
+    fatal.hidden = false;
+    fatal.textContent = `Kunne ikke starte kurateringen: ${error.message}`;
+  });
 }
