@@ -1,3 +1,9 @@
+# 1.1.0-rc2
+
+- Oppdatert kataloggrunnlag: 35 kuraterte og fire foreløpige identifikasjoner.
+- CPU-Z 1.10 og Font Xplorer Lite 1.2.2 bekreftet fra pakkene.
+- Icebreaker-pakkens innebygde kildekode er identifisert som 1.2.1.
+
 # 1.1.0-rc1
 
 - Vis innholdstype og distribusjonsutgave fra Catalog.
