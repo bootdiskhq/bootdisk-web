@@ -49,6 +49,25 @@ Tastene er av i `input`, `textarea`, `select` og `contenteditable`, ved
 tekstkomposisjon (IME) og på gjentatte keydown-hendelser, og overstyrer ikke
 nettleserens egne snarveier. Knapper og taster bruker samme handlingskode.
 
+## Varighet og feilhåndtering
+
+Fixture-adapteren lagrer i nettleseren. En lagring som blir avvist — full kvote, blokkert
+opprinnelse — er en **mislykket skriving**: adapteren ruller tilbake den interne
+tilstanden og svarer `write_failed`. Kladden beholdes lokalt på skjermen, men ingenting
+påstås lagret. Er nettleserlagring utilgjengelig i det hele tatt, sier siden det med en
+synlig advarsel i prøvedatabanneret; en flyktig økt lover aldri at en kladd overlever en
+omlasting.
+
+Skrivinger er serialisert per oppføring, og hver forespørsel er bundet til kildeposten den
+gjelder. Et svar som kommer tilbake etter at kuratoren har åpnet en annen oppføring
+oppdaterer aldri den nye oppføringens tilstand. Å bytte oppføring venter ut en pågående
+skriving, også når den lokale kladden ser ren ut.
+
+Et gjenforsøk sender den opprinnelige forespørselen på nytt — samme operasjons-ID og
+samme innhold — for `saveDraft`, `approve`, `defer` og `undo`. Det er dette som gjør et
+tidsavbrudd etter en utført skriving trygt: tjenesten svarer med den opprinnelige
+kvitteringen i stedet for å beslutte to ganger.
+
 ## Kontraktobservasjoner
 
 Ingenting av dette er løst ved å endre Catalog-dokumentene. Punktene er forslag til

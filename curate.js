@@ -63,6 +63,15 @@ function bootstrap(fixture) {
   });
   const controller = createCuratorController({ adapter });
 
+  if (!adapter.durable) {
+    /* A session that cannot keep anything says so; it never implies a draft will survive
+     * a reload. */
+    const banner = document.querySelector("#fixture-banner");
+    banner.classList.add("fixture-banner-ephemeral");
+    banner.append(element("span", "ephemeral-warning",
+      "Nettleserlagring er ikke tilgjengelig. Kladder og beslutninger forsvinner når siden lastes på nytt."));
+  }
+
   const nodes = {
     notice: document.querySelector("#curate-notice"),
     fatal: document.querySelector("#curate-fatal"),

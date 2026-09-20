@@ -15,6 +15,9 @@
   text-transform: uppercase;
 }
 
+.fixture-banner-ephemeral { border-style: solid; }
+.fixture-banner .ephemeral-warning { color: #ffb3a3; font-weight: 700; }
+
 .fixture-banner span {
   display: block;
   margin-top: 4px;

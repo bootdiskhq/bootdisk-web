@@ -5,6 +5,9 @@
 - Fixture-adapter for `bootdisk-curator-v1` med versjonert nettleserlagring, eksplisitt
   tilbakestilling og simulerte feil-, konflikt- og kildeproblemtilstander.
 - Kurator, prøvedata og skriveveier er holdt utenfor den offentlige release-allowlisten.
+- Rettet etter gjennomgang av PR #27: lagringssvar er bundet til sin egen kildepost,
+  gjenforsøk sender den opprinnelige forespørselen for alle skriveoperasjoner, og en
+  avvist nettleserlagring meldes som mislykket skriving i stedet for lagret kladd.
 
 # 1.1.0-rc2
 

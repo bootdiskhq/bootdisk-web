@@ -125,6 +125,27 @@ class CuratorBrowserTests(unittest.TestCase):
             self.assertTrue(page.locator("#save-state[role='status'][aria-live='polite']").count())
             self.assertTrue(page.locator("#decision-error[role='alert']").count())
 
+    def test_a_session_without_browser_storage_says_so(self):
+        """Review #27 P3: an ephemeral session is explicit, never an implied saved draft."""
+        page = self.browser.new_page(viewport={"width": 1280, "height": 900})
+        try:
+            # A browser that refuses site data, as a private window with storage blocked does.
+            page.add_init_script(
+                "Object.defineProperty(window, 'localStorage', {"
+                "  get() { throw new DOMException('blocked', 'SecurityError'); }"
+                "});"
+            )
+            page.goto(f"{self.base_url}/curate.html", wait_until="networkidle")
+            page.wait_for_selector("#entry-heading:not(:empty)")
+            banner = page.text_content("#fixture-banner")
+            self.assertIn("Nettleserlagring er ikke tilgjengelig", banner)
+            self.assertIn("forsvinner når siden lastes på nytt", banner)
+            # The screen still works; it just promises nothing durable.
+            page.fill("#claim-version", "1.10-flyktig")
+            self.assertEqual(page.input_value("#claim-version"), "1.10-flyktig")
+        finally:
+            page.close()
+
     def test_a_simulated_write_failure_keeps_the_edit_and_stops_the_advance(self):
         with self.curator() as page:
             page.click(".queue-item:has-text('Cpu-Z') button")

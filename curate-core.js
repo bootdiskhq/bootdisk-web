@@ -95,6 +95,8 @@ function createCuratorController(options) {
   let autosaveTimer = null;
   let writing = null;
   let inflightSave = null;
+  /* The last failed operation, kept whole so a retry re-sends an identical request. */
+  let pendingOperation = null;
 
   function emit() {
     for (const listener of listeners) listener(state);
@@ -147,58 +149,77 @@ function createCuratorController(options) {
     return task;
   }
 
-  function operationFor(kind, payloadKey) {
-    const retry = state.pendingRetry;
-    if (retry && retry.kind === kind && retry.payloadKey === payloadKey) return retry.operation_id;
-    return newOperationId();
+  function quiesce() {
+    return (writing ?? Promise.resolve()).then(() => null, () => null);
   }
 
-  function rememberRetry(kind, payloadKey, operationId) {
-    state.pendingRetry = { kind, payloadKey, operation_id: operationId };
-  }
-
-  function clearRetry() {
+  function forgetPendingOperation() {
+    pendingOperation = null;
     state.pendingRetry = null;
+  }
+
+  /* One gate for every mutation. The request is built inside the serialised write so it
+   * carries the current revision, then kept verbatim: a retry sends the same operation ID
+   * and the same payload, which is what makes a committed-but-timed-out write safe. */
+  function submit(kind, build, apply) {
+    const entryId = state.entry?.key?.entry ?? null;
+    let request = null;
+
+    const attempt = () => write(kind, () => {
+      if (!request) request = build();
+      return adapter[kind](request);
+    }).then(receipt => {
+      forgetPendingOperation();
+      return apply(receipt, entryId);
+    }, error => {
+      pendingOperation = { kind, entryId, replay: attempt };
+      state.pendingRetry = { kind, operation_id: request?.operation_id ?? null };
+      applyError(error, "Handlingen kunne ikke fullføres.");
+      emit();
+      throw error;
+    });
+
+    return attempt();
   }
 
   function save() {
     cancelAutosave();
-    if (!state.entry || !dirty() || state.conflict) return Promise.resolve(null);
+    /* Even a clean draft may have a write still on its way back; callers must be able to
+     * wait for it before moving on. */
+    if (!state.entry || !dirty() || state.conflict) return quiesce();
     const draft = clone(state.draft);
     const payloadKey = JSON.stringify(curatorCanonical(draft));
-    /* An explicit flush during an identical autosave joins it instead of issuing a
-     * second write with the same content. */
     if (inflightSave && inflightSave.payloadKey === payloadKey) return inflightSave.promise;
 
     state.status = "saving";
     state.error = null;
     emit();
 
-    const promise = write("saveDraft", () => {
-      const key = clone(state.entry.key);
-      const revision = state.entry.revision;
-      const stamp = `${revision}:${payloadKey}`;
-      const operationId = operationFor("saveDraft", stamp);
-      rememberRetry("saveDraft", stamp, operationId);
-      return adapter.saveDraft({ key, expected_revision: revision, operation_id: operationId, draft });
-    }).then(receipt => {
-      state.entry = receipt.entry;
-      clearRetry();
-      /* The receipt only reports what it carried. Newer edits stay unsaved. */
-      if (curatorSameDraft(state.draft, draft)) {
-        state.status = "saved";
-        state.fieldErrors = {};
-      } else {
-        state.status = "dirty";
-        scheduleAutosave();
-      }
-      emit();
-      return receipt;
-    }, error => {
-      applyError(error, "Kladden kunne ikke lagres.");
-      emit();
-      throw error;
-    });
+    const promise = submit(
+      "saveDraft",
+      () => ({
+        key: clone(state.entry.key),
+        expected_revision: state.entry.revision,
+        operation_id: newOperationId(),
+        draft,
+      }),
+      (receipt, entryId) => {
+        /* A receipt belongs to the entry it was sent for. If the curator has moved on, it
+         * must never become the state of the entry now on screen. */
+        if (state.entry?.key?.entry !== entryId) return receipt;
+        state.entry = receipt.entry;
+        /* The receipt only reports what it carried. Newer edits stay unsaved. */
+        if (curatorSameDraft(state.draft, draft)) {
+          state.status = "saved";
+          state.fieldErrors = {};
+        } else {
+          state.status = "dirty";
+          scheduleAutosave();
+        }
+        emit();
+        return receipt;
+      },
+    );
 
     const settled = () => {
       if (inflightSave && inflightSave.promise === promise) inflightSave = null;
@@ -235,7 +256,7 @@ function createCuratorController(options) {
       state.fieldErrors = {};
       state.conflict = null;
       state.complete = false;
-      clearRetry();
+      forgetPendingOperation();
       emit();
       if (!bookmark) return entry;
       return adapter.setResume({ key }).then(() => entry, () => {
@@ -266,6 +287,7 @@ function createCuratorController(options) {
   }
 
   function setFilter(filter) {
+    if (state.busy) return Promise.resolve(null);
     return flush().then(() => {
       if (dirty()) return null;
       state.filter = filter;
@@ -282,9 +304,17 @@ function createCuratorController(options) {
     }, () => null);
   }
 
-  function flush() {
+  /* Settles the entry: waits out any write already on its way back, then saves whatever
+   * the returning receipt left unsaved. A revert typed during a save looks clean until
+   * that receipt lands, so one pass is not enough. */
+  function flush(remaining = 3) {
     cancelAutosave();
-    return dirty() ? save() : Promise.resolve(null);
+    return save().then(result => {
+      if (remaining > 1 && dirty() && !state.conflict && state.status !== "error") {
+        return flush(remaining - 1);
+      }
+      return result;
+    });
   }
 
   function editClaim(field, patch) {
@@ -310,13 +340,17 @@ function createCuratorController(options) {
     return dirty() || state.status === "saved" ? "Lagre og neste" : "Godkjenn og neste";
   }
 
-  function decide(kind, run) {
+  function decide(run) {
     if (state.busy || !state.entry || state.conflict) return Promise.resolve(null);
     state.busy = true;
     state.error = null;
+    /* A retry has to reach the adapter: the error left by the previous attempt is cleared
+     * before flushing, so only a fresh failure blocks this one. */
+    if (state.status === "error") state.status = dirty() ? "dirty" : "idle";
     emit();
-    return flush().catch(() => "flush-failed").then(outcome => {
-      if (outcome === "flush-failed" || state.status === "error" || state.conflict) {
+
+    return flush().then(() => true, () => false).then(flushed => {
+      if (!flushed || state.conflict || state.status === "error") {
         /* Never advance on an unsaved or rejected draft. */
         state.busy = false;
         emit();
@@ -324,10 +358,8 @@ function createCuratorController(options) {
       }
       return run().then(receipt => {
         state.busy = false;
-        clearRetry();
         return receipt;
       }, error => {
-        applyError(error, "Handlingen kunne ikke fullføres.");
         state.busy = false;
         emit();
         throw error;
@@ -353,52 +385,51 @@ function createCuratorController(options) {
   }
 
   function approve() {
-    return decide("approve", () => {
-      const operationId = operationFor("approve", state.entry.revision);
-      rememberRetry("approve", state.entry.revision, operationId);
-      return write("approve", () => adapter.approve({
+    return decide(() => submit(
+      "approve",
+      () => ({
         key: clone(state.entry.key),
         expected_revision: state.entry.revision,
-        operation_id: operationId,
-      })).then(receipt => {
+        operation_id: newOperationId(),
+      }),
+      receipt => {
         state.entry = receipt.entry;
         state.draft = clone(receipt.entry.draft);
         state.draftToken += 1;
         state.status = "idle";
         return advance().then(() => receipt);
-      });
-    });
+      },
+    ));
   }
 
   function defer(reason) {
-    return decide("defer", () => {
-      const payloadKey = String(reason ?? "");
-      const operationId = operationFor("defer", payloadKey);
-      rememberRetry("defer", payloadKey, operationId);
-      return write("defer", () => adapter.defer({
+    return decide(() => submit(
+      "defer",
+      () => ({
         key: clone(state.entry.key),
         expected_revision: state.entry.revision,
-        operation_id: operationId,
+        operation_id: newOperationId(),
         reason,
-      })).then(receipt => {
+      }),
+      receipt => {
         state.entry = receipt.entry;
         return advance().then(() => receipt);
-      });
-    });
+      },
+    ));
   }
 
   function undo() {
     const available = state.entry?.undo ?? null;
     if (!available) return Promise.resolve(null);
-    return decide("undo", () => {
-      const operationId = operationFor("undo", available.decision_id);
-      rememberRetry("undo", available.decision_id, operationId);
-      return write("undo", () => adapter.undo({
+    return decide(() => submit(
+      "undo",
+      () => ({
         key: clone(state.entry.key),
         expected_revision: state.entry.revision,
-        operation_id: operationId,
+        operation_id: newOperationId(),
         decision_id: available.decision_id,
-      })).then(receipt => {
+      }),
+      receipt => {
         /* Undo stays on the restored entry and keeps the current draft. */
         const keptDraft = clone(state.draft);
         state.entry = receipt.entry;
@@ -408,17 +439,21 @@ function createCuratorController(options) {
           emit();
           return receipt;
         });
-      });
-    });
+      },
+    ));
   }
 
   function retry() {
-    const pending = state.pendingRetry;
-    if (!pending) return Promise.resolve(null);
-    if (pending.kind === "saveDraft") return save();
-    if (pending.kind === "approve") return approve();
-    if (pending.kind === "undo") return undo();
-    return Promise.resolve(null);
+    const operation = pendingOperation;
+    if (!operation) return Promise.resolve(null);
+    if (operation.kind === "saveDraft") {
+      state.error = null;
+      state.status = "saving";
+      emit();
+      return operation.replay();
+    }
+    /* approve, defer and undo all re-enter through the same gate. */
+    return decide(() => operation.replay());
   }
 
   function resolveConflict(choice) {
@@ -427,7 +462,7 @@ function createCuratorController(options) {
     state.entry = conflict.server;
     state.conflict = null;
     state.error = null;
-    clearRetry();
+    forgetPendingOperation();
     state.draftToken += 1;
     if (choice === "load_server") {
       state.draft = clone(conflict.server.draft);
@@ -442,6 +477,9 @@ function createCuratorController(options) {
   }
 
   function select(key) {
+    /* Waits for any write already on its way back, so a late receipt can never land on
+     * the entry the curator has just opened. */
+    if (state.busy) return Promise.resolve(null);
     return flush().then(() => {
       if (dirty() || state.status === "error" || state.conflict) return null;
       return openEntry(key);

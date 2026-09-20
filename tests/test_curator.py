@@ -356,7 +356,8 @@ class CuratorBehaviourTests(unittest.TestCase):
 
   controller.editClaim("version", { value: "1.10-first" });
   const held = adapter.simulation.hold();
-  const saving = controller.flush();
+  // save() is the single write whose receipt is under test; flush() deliberately settles.
+  const saving = controller.save();
   await held.arrived;
   assert.equal(controller.state.status, "saving");
 
@@ -376,6 +377,144 @@ class CuratorBehaviourTests(unittest.TestCase):
   assert.equal(controller.state.status, "saved");
   const settled = await adapter.getEntry({ key: key("K23") });
   assert.equal(settled.draft.claims.version.value, "1.10-second");
+""")
+
+    def test_a_late_save_receipt_never_lands_on_another_entry(self):
+        """Review #27 P1: a write is bound to the entry it was sent for."""
+        self.run_behaviour("""
+  const { adapter, controller } = harness();
+  await controller.start();
+  assert.equal(controller.state.entry.key.entry, "K4");
+  const original = JSON.parse(JSON.stringify(controller.state.draft.claims.version));
+
+  controller.editClaim("version", { value: "endret" });
+  const held = adapter.simulation.hold();
+  const saving = controller.save();
+  await held.arrived;
+
+  // The curator undoes the edit by hand, so the draft looks clean again, and moves on
+  // while K4's write is still out.
+  controller.editClaim("version", original);
+  const selecting = controller.select(key("K23"));
+  held.release();
+  await saving;
+  await selecting;
+
+  assert.equal(controller.state.entry.key.entry, "K23", "the selected entry is the one on screen");
+  assert.equal(controller.state.draft.claims.identity.value.name, "CPU-Z", "its draft belongs to it");
+  assert.equal(controller.state.entry.draft.claims.identity.value.name, "CPU-Z", "the late receipt did not replace the entry");
+
+  // Whatever is saved next must not carry CPU-Z's claims onto K4.
+  controller.editClaim("description", { value: { language: "nb-NO", text: "Ny tekst for K23." } });
+  await controller.flush();
+
+  const k4 = await adapter.getEntry({ key: key("K4") });
+  const k23 = await adapter.getEntry({ key: key("K23") });
+  assert.equal(k4.draft.claims.identity.value.name, "Blockout", "K4 kept its own identity");
+  assert.equal(k4.draft.claims.version.value, original.value, "K4 kept its own version");
+  assert.equal(k23.draft.claims.identity.value.name, "CPU-Z", "K23 kept its own identity");
+  assert.equal(k23.draft.claims.description.value.text, "Ny tekst for K23.", "the edit landed on K23");
+""")
+
+    def test_retry_resends_the_original_operation_for_every_mutation(self):
+        """Review #27 P2: a retry reaches the adapter and the original receipt is processed."""
+        self.run_behaviour("""
+  for (const kind of ["approve", "defer", "undo"]) {
+    const { adapter, controller } = harness({ prefix: kind });
+    await controller.start();
+    await controller.setFilter("all");
+    await controller.select(key("K23"));
+    if (kind === "undo") {
+      await controller.dispatch("commit");
+      await controller.setFilter("all");
+      await controller.select(key("K23"));
+    }
+
+    const seen = [];
+    const real = adapter[kind];
+    adapter[kind] = request => {
+      seen.push(request);
+      return real(request);
+    };
+
+    adapter.simulation.arm("timeout_after_commit");
+    const action = kind === "approve" ? "commit" : kind;
+    await controller.dispatch(action, kind === "defer" ? "Undersøk senere" : undefined).catch(() => {});
+
+    assert.equal(controller.state.status, "error", `${kind}: the timeout is reported`);
+    assert.ok(controller.state.pendingRetry, `${kind}: a retry is offered`);
+    assert.equal(controller.state.pendingRetry.kind, kind);
+    assert.equal(seen.length, 1, `${kind}: one attempt so far`);
+
+    await controller.dispatch("retry");
+
+    assert.equal(seen.length, 2, `${kind}: the retry reached the adapter`);
+    assert.deepEqual(seen[1], seen[0], `${kind}: the retry sent an identical request`);
+    assert.equal(controller.state.pendingRetry, null, `${kind}: the retry cleared`);
+    assert.notEqual(controller.state.status, "error", `${kind}: the original receipt was processed`);
+
+    const entry = await adapter.getEntry({ key: key("K23") });
+    assert.equal(entry.history.filter(event => event.kind === kind).length, 1, `${kind}: decided exactly once`);
+  }
+
+  // After a committed approve, the screen advances on the retry rather than staying put.
+  const { adapter, controller } = harness({ prefix: "advance" });
+  await controller.start();
+  await controller.select(key("K23"));
+  adapter.simulation.arm("timeout_after_commit");
+  await controller.dispatch("commit").catch(() => {});
+  assert.equal(controller.state.entry.key.entry, "K23", "no advance while the outcome is unknown");
+  await controller.dispatch("retry");
+  assert.notEqual(controller.state.entry.key.entry, "K23", "the confirmed decision advances the queue");
+""")
+
+    def test_a_refused_browser_store_is_a_failed_write_not_a_saved_draft(self):
+        """Review #27 P3: storage that rejects the write must not report a saved draft."""
+        self.run_behaviour("""
+  const storage = memoryStorage();
+  const adapter = createFixtureAdapter({ fixture, storage });
+  assert.equal(adapter.durable, true, "storage is available at startup");
+  const entry = await adapter.getEntry({ key: key("K23") });
+
+  // The store starts refusing writes, as a full quota does mid-session.
+  storage.setItem = () => { throw new Error("QuotaExceededError"); };
+
+  const draft = JSON.parse(JSON.stringify(entry.draft));
+  draft.claims.version.value = "CHANGED";
+  await assert.rejects(
+    adapter.saveDraft({ key: entry.key, expected_revision: entry.revision, operation_id: "quota-1", draft }),
+    error => error.code === "write_failed" && error.retryable === true,
+    "a refused store is a failed write",
+  );
+
+  const live = await adapter.getEntry({ key: key("K23") });
+  assert.equal(live.draft.claims.version.value, "1.10", "the in-memory state was rolled back");
+  assert.equal(live.revision, entry.revision, "no revision was spent on a write that did not happen");
+  const reloaded = await createFixtureAdapter({ fixture, storage }).getEntry({ key: key("K23") });
+  assert.equal(reloaded.draft.claims.version.value, "1.10", "nothing was promised that a reload would lose");
+
+  // An approval is refused the same way, and stays unapproved.
+  await assert.rejects(
+    adapter.approve({ key: entry.key, expected_revision: live.revision, operation_id: "quota-2" }),
+    error => error.code === "write_failed",
+  );
+  assert.equal((await adapter.getEntry({ key: key("K23") })).queue_state, "pending", "nothing was decided");
+
+  // The controller keeps the edit and refuses to advance.
+  const { adapter: live2, controller } = harness({ prefix: "quota" });
+  await controller.start();
+  await controller.select(key("K23"));
+  controller.editClaim("version", { value: "1.10-lokal" });
+  live2.saveDraft = () => Promise.reject({ code: "write_failed", message: "Nettleserlagringen avviste skrivingen.", retryable: true, field_errors: {}, current_entry: null });
+  await controller.dispatch("commit").catch(() => {});
+  assert.equal(controller.state.status, "error");
+  assert.equal(controller.state.draft.claims.version.value, "1.10-lokal", "the edit is kept on screen");
+  assert.equal(controller.state.entry.key.entry, "K23", "a failed store stops the advance");
+
+  // With no storage at all the adapter says so, so the page can state it.
+  const ephemeral = createFixtureAdapter({ fixture, storage: null });
+  assert.equal(ephemeral.durable, false, "an ephemeral session is explicit, not silent");
+  await ephemeral.saveDraft({ key: entry.key, expected_revision: entry.revision, operation_id: "ephemeral-1", draft });
 """)
 
     def test_contract_validation_refuses_guesses_and_unsupported_claims(self):

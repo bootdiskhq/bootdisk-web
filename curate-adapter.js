@@ -142,12 +142,16 @@ function createFixtureAdapter(options) {
     return state;
   }
 
+  /* Reports whether the write actually reached browser storage. A refusal (quota, a
+   * blocked origin) is a failed write, never a silent in-memory success. */
   function persist() {
-    if (!storage || !state) return;
+    if (!state) return false;
+    if (!storage) return true;
     try {
       storage.setItem(storageKey, JSON.stringify(state));
+      return true;
     } catch (error) {
-      /* Storage refusal must not fake a failed decision; the in-memory state stays authoritative. */
+      return false;
     }
   }
 
@@ -290,10 +294,12 @@ function createFixtureAdapter(options) {
         return;
       }
 
+      const snapshot = clone(record);
       let outcome;
       try {
         outcome = apply({ source, record, entryId });
       } catch (error) {
+        load().entries[entryId] = snapshot;
         settle(null).then(() => reject(error), reject);
         return;
       }
@@ -306,7 +312,17 @@ function createFixtureAdapter(options) {
         decision_id: outcome?.decision_id ?? null,
       };
       record.operations[request.operation_id] = { fingerprint: mark, receipt: clone(receipt) };
-      persist();
+
+      if (!persist()) {
+        /* Nothing was stored, so nothing is decided: the entry goes back as it was and the
+         * caller keeps its local draft. */
+        load().entries[entryId] = snapshot;
+        settle(null).then(
+          () => reject(curatorError("write_failed", "Nettleserlagringen avviste skrivingen. Ingenting ble lagret; endringene er beholdt lokalt.", { retryable: true })),
+          reject,
+        );
+        return;
+      }
 
       /* A commit that times out on the way back is already durable: retrying the same
        * operation ID returns this receipt instead of deciding twice. */
@@ -423,14 +439,20 @@ function createFixtureAdapter(options) {
 
   function setResume(request) {
     const current = load();
+    const previous = clone(current.resume_key);
     current.resume_key = clone(request.key);
-    persist();
+    if (!persist()) {
+      current.resume_key = previous;
+      return Promise.reject(curatorError("write_failed", "Bokmerket kunne ikke lagres i nettleseren.", { retryable: true }));
+    }
     return Promise.resolve({ schema: CURATOR_SCHEMA, resume_key: clone(current.resume_key) });
   }
 
   return {
     schema: CURATOR_SCHEMA,
     fixtureMode: true,
+    /* False means this session keeps nothing across a reload, which the page states. */
+    durable: Boolean(storage),
     manifest,
     getQueue,
     getEntry,
