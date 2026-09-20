@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kuratering — Bootdisk</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Lokal kurateringsflyt for Bootdisk. Kjøres bare lokalt og inngår ikke i den offentlige releasen.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="accessibility.css">
+<link rel="stylesheet" href="curate.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Hopp til innholdet</a>
+<header class="site-header">
+  <a class="brand" href="archive.html">BOOTDISK<span class="cursor">_</span></a>
+  <span class="tagline">lokal kuratering</span>
+</header>
+
+<p id="fixture-banner" class="fixture-banner">
+  <strong>Prøvedata – endrer ikke katalogen.</strong>
+  <span>Beslutningene lagres bare i denne nettleseren. Den virkelige lokale tjenesten er ikke koblet til.</span>
+</p>
+
+<main id="main-content">
+  <noscript><p class="system-message">Kurateringsskjermen trenger JavaScript.</p></noscript>
+  <p id="curate-notice" class="system-message" role="status" hidden></p>
+  <p id="curate-fatal" class="system-message" role="alert" hidden></p>
+
+  <div class="curate-layout">
+    <section class="queue-panel" aria-labelledby="queue-heading">
+      <h2 id="queue-heading">Kø</h2>
+      <div class="queue-filter">
+        <label for="queue-filter">Filter</label>
+        <select id="queue-filter">
+          <option value="pending">Ventende</option>
+          <option value="deferred">Utsatt</option>
+          <option value="open_fields">Åpne felt</option>
+          <option value="all">Alle</option>
+        </select>
+      </div>
+      <p id="queue-count" class="queue-count" role="status"></p>
+      <p id="queue-summary" class="queue-summary"></p>
+      <ul id="queue-list" class="queue-list"></ul>
+      <p id="queue-empty" class="queue-empty" hidden>Ingen oppføringer i dette filteret.</p>
+    </section>
+
+    <section class="decision-panel" aria-labelledby="entry-heading">
+      <div id="queue-complete" class="queue-complete" hidden>
+        <h2>Køen er tom</h2>
+        <p>Alle oppføringene i dette filteret er behandlet. Bytt filter for å se utsatte eller gjennomgåtte oppføringer.</p>
+      </div>
+
+      <div id="entry-view" hidden>
+        <header class="entry-head">
+          <p class="eyebrow"><span id="entry-id"></span> · <span id="entry-queue-state"></span> · <span id="entry-identification"></span></p>
+          <h2 id="entry-heading" tabindex="-1"></h2>
+        </header>
+
+        <p id="save-state" class="save-state" role="status" aria-live="polite"></p>
+        <div id="decision-error" class="decision-error" role="alert" hidden></div>
+
+        <div id="conflict-panel" class="conflict-panel" role="alert" hidden>
+          <h3>Konflikt: oppføringen er endret et annet sted</h3>
+          <p>Den lokale kladden er beholdt. Velg bevisst hvordan konflikten skal løses; ingenting overskrives automatisk.</p>
+          <div class="conflict-columns">
+            <div><h4>Din lokale kladd</h4><dl id="conflict-local"></dl></div>
+            <div><h4>Gjeldende servertilstand</h4><dl id="conflict-server"></dl></div>
+          </div>
+          <div class="conflict-actions">
+            <button type="button" id="conflict-keep">Behold min kladd og bygg videre</button>
+            <button type="button" id="conflict-load">Last serverversjonen</button>
+          </div>
+        </div>
+
+        <ul id="entry-issues" class="entry-issues"></ul>
+
+        <form id="claim-form" class="claim-form"></form>
+
+        <div class="decision-actions">
+          <button type="button" id="action-commit" class="primary" data-action="commit"></button>
+          <button type="button" id="action-defer" data-action="defer">Hopp over <kbd>H</kbd></button>
+          <button type="button" id="action-undo" data-action="undo" hidden></button>
+          <button type="button" id="action-retry" data-action="retry" hidden>Forsøk på nytt</button>
+        </div>
+
+        <form id="defer-form" class="defer-form" hidden>
+          <label for="defer-reason">Begrunnelse for å hoppe over</label>
+          <textarea id="defer-reason" rows="2" required></textarea>
+          <p id="defer-error" class="field-error" hidden></p>
+          <div class="defer-actions">
+            <button type="submit" id="defer-confirm">Hopp over og gå videre</button>
+            <button type="button" id="defer-cancel">Avbryt</button>
+          </div>
+        </form>
+
+        <details class="panel" id="source-panel">
+          <summary>Kilden slik den er bevart</summary>
+          <dl class="source-facts">
+            <div><dt>Original tittel</dt><dd id="source-title"></dd></div>
+            <div><dt>Original beskrivelse</dt><dd id="source-description"></dd></div>
+            <div><dt>Mål</dt><dd id="source-target"></dd></div>
+          </dl>
+          <h4>Filer i pakken (<span id="member-count"></span>)</h4>
+          <ul id="source-members" class="source-members"></ul>
+        </details>
+
+        <details class="panel" id="evidence-panel">
+          <summary>Kildeobservasjoner (<span id="evidence-count"></span>)</summary>
+          <p class="panel-note">Observasjonene er bevart kildetekst. De vises som tekst, aldri som kjørbart innhold eller lenker.</p>
+          <ul id="evidence-list" class="evidence-list"></ul>
+        </details>
+
+        <details class="panel" id="history-panel">
+          <summary>Beslutningshistorikk (<span id="history-count"></span>)</summary>
+          <ol id="history-list" class="history-list"></ol>
+        </details>
+      </div>
+
+      <section class="shortcuts" aria-labelledby="shortcuts-heading">
+        <h3 id="shortcuts-heading">Hurtigtaster</h3>
+        <p class="panel-note">Hurtigtastene er av mens du skriver i et felt.</p>
+        <ul id="shortcut-list" class="shortcut-list"></ul>
+      </section>
+
+      <details class="panel simulation" id="simulation-panel">
+        <summary>Simuleringer (bare prøvedata)</summary>
+        <p class="panel-note">Simulerte tilstander er merket som simulerte. De er ikke ekte kildefunn og ikke ekte tjenestefeil.</p>
+        <div class="simulation-row">
+          <label for="simulate-fault">Neste skriveoperasjon</label>
+          <select id="simulate-fault">
+            <option value="">Uten simulert feil</option>
+            <option value="write_failed">Lagringsfeil</option>
+            <option value="service_unavailable">Tjenesten svarer ikke</option>
+            <option value="timeout_after_commit">Tidsavbrudd etter at skrivingen er utført</option>
+            <option value="revision_conflict">Revisjonskonflikt</option>
+          </select>
+        </div>
+        <div class="simulation-row">
+          <label for="simulate-media">Kildetilgang for valgt oppføring</label>
+          <select id="simulate-media">
+            <option value="">Uten simulert kildeproblem</option>
+            <option value="media_unavailable">Manglende media</option>
+            <option value="read_permission_denied">Lesefeil</option>
+          </select>
+        </div>
+        <button type="button" id="simulate-reset">Tilbakestill prøvedata</button>
+      </details>
+    </section>
+  </div>
+</main>
+
+<footer><span>bootdisk.no</span><span>lokal kuratering · prøvedata</span></footer>
+<script src="curate-adapter.js"></script>
+<script src="curate-core.js"></script>
+<script src="curate.js"></script>
+</body>
+</html>

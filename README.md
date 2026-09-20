@@ -8,6 +8,10 @@ Statisk presentasjonslag for det bevarte Bootdisk-arkivet. Catalog eier identite
 python -m unittest discover -s tests -v
 ```
 
+Node må være tilgjengelig for JavaScript-testene. Nettleserkontrollene i
+`tests/test_curator_browser.py` hoppes over uten Playwright; kjør dem lokalt med
+`pip install playwright && playwright install chromium`.
+
 ## Bygg en release
 
 Bygg først frontend-data fra de autoritative Catalog- og Publish-resultatene:
@@ -59,8 +63,20 @@ python scripts/frontend_contract.py build/data --expected-entries 39
 
 Offentlige, stabile lenker og metadata er dokumentert i [`docs/url-contract.md`](docs/url-contract.md). Sitemap og `robots.txt` genereres automatisk av releasebygget.
 
-## Lokal kuratering i 1.2 (planlagt)
+## Lokal kuratering i 1.2
+
+Kurateringsskjermen kjører lokalt mot prøvedata. Start den fra reporoten, fordi
+prøvedataene ligger under `tests/fixtures/`:
+
+```sh
+python -m http.server 8000
+```
+
+Åpne `http://localhost:8000/curate.html`. Skjermen er merket
+«Prøvedata – endrer ikke katalogen» og skriver ingenting til katalogen.
 
 [Arbeidsordren til Claude](docs/claude-curator-work-order.md) avgrenser frontend-
-leveransen. Datakontrakt og ADR-er eies av `bootdisk-catalog`; ekte kataloglagring
-bygges separat. Kurateringsverktøyet inngår ikke i den offentlige statiske releasen.
+leveransen, og [frontend v1](docs/curator-frontend-v1.md) beskriver filene,
+hurtigtastene og kontraktobservasjonene. Datakontrakt og ADR-er eies av
+`bootdisk-catalog`; ekte kataloglagring bygges separat. Kurateringsverktøyet inngår
+ikke i den offentlige statiske releasen.

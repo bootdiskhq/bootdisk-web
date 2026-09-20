@@ -1,3 +1,11 @@
+# Upubliserte endringer
+
+- Lokal kurateringsskjerm (`curate.html`) med kø, kildebelegg, redigerbare påstander,
+  «godkjenn/lagre og neste», «hopp over» og «angre».
+- Fixture-adapter for `bootdisk-curator-v1` med versjonert nettleserlagring, eksplisitt
+  tilbakestilling og simulerte feil-, konflikt- og kildeproblemtilstander.
+- Kurator, prøvedata og skriveveier er holdt utenfor den offentlige release-allowlisten.
+
 # 1.1.0-rc2
 
 - Oppdatert kataloggrunnlag: 35 kuraterte og fire foreløpige identifikasjoner.
