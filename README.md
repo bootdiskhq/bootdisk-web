@@ -81,6 +81,21 @@ hurtigtastene og kontraktobservasjonene. Datakontrakt og ADR-er eies av
 `bootdisk-catalog`; ekte kataloglagring bygges separat. Kurateringsverktøyet inngår
 ikke i den offentlige statiske releasen.
 
+## Kurateringsoversikt (prototype)
+
+En egen oversikt over hele kurateringskøen, med søk, filtre, status og navigasjon til og
+fra kurateringsskjermen. Kjør den fra reporoten på en egen port, så den ikke kolliderer
+med en kjørende lokal tjeneste:
+
+```sh
+python -m http.server 8791
+```
+
+Åpne `http://localhost:8791/overview.html`. Oversikten bruker syntetiske prøvedata for å
+måle skalaen, leser bare, og er ikke integrert med den lokale tjenesten.
+[Prototypen](docs/curator-overview-prototype.md) beskriver hva som virker, hva som bare er
+prøvedata, forslaget til lesekontrakt og backendavhengighetene.
+
 ## Ekte lokal kuratering
 
 Start Catalogs lokale tjeneste med dette repoet som `--web-root`, og åpne

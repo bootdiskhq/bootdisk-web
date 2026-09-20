@@ -2,25 +2,7 @@
  * package members are never interpreted as HTML, executable content or file links.
  * Buttons and keyboard shortcuts resolve to the same action codes in curate-core.js. */
 const FIXTURE_URL = "tests/fixtures/curator-fixtures-v1.json";
-const CONTENT_KIND_LABELS = {
-  application: "Program",
-  game: "Spill",
-  course: "Kurs",
-  image_collection: "Bildesamling",
-  font_collection: "Fontsamling",
-  reference: "Oppslagsverk",
-};
-const DISTRIBUTION_LABELS = {
-  full: "Full versjon",
-  demo: "Demo",
-  trial: "Prøveversjon",
-  update: "Oppdatering",
-  unknown: "Ukjent",
-};
-const QUEUE_STATE_LABELS = { pending: "Venter", deferred: "Utsatt", reviewed: "Gjennomgått" };
-const QUEUE_STATE_MARKS = { pending: "●", deferred: "‖", reviewed: "✓" };
-const IDENTIFICATION_LABELS = { curated: "Kuratert identitet", interpreted: "Foreløpig identitet" };
-const ASSESSMENT_LABELS = { accepted: "Belagt", unresolved: "Uavklart" };
+/* Labels are shared with the overview screen; see curator-labels.js. */
 const FIELD_SPECS = [
   { field: "identity", label: "Identitet og navn", control: "identity" },
   { field: "version", label: "Versjon", control: "text", help: "Bruk «Ikke oppgitt» med begrunnelse når versjonen ikke er fastslått." },
@@ -90,30 +72,19 @@ function claimControlValue(field, value) {
 }
 
 function claimValueText(field, value) {
-  if (field === "version" && value === "unknown") return "Ikke oppgitt";
   if (field === "identity") return `${value?.name ?? ""}${value?.software_id ? ` (${value.software_id})` : " (ny eller ukjent ID)"}`;
   if (field === "description") return value?.text ?? "";
-  if (field === "content_kind") return CONTENT_KIND_LABELS[value] ?? String(value ?? "");
-  if (field === "distribution_kind") return DISTRIBUTION_LABELS[value] ?? String(value ?? "");
-  return String(value ?? "");
+  return curatorFieldText(field, value);
 }
 
 function byteText(size) {
   return typeof size === "number" ? `${size.toLocaleString("nb-NO")} byte` : "ukjent størrelse";
 }
 
-function bootstrap(fixture, liveAdapter = null) {
-  const adapter = liveAdapter ?? createFixtureAdapter({
+function bootstrap(fixture, providedAdapter = null, options = {}) {
+  const adapter = providedAdapter ?? createFixtureAdapter({
     fixture,
-    storage: (() => {
-      try {
-        window.localStorage.setItem("curator-probe", "1");
-        window.localStorage.removeItem("curator-probe");
-        return window.localStorage;
-      } catch (error) {
-        return null;
-      }
-    })(),
+    storage: curatorBrowserStorage(),
   });
   const controller = createCuratorController({ adapter });
   if (!adapter.fixtureMode) {
@@ -123,6 +94,21 @@ function bootstrap(fixture, liveAdapter = null) {
     document.querySelector('#simulate-reset').closest('details').hidden = true;
     document.querySelector('footer').lastElementChild.textContent = 'lokal kuratering · varig arbeidsområde';
     document.querySelector('.brand').href = 'curate.html?mode=local';
+  }
+
+  if (options.sampleMode) {
+    /* Opened from the overview prototype: the same fixture semantics, over synthetic
+     * entries that are not catalogue findings. */
+    document.querySelector("#fixture-banner").append(element("span", null,
+      "Syntetiske prøvedata fra oversiktsprototypen. Oppdiktede programmer, ikke katalogfunn."));
+  }
+
+  if (options.returnQuery !== undefined) {
+    const returnNode = document.querySelector("#curate-return");
+    returnNode.hidden = false;
+    returnNode.querySelector("a").href = options.returnQuery
+      ? `overview.html?${options.returnQuery}`
+      : "overview.html";
   }
 
   if (!adapter.durable) {
@@ -635,24 +621,64 @@ function bootstrap(fixture, liveAdapter = null) {
   });
 
   controller.subscribe(render);
-  return controller.start().catch(error => {
-    nodes.fatal.hidden = false;
-    nodes.fatal.textContent = `Kunne ikke starte kurateringsskjermen: ${error.message}`;
+  /* An entry handed over from the overview is opened on its full identity: manifest and
+   * entry together, because a K-id alone is not unique across source manifests. */
+  return controller.start()
+    .then(() => (options.openKey ? controller.select(options.openKey) : null))
+    .catch(error => {
+      nodes.fatal.hidden = false;
+      nodes.fatal.textContent = `Kunne ikke starte kurateringsskjermen: ${error.message}`;
+    });
+}
+
+/* Browser storage for the fixture adapters, or null when the origin refuses it. */
+function curatorBrowserStorage() {
+  try {
+    window.localStorage.setItem("curator-probe", "1");
+    window.localStorage.removeItem("curator-probe");
+    return window.localStorage;
+  } catch (error) {
+    return null;
+  }
+}
+
+/* The synthetic dataset of the overview prototype, opened on one source manifest. It reuses
+ * this screen unchanged: same adapter, same decisions, same simulations. */
+function startSampleCuration(params) {
+  const manifest = params.get("manifest");
+  const entry = params.get("entry");
+  const adapter = createFixtureAdapter({
+    fixture: createSampleBundle(manifest),
+    datasetId: sampleDatasetId(manifest),
+    storage: curatorBrowserStorage(),
+  });
+  return bootstrap(null, adapter, {
+    sampleMode: true,
+    openKey: entry ? { manifest: adapter.manifest, entry } : null,
+    returnQuery: overviewSafeReturnQuery(params.get("retur")),
   });
 }
 
+/* Three ways in, one screen: the real local service, the overview prototype's synthetic
+ * dataset, and Catalog's own reference fixtures. */
+function startCuration(params) {
+  if (params.get('mode') === 'local') {
+    document.querySelector('#fixture-banner').textContent = 'Lokal kuratering – kobler til arbeidsområdet …';
+    return createLiveAdapter().then(adapter => bootstrap(null, adapter));
+  }
+  if (params.get('dataset') === 'sample') return startSampleCuration(params);
+  return fetch(FIXTURE_URL).then(response => {
+    if (!response.ok) throw new Error(`Fant ikke prøvedataene (${response.status}).`);
+    return response.json();
+  }).then(fixture => bootstrap(fixture));
+}
+
 if (typeof document !== "undefined") {
-  const localMode = new URLSearchParams(window.location.search).get('mode') === 'local';
-  if (localMode) document.querySelector('#fixture-banner').textContent = 'Lokal kuratering – kobler til arbeidsområdet …';
-  const startup = localMode
-    ? createLiveAdapter().then(adapter => bootstrap(null, adapter))
-    : fetch(FIXTURE_URL).then(response => {
-      if (!response.ok) throw new Error(`Fant ikke prøvedataene (${response.status}).`);
-      return response.json();
-    }).then(fixture => bootstrap(fixture));
-  startup.catch(error => {
-    const fatal = document.querySelector('#curate-fatal');
-    fatal.hidden = false;
-    fatal.textContent = `Kunne ikke starte kurateringen: ${error.message}`;
-  });
+  Promise.resolve()
+    .then(() => startCuration(new URLSearchParams(window.location.search)))
+    .catch(error => {
+      const fatal = document.querySelector('#curate-fatal');
+      fatal.hidden = false;
+      fatal.textContent = `Kunne ikke starte kurateringen: ${error.message}`;
+    });
 }

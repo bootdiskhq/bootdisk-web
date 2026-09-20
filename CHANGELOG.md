@@ -1,5 +1,17 @@
 # Upubliserte endringer
 
+- Kurateringsoversikt (`overview.html`) som prototype: søk på navn og kildepost,
+  status- og feltfiltre, sortering, sidevisning på 50 rader, og åpning av en rad i den
+  eksisterende kurateringsflyten med retur til samme søk, filtre, side og tastaturfokus.
+  Raden friskes opp fra adapterens faktiske svar etter en beslutning.
+- Oversikten skiller kladd fra sist godkjent verdi, og gjennomgått fra fullstendig
+  avklart. Status er lesbar uten farge, og smal skjerm beholder alle kolonnene.
+- Deterministiske syntetiske prøvedata på 5 230 oppføringer fordelt på 125 kildeposter,
+  med gjentatte K-ID-er og programnavn. Genereres i minnet og lagres ikke.
+- Prototypens leselag er et forslag til Catalog, på sitt eget skjema, og har ingen
+  skriveoperasjon. Oversikt, leselag og prøvedata er holdt utenfor den offentlige
+  release-allowlisten.
+
 - Vis beskrivelsen som skrivebeskyttet original CD-omtale når Catalog har
   tilbakeført originalteksten. Vis tilbakeføringen i beslutningshistorikken.
 

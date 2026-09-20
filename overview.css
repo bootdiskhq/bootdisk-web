@@ -1,0 +1,188 @@
+/* Overview screen for the curator. Built on the existing visual identity: same panel,
+ * line and accent colours as the archive and the decision screen. */
+.overview-title {
+  font-family: system-ui, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -.03em;
+  margin: 26px 0 6px;
+}
+
+.overview-lede {
+  color: var(--muted);
+  margin: 0 0 20px;
+  font-size: .9rem;
+}
+
+.overview-lede a { color: var(--cyan); }
+
+.overview-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.overview-control { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.overview-control-wide { grid-column: span 2; }
+.overview-control-action { justify-content: flex-end; }
+
+.overview-control label {
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.overview-control input,
+.overview-control select,
+.overview-pager button,
+.overview-control button {
+  padding: 10px 12px;
+  border: 1px solid #50616a;
+  background: #091116;
+  color: var(--ink);
+  font: inherit;
+}
+
+.overview-control input:focus-visible,
+.overview-control select:focus-visible,
+.overview-control button:focus-visible,
+.overview-pager button:focus-visible,
+.overview-table a:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.overview-control button,
+.overview-pager button { cursor: pointer; }
+.overview-pager button[disabled] { opacity: .45; cursor: default; }
+
+.overview-count {
+  color: var(--muted);
+  font-size: .78rem;
+  margin: 14px 0 6px;
+}
+
+.overview-state {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+.overview-error { border-left-color: #ffb3a3; color: #ffb3a3; }
+.overview-outside { border-left-color: var(--amber); color: var(--amber); }
+
+.overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: .86rem;
+}
+
+.overview-table caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: .75rem;
+  padding: 0 0 8px;
+}
+
+.overview-table th,
+.overview-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.overview-table thead th {
+  position: sticky;
+  top: 0;
+  background: #16222a;
+  color: var(--cyan);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  z-index: 1;
+}
+
+.overview-table tbody tr:hover { background: #0f1a20; }
+.overview-table tbody tr[aria-current="true"] { outline: 2px solid var(--amber); outline-offset: -2px; }
+
+.overview-table a {
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+}
+
+.overview-table a:hover { color: var(--cyan); }
+
+.row-source { color: var(--muted); font-size: .76rem; display: block; }
+.row-entry { color: var(--amber); }
+
+/* The approved value leads; a draft that differs is labelled as a draft and never shown
+ * as the catalogue's approved value. */
+.row-draft {
+  display: block;
+  margin-top: 3px;
+  color: var(--amber);
+  font-size: .74rem;
+}
+
+.row-unaccepted { color: var(--muted); font-style: normal; }
+.row-status { white-space: nowrap; }
+.row-open { color: var(--muted); font-size: .78rem; }
+.row-review { display: block; color: var(--amber); font-size: .74rem; }
+.row-resolved { color: var(--green); }
+.row-outside { display: block; color: var(--amber); font-size: .74rem; }
+
+.overview-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 0 8px;
+}
+
+.overview-note {
+  color: var(--muted);
+  font-size: .76rem;
+  max-width: 70ch;
+  padding-bottom: 50px;
+}
+
+/* A narrow screen keeps every column: each row becomes a labelled block instead of a
+ * horizontal scroll that hides the status. */
+@media (max-width: 860px) {
+  .overview-control-wide { grid-column: auto; }
+  .overview-table thead { position: absolute; left: -9999px; }
+  .overview-table,
+  .overview-table tbody,
+  .overview-table tr,
+  .overview-table td { display: block; width: 100%; }
+  .overview-table tr {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 0;
+  }
+  .overview-table td {
+    border: 0;
+    display: grid;
+    grid-template-columns: 11ch 1fr;
+    gap: 10px;
+    padding: 4px 12px;
+  }
+  /* Every part of a cell stays in the value column; only the label sits beside it. */
+  .overview-table td > * { grid-column: 2; }
+  .overview-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .overview-pager { flex-direction: column; align-items: stretch; }
+}
