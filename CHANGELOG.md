@@ -1,5 +1,8 @@
 # Upubliserte endringer
 
+- Kildebelegg viser lesbar kildetype, filnavn og tekstutdrag ved avkryssingen.
+  Lange utdrag kan åpnes, og hasher ligger under «Tekniske detaljer».
+
 - Lokal kurateringsskjerm (`curate.html`) med kø, kildebelegg, redigerbare påstander,
   «godkjenn/lagre og neste», «hopp over» og «angre».
 - Fixture-adapter for `bootdisk-curator-v1` med versjonert nettleserlagring, eksplisitt
