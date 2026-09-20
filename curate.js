@@ -23,7 +23,7 @@ const IDENTIFICATION_LABELS = { curated: "Kuratert identitet", interpreted: "For
 const ASSESSMENT_LABELS = { accepted: "Belagt", unresolved: "Uavklart" };
 const FIELD_SPECS = [
   { field: "identity", label: "Identitet og navn", control: "identity" },
-  { field: "version", label: "Versjon", control: "text", help: "Bruk «unknown» med begrunnelse når versjonen ikke er fastslått." },
+  { field: "version", label: "Versjon", control: "text", help: "Bruk «Ikke oppgitt» med begrunnelse når versjonen ikke er fastslått." },
   { field: "content_kind", label: "Innholdstype", control: "select", options: CONTENT_KINDS, labels: CONTENT_KIND_LABELS },
   { field: "distribution_kind", label: "Distribusjon", control: "select", options: DISTRIBUTION_KINDS, labels: DISTRIBUTION_LABELS, help: "«Ukjent» må stå som uavklart. Freeware betyr ikke automatisk full versjon." },
   { field: "description", label: "Norsk beskrivelse (nb-NO)", control: "textarea" },
@@ -80,12 +80,14 @@ function evidencePreview(item, index) {
 
 /* What a claim's editable control displays, as opposed to the read-only summary text. */
 function claimControlValue(field, value) {
+  if (field === "version" && value === "unknown") return "Ikke oppgitt";
   if (field === "identity") return value?.name ?? "";
   if (field === "description") return value?.text ?? "";
   return value ?? "";
 }
 
 function claimValueText(field, value) {
+  if (field === "version" && value === "unknown") return "Ikke oppgitt";
   if (field === "identity") return `${value?.name ?? ""}${value?.software_id ? ` (${value.software_id})` : " (ny eller ukjent ID)"}`;
   if (field === "description") return value?.text ?? "";
   if (field === "content_kind") return CONTENT_KIND_LABELS[value] ?? String(value ?? "");
@@ -261,8 +263,11 @@ function bootstrap(fixture, liveAdapter = null) {
     } else {
       control = element("input");
       control.type = "text";
-      control.value = claim.value ?? "";
-      control.addEventListener("input", () => controller.editClaim(spec.field, { value: control.value }));
+      control.value = claimControlValue(spec.field, claim.value);
+      control.addEventListener("input", () => controller.editClaim(spec.field, {
+        value: spec.field === "version" && control.value.trim().toLocaleLowerCase("nb-NO") === "ikke oppgitt"
+          ? "unknown" : control.value,
+      }));
     }
     control.id = controlId;
     wrapper.append(control);

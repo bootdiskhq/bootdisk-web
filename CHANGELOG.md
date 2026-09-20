@@ -1,5 +1,7 @@
 # Upubliserte endringer
 
+- Vis ukjent versjon som «Ikke oppgitt» i kurateringen; behold katalogens lagringsformat.
+
 - Kildebelegg viser lesbar kildetype, filnavn og tekstutdrag ved avkryssingen.
   Lange utdrag kan åpnes, og hasher ligger under «Tekniske detaljer».
 
