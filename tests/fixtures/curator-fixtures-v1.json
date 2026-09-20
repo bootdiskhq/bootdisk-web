@@ -1,0 +1,452 @@
+{
+  "schema": "bootdisk-curator-v1",
+  "fixture_only": true,
+  "note": "Real source observations; simulated review state. Not a catalog import bundle.",
+  "entries": [
+    {
+      "schema": "bootdisk-curator-v1",
+      "key": {
+        "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+        "entry": "K4"
+      },
+      "revision": "fixture-K4-0",
+      "queue_state": "pending",
+      "source": {
+        "title": "Blockout",
+        "description": "Nå er det på tide med et vanedannende spill igjen som tester hvor raskt og logisk du tenker. Dette spillet minner om Tetris i en 3D-utgave.",
+        "target": {
+          "kind": "package",
+          "id": "package:sha256:ca330cb61f39de9951b58c5e0cb21e8eaf0b6f3c2a143340ecf31f70f144a245"
+        },
+        "members": [
+          {
+            "path": "Blockout/borx_setup.exe",
+            "size": 708345,
+            "sha256": "99e14e838b839eb8387efdae2eb15b38e4416e25edf418422a9a2420458d27f8"
+          },
+          {
+            "path": "Blockout/Ikon.bmp",
+            "size": 3126,
+            "sha256": "d2d662085d700428bb8aeab578ced5357d68a59948ca903270946505c78d5fd2"
+          },
+          {
+            "path": "Blockout/No.rtf",
+            "size": 4535,
+            "sha256": "3d3e8ceb08f2a425f37ec15b90b884a0045c76e0e0252124f524229587cb7326"
+          },
+          {
+            "path": "Blockout/Shot.jpg",
+            "size": 14515,
+            "sha256": "726bbd5e8c7d4d07a0597a1de954f5f8ca793d5604a3ead73fce220aacd88f4e"
+          }
+        ]
+      },
+      "accepted": {
+        "identification_status": "interpreted",
+        "claims": {
+          "identity": {
+            "value": {
+              "software_id": "software:blockout",
+              "name": "Blockout"
+            },
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "version": {
+            "value": "unknown",
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "content_kind": {
+            "value": "game",
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": ""
+          },
+          "distribution_kind": {
+            "value": "unknown",
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "description": {
+            "value": {
+              "language": "nb-NO",
+              "text": "Spilloppføring for Blockout, bevart med installasjonsfil og redaksjonelt materiale."
+            },
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": ""
+          }
+        }
+      },
+      "draft": {
+        "claims": {
+          "identity": {
+            "value": {
+              "software_id": "software:blockout",
+              "name": "Blockout"
+            },
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "version": {
+            "value": "unknown",
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "content_kind": {
+            "value": "game",
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": ""
+          },
+          "distribution_kind": {
+            "value": "unknown",
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "description": {
+            "value": {
+              "language": "nb-NO",
+              "text": "Spilloppføring for Blockout, bevart med installasjonsfil og redaksjonelt materiale."
+            },
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K4-e1",
+              "K4-e2"
+            ],
+            "reason": ""
+          }
+        }
+      },
+      "proposals": [],
+      "evidence": [
+        {
+          "id": "K4-e1",
+          "source_ref": {
+            "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+            "entry": "K4"
+          },
+          "field": "normalized.title",
+          "observation": "Blockout"
+        },
+        {
+          "id": "K4-e2",
+          "source_ref": {
+            "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+            "entry": "K4"
+          },
+          "field": "normalized.description",
+          "observation": "Nå er det på tide med et vanedannende spill igjen som tester hvor raskt og logisk du tenker. Dette spillet minner om Tetris i en 3D-utgave."
+        }
+      ],
+      "issues": [
+        {
+          "code": "identity_provisional",
+          "field": "identity",
+          "message": "Ikke fastslått av tilgjengelig kildebelegg."
+        },
+        {
+          "code": "version_unknown",
+          "field": "version",
+          "message": "Ikke fastslått av tilgjengelig kildebelegg."
+        },
+        {
+          "code": "distribution_unknown",
+          "field": "distribution_kind",
+          "message": "Ikke fastslått av tilgjengelig kildebelegg."
+        },
+        {
+          "code": "unsupported_archive",
+          "field": null,
+          "message": "Gentee-pakken er ikke dekodet. Behold foreløpig identitet og ukjent versjon."
+        }
+      ],
+      "undo": null
+    },
+    {
+      "schema": "bootdisk-curator-v1",
+      "key": {
+        "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+        "entry": "K23"
+      },
+      "revision": "fixture-K23-0",
+      "queue_state": "pending",
+      "source": {
+        "title": "Cpu-Z",
+        "description": "Dette programmet forteller deg alt om CPU-en din. Du kan se modell, revisjon, frekvens, ramtype, om den er overklokket samt få mange andre nyttige eller interessante opplysninger om hjertet i datamaskinen.",
+        "target": {
+          "kind": "package",
+          "id": "package:sha256:5dc2a1d9fcd72c75b876a6db69c4e9a3466dc65c998d1affc14c6b5d246f6d40"
+        },
+        "members": [
+          {
+            "path": "Tools/CPUZ/cpu-z-110.zip",
+            "size": 109838,
+            "sha256": "443987a85fafd81e9ee7a48793ae6e8f28f9051f0d48c6d9bca630de394afc3e"
+          },
+          {
+            "path": "Tools/CPUZ/CPUZ.EXE",
+            "size": 237568,
+            "sha256": "b6686d16c3d3656960112b6da2c170ad27be1d9b5b3f1eff0bc15a0acb20db34"
+          },
+          {
+            "path": "Tools/CPUZ/CPUZ.SYS",
+            "size": 3589,
+            "sha256": "ebde85e75f10584b01d7b2eda6b0b9ea4481f56ac85ae081eedb0fc27c7c94c1"
+          },
+          {
+            "path": "Tools/CPUZ/CPUZ.VXD",
+            "size": 12377,
+            "sha256": "9056b1877ca9e550cdb411acbf861647bee2e6268a03ccf2df533663e1729afe"
+          },
+          {
+            "path": "Tools/CPUZ/Setup.exe",
+            "size": 386140,
+            "sha256": "cbcb5b1951923a1a612778680379405ab1ac6b6651e5e742479aaf905e083fa6"
+          },
+          {
+            "path": "Tools/CPUZ/Shot.jpg",
+            "size": 34016,
+            "sha256": "ce97d6c6c09d162a7066b4a8f6e8b39673e1e56c9afb72ad8c5e7d4d2e2e3279"
+          }
+        ]
+      },
+      "accepted": {
+        "identification_status": "curated",
+        "claims": {
+          "identity": {
+            "value": {
+              "software_id": "software:cpu-z",
+              "name": "CPU-Z"
+            },
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          },
+          "version": {
+            "value": "1.10",
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          },
+          "content_kind": {
+            "value": "application",
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          },
+          "distribution_kind": {
+            "value": "unknown",
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "description": {
+            "value": {
+              "language": "nb-NO",
+              "text": "CPU-Z 1.10 viser informasjon om prosessoren og maskinvaren. Versjonen er bekreftet i programmets rapporttekst og i den identiske programfilen inne i ZIP-pakken."
+            },
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          }
+        }
+      },
+      "draft": {
+        "claims": {
+          "identity": {
+            "value": {
+              "software_id": "software:cpu-z",
+              "name": "CPU-Z"
+            },
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          },
+          "version": {
+            "value": "1.10",
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          },
+          "content_kind": {
+            "value": "application",
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          },
+          "distribution_kind": {
+            "value": "unknown",
+            "assessment": "unresolved",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": "Ikke fastslått av tilgjengelig kildebelegg."
+          },
+          "description": {
+            "value": {
+              "language": "nb-NO",
+              "text": "CPU-Z 1.10 viser informasjon om prosessoren og maskinvaren. Versjonen er bekreftet i programmets rapporttekst og i den identiske programfilen inne i ZIP-pakken."
+            },
+            "assessment": "accepted",
+            "evidence_ids": [
+              "K23-e1",
+              "K23-e2",
+              "K23-e3",
+              "K23-e4"
+            ],
+            "reason": ""
+          }
+        }
+      },
+      "proposals": [
+        {
+          "field": "version",
+          "value": "1.10",
+          "evidence_ids": [
+            "K23-e3",
+            "K23-e4"
+          ],
+          "reason": "Programrapporten oppgir produktversjon 1.10; generell PE-versjon 1.0.0.1 er ikke produktversjonen."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "K23-e1",
+          "source_ref": {
+            "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+            "entry": "K23"
+          },
+          "field": "normalized.title",
+          "observation": "Cpu-Z"
+        },
+        {
+          "id": "K23-e2",
+          "source_ref": {
+            "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+            "entry": "K23"
+          },
+          "field": "normalized.description",
+          "observation": "Dette programmet forteller deg alt om CPU-en din. Du kan se modell, revisjon, frekvens, ramtype, om den er overklokket samt få mange andre nyttige eller interessante opplysninger om hjertet i datamaskinen."
+        },
+        {
+          "id": "K23-e3",
+          "source_ref": {
+            "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+            "entry": "K23",
+            "path": "Tools/CPUZ/CPUZ.EXE"
+          },
+          "field": "payload_observation",
+          "observation": {
+            "method": "literal_bytes",
+            "offset": 195690,
+            "text": "Cpu-Z version <b>1.10</b>",
+            "encoding": "ascii",
+            "sha256": "b6686d16c3d3656960112b6da2c170ad27be1d9b5b3f1eff0bc15a0acb20db34"
+          }
+        },
+        {
+          "id": "K23-e4",
+          "source_ref": {
+            "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281",
+            "entry": "K23",
+            "path": "Tools/CPUZ/cpu-z-110.zip"
+          },
+          "field": "payload_observation",
+          "observation": {
+            "method": "zip_member",
+            "member": "cpuz.exe",
+            "member_sha256": "b6686d16c3d3656960112b6da2c170ad27be1d9b5b3f1eff0bc15a0acb20db34",
+            "text": "Cpu-Z version <b>1.10</b>",
+            "sha256": "443987a85fafd81e9ee7a48793ae6e8f28f9051f0d48c6d9bca630de394afc3e"
+          }
+        }
+      ],
+      "issues": [
+        {
+          "code": "distribution_unknown",
+          "field": "distribution_kind",
+          "message": "Ikke fastslått av tilgjengelig kildebelegg."
+        }
+      ],
+      "undo": null
+    }
+  ]
+}
