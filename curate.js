@@ -60,6 +60,24 @@ function evidenceContent(item, index) {
   };
 }
 
+// Merge only identical CD descriptions from the same source. Keep every stored
+// ID addressable so old selections remain visible without rewriting user data.
+function displayEvidence(evidence) {
+  return evidence.filter(item => item.field !== "raw.Global" || !evidence.some(other =>
+    other.field === "normalized.description" && other.observation === item.observation &&
+    other.source_ref.manifest === item.source_ref.manifest && other.source_ref.entry === item.source_ref.entry &&
+    other.source_ref.path === item.source_ref.path
+  )).map(item => ({ ...item, aliases: item.field === "normalized.description" ? evidence.filter(other =>
+    other.field === "raw.Global" && other.observation === item.observation &&
+    other.source_ref.manifest === item.source_ref.manifest && other.source_ref.entry === item.source_ref.entry &&
+    other.source_ref.path === item.source_ref.path
+  ) : [] }));
+}
+
+function evidenceIds(item) {
+  return [item.id, ...item.aliases.map(alias => alias.id)];
+}
+
 function evidenceDetails(item) {
   const details = element("details", "evidence-technical");
   details.append(element("summary", null, "Tekniske detaljer"));
@@ -334,17 +352,18 @@ function bootstrap(fixture, liveAdapter = null) {
           ? "CD-kategorien er originalens ordlyd. Forklar hvordan den eller annet kildebelegg støtter innholdstypen."
           : "Freeware og Shareware er lisensopplysninger. De fastslår ikke alene om utgaven er full, demo eller prøveversjon."));
       }
-      for (const [index, item] of state.entry.evidence.entries()) {
+      for (const [index, item] of displayEvidence(state.entry.evidence).entries()) {
         const option = element("div", "evidence-option");
         const input = element("input");
         input.type = "checkbox";
         input.id = `evidence-${spec.field}-${item.id}`;
-        input.checked = (claim.evidence_ids ?? []).includes(item.id);
+        input.checked = evidenceIds(item).some(id => (claim.evidence_ids ?? []).includes(id));
+        input.evidenceIds = evidenceIds(item);
         registry.evidence.set(item.id, input);
         input.addEventListener("change", () => {
           const current = new Set(controller.state.draft.claims[spec.field].evidence_ids ?? []);
+          for (const id of evidenceIds(item)) current.delete(id);
           if (input.checked) current.add(item.id);
-          else current.delete(item.id);
           controller.editClaim(spec.field, { evidence_ids: [...current] });
         });
         const optionLabel = element("label");
@@ -408,8 +427,8 @@ function bootstrap(fixture, liveAdapter = null) {
       return node;
     }));
 
-    nodes.evidenceCount.textContent = String(entry.evidence.length);
-    nodes.evidence.replaceChildren(...entry.evidence.map((item, index) => {
+    nodes.evidenceCount.textContent = String(displayEvidence(entry.evidence).length);
+    nodes.evidence.replaceChildren(...displayEvidence(entry.evidence).map((item, index) => {
       const node = element("li");
       node.append(evidencePreview(item, index), evidenceDetails(item));
       return node;
@@ -462,7 +481,7 @@ function bootstrap(fixture, liveAdapter = null) {
       }
       const chosen = new Set(claim.evidence_ids ?? []);
       for (const [id, input] of registry.evidence) {
-        const checked = chosen.has(id);
+        const checked = input.evidenceIds.some(sourceId => chosen.has(sourceId));
         if (input.checked !== checked) input.checked = checked;
       }
     }
