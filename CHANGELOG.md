@@ -1,5 +1,8 @@
 # Upubliserte endringer
 
+- Vis beskrivelsen som skrivebeskyttet original CD-omtale når Catalog har
+  tilbakeført originalteksten. Vis tilbakeføringen i beslutningshistorikken.
+
 - Vis CD-kategori og lisens som lesbare kildebelegg, forklar avhukingen og åpne
   kildevalgene når tidligere klassifisering trenger ny kontroll.
 

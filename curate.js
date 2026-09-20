@@ -26,7 +26,7 @@ const FIELD_SPECS = [
   { field: "version", label: "Versjon", control: "text", help: "Bruk «Ikke oppgitt» med begrunnelse når versjonen ikke er fastslått." },
   { field: "content_kind", label: "Innholdstype", control: "select", options: CONTENT_KINDS, labels: CONTENT_KIND_LABELS },
   { field: "distribution_kind", label: "Distribusjon", control: "select", options: DISTRIBUTION_KINDS, labels: DISTRIBUTION_LABELS, help: "«Ukjent» må stå som uavklart. Freeware betyr ikke automatisk full versjon." },
-  { field: "description", label: "Norsk beskrivelse (nb-NO)", control: "textarea" },
+  { field: "description", label: "Beskrivelse – original CD-omtale", control: "textarea" },
 ];
 
 function element(tag, className, text) {
@@ -44,6 +44,7 @@ function evidenceContent(item, index) {
     "normalized.title": "Tittel på CD-en",
     "normalized.categories": "Kategori på CD-en",
     "raw.Licens": "Lisens oppgitt på CD-en",
+    "raw.Global": "Original omtale på CD-en",
     "normalized.description": "Omtale på CD-en",
     file_content_review: "Gjennomgang av fil",
     payload_observation: "Tekst funnet i fil",
@@ -249,6 +250,7 @@ function bootstrap(fixture, liveAdapter = null) {
     } else if (spec.control === "textarea") {
       control = element("textarea");
       control.rows = 4;
+      control.readOnly = Boolean(state.entry.original_description_v1);
       control.value = claim.value?.text ?? "";
       control.addEventListener("input", () => controller.editClaim(spec.field, { value: { language: "nb-NO", text: control.value } }));
     } else if (spec.control === "identity") {
@@ -282,6 +284,7 @@ function bootstrap(fixture, liveAdapter = null) {
         ? `Katalog-ID: ${claim.value.software_id}`
         : "Uten katalog-ID. Navnet sendes som forslag; tjenesten avgjør identiteten."));
     }
+    if (spec.field === "description" && state.entry.original_description_v1) wrapper.append(element("p", "claim-accepted", "Gjengitt ordrett fra CD-en. Skriv egne vurderinger i begrunnelsen; originalteksten beholdes."));
     if (spec.help) wrapper.append(element("p", "claim-accepted", spec.help));
 
     const assessment = element("fieldset", "assessment-group");
@@ -423,7 +426,7 @@ function bootstrap(fixture, liveAdapter = null) {
     deferNote.textContent = entry.defer_reason ? 'Utsatt: ' + entry.defer_reason : '';
     nodes.historyCount.textContent = String(history.length);
     nodes.history.replaceChildren(...history.map(event => element("li", null, [
-      event.kind === "approve" ? "Godkjent" : event.kind === "undo" ? "Angret" : "Utsatt",
+      event.kind === "restore_description" ? "Originalomtale gjenopprettet" : event.kind === "approve" ? "Godkjent" : event.kind === "undo" ? "Angret" : "Utsatt",
       event.reason ? `– ${event.reason}` : "",
       `(${event.at})`,
     ].filter(Boolean).join(" "))));
