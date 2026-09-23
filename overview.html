@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kurateringsoversikt — Bootdisk</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Lokal oversikt over kurateringskøen. Prototype som kjøres lokalt og inngår ikke i den offentlige releasen.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="accessibility.css">
+<link rel="stylesheet" href="curate.css">
+<link rel="stylesheet" href="overview.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Hopp til innholdet</a>
+<header class="site-header">
+  <a class="brand" href="archive.html">BOOTDISK<span class="cursor">_</span></a>
+  <span class="tagline">kurateringsoversikt</span>
+</header>
+
+<p id="sample-banner" class="fixture-banner">
+  <strong>Syntetiske prøvedata – ikke katalogfunn.</strong>
+  <span>Programmene i denne oversikten er oppdiktet for å måle skalaen. Oversikten leser bare; den
+  godkjenner, utsetter eller endrer ingenting.</span>
+</p>
+
+<main id="main-content">
+  <noscript><p class="system-message">Oversikten trenger JavaScript.</p></noscript>
+  <p id="overview-fatal" class="system-message" role="alert" hidden></p>
+
+  <h1 class="overview-title">Kurateringsoversikt</h1>
+  <p class="overview-lede">
+    Søk og filtrer i hele køen, og åpne en oppføring i den vanlige kurateringsflyten.
+    <a href="curate.html">Åpne kurateringen uten oversikt</a>.
+  </p>
+
+  <form id="overview-filters" class="overview-filters" role="search">
+    <div class="overview-control overview-control-wide">
+      <label for="overview-search">Søk etter programnavn eller kildepost</label>
+      <input id="overview-search" type="search" autocomplete="off" placeholder="for eksempel Kvasarskriv eller K23">
+    </div>
+    <div class="overview-control">
+      <label for="overview-status">Vurderingsstatus</label>
+      <select id="overview-status">
+        <option value="all">Alle</option>
+        <option value="pending">Ventende</option>
+        <option value="deferred">Utsatt</option>
+        <option value="reviewed">Gjennomgått</option>
+      </select>
+    </div>
+    <div class="overview-control">
+      <label for="overview-field">Felt</label>
+      <select id="overview-field">
+        <option value="all">Alle felt</option>
+        <option value="any_open">Har arbeidsbehov: uavklart, kontroll eller ugodkjent kladd</option>
+        <option value="resolved">Fullstendig avklart</option>
+        <option value="needs_review">Trenger ny kontroll</option>
+        <option value="identity">Uavklart identitet</option>
+        <option value="version">Uavklart versjon</option>
+        <option value="content_kind">Uavklart innholdstype</option>
+        <option value="distribution_kind">Uavklart utgave</option>
+        <option value="description">Uavklart beskrivelse</option>
+      </select>
+    </div>
+    <div class="overview-control">
+      <label for="overview-sort">Sortering</label>
+      <select id="overview-sort">
+        <option value="name">Programnavn</option>
+        <option value="source">Kildepost</option>
+      </select>
+    </div>
+    <div class="overview-control overview-control-action">
+      <button type="button" id="overview-reset">Tilbakestill søk og filtre</button>
+    </div>
+  </form>
+
+  <p id="overview-count" class="overview-count" role="status" aria-live="polite"></p>
+  <p id="overview-loading" class="overview-state" hidden>Laster oversikten …</p>
+  <p id="overview-error" class="overview-state overview-error" role="alert" hidden></p>
+  <p id="overview-empty" class="overview-state" hidden>
+    Ingen oppføringer passer til søket og filtrene. Tilbakestill for å se hele køen igjen.
+  </p>
+  <p id="overview-outside" class="overview-state overview-outside" role="status" hidden></p>
+
+  <table class="overview-table">
+    <caption>Oppføringer i kurateringskøen. Gjennomgått og fullstendig avklart er to forskjellige ting.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Program</th>
+        <th scope="col">Kildepost</th>
+        <th scope="col">Versjon</th>
+        <th scope="col">Innholdstype</th>
+        <th scope="col">Utgave</th>
+        <th scope="col">Vurderingsstatus</th>
+        <th scope="col">Avklaring</th>
+      </tr>
+    </thead>
+    <tbody id="overview-rows"></tbody>
+  </table>
+
+  <nav class="overview-pager" aria-label="Sider i oversikten">
+    <button type="button" id="page-previous">Forrige side</button>
+    <p id="page-state" class="overview-count" role="status" aria-live="polite"></p>
+    <button type="button" id="page-next">Neste side</button>
+  </nav>
+
+  <p class="overview-note">
+    Oversikten viser 50 rader om gangen. Sidevisning holder antallet rader i skjermen konstant,
+    så tastaturrekkefølgen og skjermleseren beholder en fullstendig tabell uavhengig av hvor
+    mange oppføringer køen har.
+  </p>
+</main>
+
+<footer><span>bootdisk.no</span><span>lokal kuratering · prototype · syntetiske prøvedata</span></footer>
+<script src="curator-labels.js"></script>
+<script src="curator-navigation.js"></script>
+<script src="curate-adapter.js"></script>
+<script src="overview-sample.js"></script>
+<script src="overview-adapter.js"></script>
+<script src="overview-core.js"></script>
+<script src="overview.js"></script>
+</body>
+</html>

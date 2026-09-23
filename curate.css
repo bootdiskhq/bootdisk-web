@@ -278,3 +278,14 @@ kbd {
 .evidence-meta { display: block; color: var(--muted); font-size: .72rem; overflow-wrap: anywhere; }
 .evidence-technical, .evidence-full { margin-top: 6px; font-size: .74rem; }
 .evidence-technical pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .7rem; }
+
+/* Shown only when the decision screen was opened from the overview. */
+.curate-return {
+  width: min(100% - 32px, 1040px);
+  margin: 16px auto 0;
+  font-size: .82rem;
+}
+
+.curate-return a { color: var(--cyan); }
+/* The message that says why a return was stopped sits under the link, on its own line. */
+.curate-return .field-error { display: block; margin-top: 4px; }

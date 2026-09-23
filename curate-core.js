@@ -36,6 +36,12 @@ function curatorSameDraft(left, right) {
   return JSON.stringify(curatorCanonical(left)) === JSON.stringify(curatorCanonical(right));
 }
 
+/* Source identity is manifest plus entry: a K-id alone repeats across source manifests, so
+ * it can never decide which entry a receipt belongs to. */
+function curatorKeyId(key) {
+  return key ? `${key.manifest ?? ""}/${key.entry ?? ""}` : null;
+}
+
 function curatorEntryNumber(entryId) {
   const digits = String(entryId ?? "").replace(/^K/i, "");
   return Number.isFinite(Number(digits)) ? Number(digits) : Number.MAX_SAFE_INTEGER;
@@ -83,6 +89,9 @@ function createCuratorController(options) {
     fieldErrors: {},
     conflict: null,
     busy: false,
+    /* True while a return to the overview holds the gate. Decisions and internal
+     * navigation are refused for that window, so the two can never overlap. */
+    leaving: false,
     complete: false,
     notice: null,
     shortcutsVisible: false,
@@ -93,6 +102,7 @@ function createCuratorController(options) {
   };
 
   let autosaveTimer = null;
+  let leaving = null;
   let writing = null;
   let inflightSave = null;
   /* The last failed operation, kept whole so a retry re-sends an identical request. */
@@ -162,7 +172,7 @@ function createCuratorController(options) {
    * carries the current revision, then kept verbatim: a retry sends the same operation ID
    * and the same payload, which is what makes a committed-but-timed-out write safe. */
   function submit(kind, build, apply) {
-    const entryId = state.entry?.key?.entry ?? null;
+    const sentFor = curatorKeyId(state.entry?.key);
     let request = null;
 
     const attempt = () => write(kind, () => {
@@ -170,9 +180,9 @@ function createCuratorController(options) {
       return adapter[kind](request);
     }).then(receipt => {
       forgetPendingOperation();
-      return apply(receipt, entryId);
+      return apply(receipt, sentFor);
     }, error => {
-      pendingOperation = { kind, entryId, replay: attempt };
+      pendingOperation = { kind, entryId: sentFor, replay: attempt };
       state.pendingRetry = { kind, operation_id: request?.operation_id ?? null };
       applyError(error, "Handlingen kunne ikke fullføres.");
       emit();
@@ -203,10 +213,11 @@ function createCuratorController(options) {
         operation_id: newOperationId(),
         draft,
       }),
-      (receipt, entryId) => {
-        /* A receipt belongs to the entry it was sent for. If the curator has moved on, it
-         * must never become the state of the entry now on screen. */
-        if (state.entry?.key?.entry !== entryId) return receipt;
+      (receipt, sentFor) => {
+        /* A receipt belongs to the entry it was sent for, identified by manifest and entry
+         * together. If the curator has moved on, it must never become the state of the
+         * entry now on screen. */
+        if (curatorKeyId(state.entry?.key) !== sentFor) return receipt;
         state.entry = receipt.entry;
         /* The receipt only reports what it carried. Newer edits stay unsaved. */
         if (curatorSameDraft(state.draft, draft)) {
@@ -287,9 +298,9 @@ function createCuratorController(options) {
   }
 
   function setFilter(filter) {
-    if (state.busy) return Promise.resolve(null);
+    if (state.busy || state.leaving) return Promise.resolve(null);
     return flush().then(() => {
-      if (dirty()) return null;
+      if (state.busy || state.leaving || dirty()) return null;
       state.filter = filter;
       return loadQueue().then(() => {
         /* Switching filter out of a finished queue opens that filter's first entry
@@ -340,8 +351,10 @@ function createCuratorController(options) {
     return dirty() || state.status === "saved" ? "Lagre og neste" : "Godkjenn og neste";
   }
 
+  /* `state.busy` is set before the flush below, and `leave` refuses outright while it is
+   * set, so a return can never open between this check and the decision. */
   function decide(run) {
-    if (state.busy || !state.entry || state.conflict) return Promise.resolve(null);
+    if (state.busy || state.leaving || !state.entry || state.conflict) return Promise.resolve(null);
     state.busy = true;
     state.error = null;
     /* A retry has to reach the adapter: the error left by the previous attempt is cleared
@@ -447,7 +460,7 @@ function createCuratorController(options) {
 
   function retry() {
     const operation = pendingOperation;
-    if (!operation) return Promise.resolve(null);
+    if (!operation || state.leaving) return Promise.resolve(null);
     if (operation.kind === "saveDraft") {
       state.error = null;
       state.status = "saving";
@@ -480,12 +493,52 @@ function createCuratorController(options) {
 
   function select(key) {
     /* Waits for any write already on its way back, so a late receipt can never land on
-     * the entry the curator has just opened. */
-    if (state.busy) return Promise.resolve(null);
+     * the entry the curator has just opened. The conditions are read again after the wait,
+     * for the same reason `leave` does: a decision may have started meanwhile. */
+    if (state.busy || state.leaving) return Promise.resolve(null);
     return flush().then(() => {
-      if (dirty() || state.status === "error" || state.conflict) return null;
+      if (state.busy || state.leaving || dirty() || state.status === "error" || state.conflict) return null;
       return openEntry(key);
     }, () => null);
+  }
+
+  /* Leaving the screen altogether. One boundary, held for the whole return.
+   *
+   * Checking the entry is settled *before* waiting for the flush is not enough: a decision
+   * started while the flush is in the air would leave the page mid-decision. So the return
+   * takes the gate for its whole duration — `decide`, `select`, `setFilter` and `retry` all
+   * refuse while `state.leaving` is set — the conditions are re-read after the wait, and the
+   * caller's navigation runs inside the gate, before it is released. Nothing can start
+   * between the check and the page going away.
+   *
+   * Typing is deliberately still allowed: the flush saves whatever arrives, and text that
+   * lands after the last pass simply leaves the entry dirty and stops the return. Either
+   * way no text is lost, which is what matters.
+   *
+   * `navigate` is called once, and only when the answer is true. A second click while a
+   * return is already running is the same return, not a competing one, so it is given the
+   * same promise and the same answer. Once a return has been granted the gate stays shut:
+   * leaving a page is not instant, and nothing may start on a screen on its way out. */
+  function leave(navigate) {
+    if (leaving) return leaving;
+    if (state.busy) return Promise.resolve(false);
+    state.leaving = true;
+    emit();
+
+    leaving = flush().then(() => true, () => false).then(flushed => {
+      const safe = flushed && !state.busy && !dirty() && state.status !== "error" && !state.conflict;
+      if (!safe) {
+        /* Stopped: the screen is staying, so everything works again. */
+        state.leaving = false;
+        leaving = null;
+        emit();
+        return false;
+      }
+      emit();
+      if (navigate) navigate();
+      return true;
+    });
+    return leaving;
   }
 
   function step(direction) {
@@ -528,6 +581,7 @@ function createCuratorController(options) {
     useProposal,
     setFilter,
     select,
+    leave,
     flush,
     save,
     resolveConflict,
@@ -550,6 +604,7 @@ if (typeof module !== "undefined" && module.exports) {
     curatorActionForEvent,
     curatorSameDraft,
     curatorEntryNumber,
+    curatorKeyId,
     CURATOR_CLAIM_FIELDS,
     CURATOR_SHORTCUT_HINTS,
     CURATOR_ACTIONS,

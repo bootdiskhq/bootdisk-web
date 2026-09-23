@@ -12,6 +12,12 @@ Node må være tilgjengelig for JavaScript-testene. Nettleserkontrollene i
 `tests/test_curator_browser.py` hoppes over uten Playwright; kjør dem lokalt med
 `pip install playwright && playwright install chromium`.
 
+Reglene kuratorskjermene må holde — navigasjon og skriving, hva som teller som en
+kladdendring, identitet på svar, og grensene mot Catalog — står med kode, test og faktisk
+resultat i [kontrollmatrisen](docs/curator-control-matrix.md). Endrer du kuratorkoden,
+utvid den: en ny lenke, knapp eller hurtigtast som kan nå en skriveoperasjon skal ha en rad
+der før den er ferdig.
+
 ## Bygg en release
 
 Bygg først frontend-data fra de autoritative Catalog- og Publish-resultatene:
@@ -80,6 +86,21 @@ leveransen, og [frontend v1](docs/curator-frontend-v1.md) beskriver filene,
 hurtigtastene og kontraktobservasjonene. Datakontrakt og ADR-er eies av
 `bootdisk-catalog`; ekte kataloglagring bygges separat. Kurateringsverktøyet inngår
 ikke i den offentlige statiske releasen.
+
+## Kurateringsoversikt (prototype)
+
+En egen oversikt over hele kurateringskøen, med søk, filtre, status og navigasjon til og
+fra kurateringsskjermen. Kjør den fra reporoten på en egen port, så den ikke kolliderer
+med en kjørende lokal tjeneste:
+
+```sh
+python -m http.server 8791
+```
+
+Åpne `http://localhost:8791/overview.html`. Oversikten bruker syntetiske prøvedata for å
+måle skalaen, leser bare, og er ikke integrert med den lokale tjenesten.
+[Prototypen](docs/curator-overview-prototype.md) beskriver hva som virker, hva som bare er
+prøvedata, forslaget til lesekontrakt og backendavhengighetene.
 
 ## Ekte lokal kuratering
 

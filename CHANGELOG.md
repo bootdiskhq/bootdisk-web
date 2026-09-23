@@ -1,5 +1,38 @@
 # Upubliserte endringer
 
+- Kurateringsoversikt (`overview.html`) som prototype: søk på navn og kildepost,
+  status- og feltfiltre, sortering, sidevisning på 50 rader, og åpning av en rad i den
+  eksisterende kurateringsflyten med retur til samme søk, filtre, side og tastaturfokus.
+  Raden friskes opp fra adapterens faktiske svar etter en beslutning.
+- Oversikten skiller kladd fra sist godkjent verdi, og gjennomgått fra fullstendig
+  avklart. Status er lesbar uten farge, og smal skjerm beholder alle kolonnene.
+- Deterministiske syntetiske prøvedata på 5 230 oppføringer fordelt på 125 kildeposter,
+  med gjentatte K-ID-er og programnavn. Genereres i minnet og lagres ikke.
+- Prototypens leselag er et forslag til Catalog, på sitt eget skjema, og har ingen
+  skriveoperasjon. Oversikt, leselag og prøvedata er holdt utenfor den offentlige
+  release-allowlisten.
+- Detaljskjermen laster bare filer den lokale tjenesten faktisk serverer, så lokal
+  kuratering starter som før. Prototypens filer lastes først når skjermen åpnes fra
+  oversikten med prøvedata.
+- «Tilbake til oversikten» venter på at siste kladd er bekreftet, og stopper returen ved
+  lagringsfeil, konflikt eller pågående beslutning. Teksten beholdes, med en forklaring.
+- Oversikten regner arbeidsbehov fra kladden, slik Catalogs tjeneste gjør, og viser endret
+  vurdering eller begrunnelse selv når verdien er den samme. En kladd som setter et felt
+  til «Belagt» vises som kladd, ikke som en ny godkjent vurdering.
+- Retur og beslutning deler nå én grense: mens en retur venter på siste skriving, avvises
+  nye beslutninger og intern navigasjon, og selve navigasjonen skjer innenfor grensen.
+- Kildevalg teller som kladdendring. Kilde-ID-er sammenlignes som et sett, sammensatte
+  verdier sammenlignes semantisk, og raden sier om belegg er lagt til, fjernet eller byttet.
+- Kvitteringer bindes til kildepost og oppføring sammen, ikke til K-ID-en alene.
+- Prøvedataadapteren beskytter den tilbakeførte CD-omtalen mot overskriving og gir
+  «Utsatt: …» tilbake til skjermen, slik den lokale tjenesten gjør.
+- [Kontrollmatrise](docs/curator-control-matrix.md) med regel, kode, test og faktisk
+  resultat for kuratorskjermene, lenket fra README.
+- Merkelenken øverst på kurateringsskjermen går gjennom samme lagringskontroll som
+  «Tilbake til oversikten»: en bekreftet kladd slipper rett gjennom uten spørsmål, mens
+  lagringsfeil, konflikt eller pågående beslutning stopper utgangen og beholder teksten.
+  Modifisert klikk åpner fortsatt ny fane og lar siden stå.
+
 - Vis identiske CD-omtaler én gang under «Omtale på CD-en», med eksisterende
   kildevalg bevart og begge tekniske referanser tilgjengelige.
 

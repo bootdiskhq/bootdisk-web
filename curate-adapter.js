@@ -37,7 +37,18 @@ function fingerprint(kind, payload) {
   return `${kind}:${JSON.stringify(payload ?? null)}`;
 }
 
-function validateDraft(draft, evidence) {
+/* The catalogue restores some descriptions verbatim from the CD. Where it has, the text is
+ * not the curator's to edit: own notes belong in the reason. The local service enforces
+ * this on every write (`review.py`), so the fixture adapter has to as well — otherwise the
+ * prototype would accept a draft the real service refuses. */
+function originalDescriptionError(draft, entry) {
+  if (!entry?.original_description_v1) return null;
+  const value = draft?.claims?.description?.value ?? null;
+  if (value?.language === "nb-NO" && value?.text === (entry.source?.description ?? "")) return null;
+  return "Beskrivelsen skal være lik CD-omtalen. Bruk begrunnelse til egne notater.";
+}
+
+function validateDraft(draft, evidence, entry) {
   const fieldErrors = {};
   const claims = draft?.claims ?? {};
   const knownEvidence = new Set((evidence ?? []).map(item => item.id));
@@ -69,6 +80,10 @@ function validateDraft(draft, evidence) {
 
   if (!fieldErrors.identity && !String(claims.identity?.value?.name ?? "").trim()) {
     fieldErrors.identity = "Navnet kan ikke være tomt.";
+  }
+  if (!fieldErrors.description) {
+    const original = originalDescriptionError(draft, entry);
+    if (original) fieldErrors.description = original;
   }
   if (!fieldErrors.version) {
     const version = String(claims.version?.value ?? "").trim();
@@ -196,6 +211,12 @@ function createFixtureAdapter(options) {
       key: clone(source.key),
       revision: record.revision,
       queue_state: record.queue_state,
+      /* Carried through rather than dropped: the screen needs it to keep the restored CD
+       * text read-only, the way it does against the real service. */
+      ...(source.original_description_v1 ? { original_description_v1: source.original_description_v1 } : {}),
+      /* The screen shows «Utsatt: …» from this. The real service keeps it on the entry and
+       * clears it on approval, so the fixture does the same. */
+      defer_reason: record.defer_reason ?? null,
       source: clone(source.source),
       accepted: clone(record.accepted),
       draft: clone(record.draft),
@@ -357,7 +378,15 @@ function createFixtureAdapter(options) {
   }
 
   function saveDraft(request) {
-    return mutate("saveDraft", request, ({ record }) => {
+    return mutate("saveDraft", request, ({ source, record }) => {
+      /* Drafts allow incomplete typing, so only the rules that hold at every moment are
+       * checked here. A restored CD description is one of them. */
+      const original = originalDescriptionError(request.draft, source);
+      if (original) {
+        throw curatorError("validation_failed", "Kladden kan ikke lagres slik.", {
+          field_errors: { description: original },
+        });
+      }
       record.draft = clone(request.draft);
       return { decision_id: null };
     });
@@ -369,6 +398,7 @@ function createFixtureAdapter(options) {
         throw curatorError("validation_failed", "Utsettelse krever en begrunnelse.", { field_errors: { reason: "Skriv hvorfor oppføringen hoppes over." } });
       }
       record.queue_state = "deferred";
+      record.defer_reason = request.reason;
       record.history.push({ kind: "defer", reason: request.reason, at: now() });
       return { decision_id: null };
     });
@@ -376,7 +406,7 @@ function createFixtureAdapter(options) {
 
   function approve(request) {
     return mutate("approve", request, ({ source, record, entryId }) => {
-      const fieldErrors = validateDraft(record.draft, source.evidence);
+      const fieldErrors = validateDraft(record.draft, source.evidence, source);
       if (Object.keys(fieldErrors).length) {
         throw curatorError("validation_failed", "Kladden kan ikke godkjennes ennå.", { field_errors: fieldErrors });
       }
@@ -402,6 +432,7 @@ function createFixtureAdapter(options) {
         claims: clone(record.draft.claims),
       };
       record.queue_state = "reviewed";
+      record.defer_reason = null;
       record.history.push({
         kind: "approve",
         decision_id: decisionId,
@@ -433,6 +464,7 @@ function createFixtureAdapter(options) {
       /* Undo is a compensating event: previous claims return, the draft survives. */
       record.accepted = clone(reversible.previous);
       record.queue_state = "pending";
+      record.defer_reason = null;
       return { decision_id: compensationId };
     });
   }
@@ -505,5 +537,5 @@ function createFixtureAdapter(options) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { createFixtureAdapter, validateDraft, openFieldsOf, entryNumber, CURATOR_SCHEMA, CLAIM_FIELDS, CONTENT_KINDS, DISTRIBUTION_KINDS, QUEUE_FILTERS };
+  module.exports = { createFixtureAdapter, validateDraft, originalDescriptionError, openFieldsOf, entryNumber, CURATOR_SCHEMA, CLAIM_FIELDS, CONTENT_KINDS, DISTRIBUTION_KINDS, QUEUE_FILTERS };
 }
