@@ -300,6 +300,118 @@ class OverviewBrowserTests(unittest.TestCase):
             self.assertTrue(page.locator("#curate-return-error").is_hidden(),
                             "a modified click is ordinary browser behaviour, not a blocked return")
 
+    def test_the_logo_stops_on_a_failed_save_and_keeps_the_text(self):
+        """Third review: the logo is an exit too, so a failed write has to stop it."""
+        with self.detail_from_overview() as (page, _entry):
+            page.evaluate("""() => {
+              const fault = document.querySelector('#simulate-fault');
+              fault.value = 'write_failed';
+              fault.dispatchEvent(new Event('change', { bubbles: true }));
+              const input = document.querySelector('#claim-version');
+              input.value = '4.44-logo';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('.brand').click();
+            }""")
+            page.wait_for_selector("#curate-leave-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"), "the page was not left")
+            self.assertIn("lagret", page.text_content("#curate-leave-error").lower())
+            self.assertEqual(page.input_value("#claim-version"), "4.44-logo", "the text is still there")
+
+    def test_the_logo_stops_on_a_revision_conflict(self):
+        """Third review: a conflict has to be resolved before the logo may leave."""
+        with self.detail_from_overview() as (page, _entry):
+            page.evaluate("""() => {
+              const fault = document.querySelector('#simulate-fault');
+              fault.value = 'revision_conflict';
+              fault.dispatchEvent(new Event('change', { bubbles: true }));
+              const input = document.querySelector('#claim-version');
+              input.value = '4.45-logokonflikt';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('.brand').click();
+            }""")
+            page.wait_for_selector("#curate-leave-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"), "the page was not left")
+            self.assertIn("konflikt", page.text_content("#curate-leave-error").lower())
+            self.assertEqual(page.input_value("#claim-version"), "4.45-logokonflikt", "the text is kept")
+
+    def test_the_logo_runs_the_same_gate_from_the_keyboard(self):
+        """The logo is the first thing the keyboard reaches, so Enter must hold the gate too."""
+        with self.detail_from_overview() as (page, _entry):
+            page.evaluate("""() => {
+              const fault = document.querySelector('#simulate-fault');
+              fault.value = 'write_failed';
+              fault.dispatchEvent(new Event('change', { bubbles: true }));
+              const input = document.querySelector('#claim-version');
+              input.value = '4.46-logotastatur';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('.brand').focus();
+            }""")
+            page.keyboard.press("Enter")
+            page.wait_for_selector("#curate-leave-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"),
+                            "keyboard activation is stopped by the same rule as a click")
+            self.assertEqual(page.input_value("#claim-version"), "4.46-logotastatur", "the text is kept")
+            self.assertEqual(page.evaluate("document.activeElement.className"), "brand",
+                             "and the keyboard stays on the link that was stopped")
+
+    def test_the_logo_during_a_running_decision_neither_navigates_nor_decides_twice(self):
+        """Third review: a decision in flight blocks the logo, and the click starts no second one."""
+        with self.detail_from_overview() as (page, entry):
+            page.evaluate("""() => {
+              document.querySelector('#action-commit').click();
+              document.querySelector('.brand').click();
+            }""")
+            page.wait_for_selector("#curate-leave-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"), "the page was not left")
+            self.assertIn("beslutningen", page.text_content("#curate-leave-error").lower())
+
+            page.wait_for_function("document.querySelector('#save-state').textContent !== 'Lagrer kladd …'")
+            self.assertTrue(page.locator("#decision-error").is_hidden(),
+                            "the blocked click started no second decision that could fail")
+
+            page.click("#curate-return a")
+            page.wait_for_selector("#overview-rows tr")
+            current = page.locator("#overview-rows tr[aria-current='true']")
+            self.assertEqual(current.count(), 1, "the decided row is where it was left")
+            self.assertIn(entry, current.text_content())
+            self.assertIn("Gjennomgått", current.text_content(), "the single decision took effect")
+
+    def test_the_logo_leaves_without_asking_once_the_draft_is_confirmed(self):
+        """Third review: no extra dialog on a successful save; the text is a draft afterwards."""
+        with self.detail_from_overview() as (page, entry):
+            detail_url = page.url
+            # Type and click the logo inside one task, so the 900 ms autosave cannot have run:
+            # only the leave gate can have saved this.
+            still_here = page.evaluate("""() => {
+              const input = document.querySelector('#claim-version');
+              input.value = '4.47-logokladd';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('.brand').click();
+              return window.location.pathname.endsWith('curate.html');
+            }""")
+            self.assertTrue(still_here, "the page waits for the write instead of navigating at once")
+            page.wait_for_url(lambda url: not url.split("?")[0].endswith("curate.html"))
+            self.assertTrue(page.url.split("?")[0].endswith("archive.html"),
+                            "a settled draft leaves through the logo without a question")
+
+            page.goto(detail_url, wait_until="networkidle")
+            page.wait_for_selector("#entry-heading:not(:empty)")
+            self.assertEqual(page.text_content("#entry-id"), entry)
+            self.assertEqual(page.input_value("#claim-version"), "4.47-logokladd",
+                             "the text was saved as a draft on the way out")
+
+    def test_a_modified_click_on_the_logo_keeps_the_page_and_its_draft(self):
+        """Ctrl-click opens the archive in a second tab; this page and its text must not move."""
+        with self.detail_from_overview() as (page, _entry):
+            page.fill("#claim-version", "4.48-logofane")
+            before = page.url
+            page.click(".brand", modifiers=["Control"])
+            page.wait_for_timeout(200)
+            self.assertEqual(page.url, before, "the original page did not navigate")
+            self.assertEqual(page.input_value("#claim-version"), "4.48-logofane", "and still holds its text")
+            self.assertTrue(page.locator("#curate-leave-error").is_hidden(),
+                            "a modified click is ordinary browser behaviour, not a blocked exit")
+
     def test_changing_only_the_source_selection_shows_up_as_draft_work_in_the_overview(self):
         """Correction order remaining fault 2, end to end: a new source selection is visible work."""
         with self.detail_from_overview() as (page, entry):

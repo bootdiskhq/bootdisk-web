@@ -162,6 +162,7 @@ function bootstrap(fixture, providedAdapter = null, options = {}) {
   }
 
   if (options.returnQuery !== undefined) bindReturnLink(options.returnQuery);
+  bindBrandLink();
 
   if (!adapter.durable) {
     /* A session that cannot keep anything says so; it never implies a draft will survive
@@ -607,32 +608,46 @@ function bootstrap(fixture, providedAdapter = null, options = {}) {
     renderStatus(state);
   }
 
-  /* Going back to the overview passes the same gate as opening another entry: the draft is
-   * flushed and the page is left only once the write is confirmed. A plain href would
-   * navigate away mid-autosave, during a failed write, a conflict or a running decision,
-   * and the text would be gone. */
-  function bindReturnLink(query) {
-    const node = document.querySelector("#curate-return");
-    const link = document.querySelector("#curate-return-link");
-    const message = document.querySelector("#curate-return-error");
-    link.href = query ? `overview.html?${query}` : "overview.html";
+  /* Every link that leaves the entry passes the same gate as opening another entry: the
+   * draft is flushed and the page is left only once the write is confirmed. A plain href
+   * would navigate away mid-autosave, during a failed write, a conflict or a running
+   * decision, and the text would be gone. A settled draft goes straight through, so
+   * leaving never asks an extra question. */
+  function bindGuardedLink(link, message) {
     link.addEventListener("click", event => {
       /* A modified or middle click opens a second tab and leaves this page, and its draft,
-       * exactly as they are. */
+       * exactly as they are. The keyboard's Enter arrives here as an ordinary click. */
       if (event.defaultPrevented || event.button !== 0) return;
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       message.hidden = true;
-      /* The navigation itself is handed to the controller, which runs it inside its own
+      /* The address is read at click time: the logo's is rewritten for local curation.
+       * The navigation itself is handed to the controller, which runs it inside its own
        * gate: the entry cannot become unsettled between the check and the page going. */
-      controller.leave(() => window.location.assign(link.href)).then(safe => {
+      const href = link.href;
+      controller.leave(() => window.location.assign(href)).then(safe => {
         if (safe) return;
         message.textContent = returnBlockedText(controller.state);
         message.hidden = false;
         link.focus();
       });
     });
+  }
+
+  function bindReturnLink(query) {
+    const node = document.querySelector("#curate-return");
+    const link = document.querySelector("#curate-return-link");
+    link.href = query ? `overview.html?${query}` : "overview.html";
+    bindGuardedLink(link, document.querySelector("#curate-return-error"));
     node.hidden = false;
+  }
+
+  /* The logo leaves the curation screen too, whether it goes to the archive or reloads
+   * local curation, so it holds the same gate rather than a bare href. */
+  function bindBrandLink() {
+    const link = document.querySelector(".brand");
+    if (!link) return;
+    bindGuardedLink(link, document.querySelector("#curate-leave-error"));
   }
 
   function openDeferForm() {

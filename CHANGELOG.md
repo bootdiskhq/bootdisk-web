@@ -28,6 +28,10 @@
   «Utsatt: …» tilbake til skjermen, slik den lokale tjenesten gjør.
 - [Kontrollmatrise](docs/curator-control-matrix.md) med regel, kode, test og faktisk
   resultat for kuratorskjermene, lenket fra README.
+- Merkelenken øverst på kurateringsskjermen går gjennom samme lagringskontroll som
+  «Tilbake til oversikten»: en bekreftet kladd slipper rett gjennom uten spørsmål, mens
+  lagringsfeil, konflikt eller pågående beslutning stopper utgangen og beholder teksten.
+  Modifisert klikk åpner fortsatt ny fane og lar siden stå.
 
 - Vis identiske CD-omtaler én gang under «Omtale på CD-en», med eksisterende
   kildevalg bevart og begge tekniske referanser tilgjengelige.

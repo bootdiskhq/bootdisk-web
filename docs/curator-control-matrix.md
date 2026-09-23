@@ -36,9 +36,15 @@ Radene under viser testnavnet; filen står i parentes første gang den brukes.
 | Retur kan lagre kladd, men godkjenner aldri som bivirkning | `leave()` kaller bare `flush()` | `test_typing_then_returning_before_the_autosave_starts_saves_the_text` | Grønn. Køtilstanden er uendret etter retur. |
 | En feilet beslutning forblir synlig; ingen skjult retur | `applyError`, `state.pendingRetry` | `test_a_failed_decision_stays_visible_and_blocks_the_return` | Grønn. |
 | Feil og konflikt beholder teksten og gir en vei videre | `applyError`, `resolveConflict` | `test_a_failed_save_and_a_revision_conflict_both_stop_the_return_and_keep_the_text` | Grønn for begge feilene. |
-| Returlenken i nettleseren følger samme regel som controlleren | `bindReturnLink` i `curate.js` | `test_returning_right_after_typing_saves_the_text_as_a_draft`, `test_a_failed_save_stops_the_return_and_keeps_the_text`, `test_a_revision_conflict_stops_the_return_and_keeps_the_text`, `test_returning_during_a_running_decision_neither_navigates_nor_decides_twice` (`tests/test_overview_browser.py`) | Grønne i Chromium. |
-| Tastaturaktivering av lenken går gjennom samme port | `bindReturnLink` lytter på `click`, som Enter utløser | `test_the_return_link_runs_the_same_gate_from_the_keyboard` | Grønn. |
-| Modifisert klikk beholder vanlig nettleseroppførsel uten å forlate siden | `bindReturnLink` slipper gjennom modifiserte klikk | `test_a_modified_click_keeps_the_page_and_its_draft_where_they_are` | Grønn. Siden og teksten står. |
+| Returlenken i nettleseren følger samme regel som controlleren | `bindGuardedLink` i `curate.js` | `test_returning_right_after_typing_saves_the_text_as_a_draft`, `test_a_failed_save_stops_the_return_and_keeps_the_text`, `test_a_revision_conflict_stops_the_return_and_keeps_the_text`, `test_returning_during_a_running_decision_neither_navigates_nor_decides_twice` (`tests/test_overview_browser.py`) | Grønne i Chromium. |
+| Tastaturaktivering av lenken går gjennom samme port | `bindGuardedLink` lytter på `click`, som Enter utløser | `test_the_return_link_runs_the_same_gate_from_the_keyboard` | Grønn. |
+| Modifisert klikk beholder vanlig nettleseroppførsel uten å forlate siden | `bindGuardedLink` slipper gjennom modifiserte klikk | `test_a_modified_click_keeps_the_page_and_its_draft_where_they_are` | Grønn. Siden og teksten står. |
+| Merkelenken øverst er også en utgang og holder samme port | `bindBrandLink` binder `.brand` med `bindGuardedLink`; meldingen står i `#curate-leave-error` | `test_the_logo_stops_on_a_failed_save_and_keeps_the_text`, `test_the_logo_stops_on_a_revision_conflict` | Grønne. Falt på koden før rettingen (`42149a2`). |
+| Merkelenken under en pågående beslutning stoppes, og starter ingen ny | samme port som returen; `state.busy` | `test_the_logo_during_a_running_decision_neither_navigates_nor_decides_twice` | Grønn. Falt på koden før rettingen. |
+| Tastaturaktivering av merkelenken går gjennom samme port | `bindGuardedLink` lytter på `click`, som Enter utløser | `test_the_logo_runs_the_same_gate_from_the_keyboard` | Grønn. Falt på koden før rettingen. |
+| Bekreftet kladd forlater gjennom merkelenken uten ekstra spørsmål | `leave()` navigerer selv når skrivingen er bekreftet | `test_the_logo_leaves_without_asking_once_the_draft_is_confirmed` | Grønn. Teksten ligger i kladden etterpå; ingen dialog. Falt på koden før rettingen. |
+| Modifisert klikk på merkelenken beholder vanlig nettleseroppførsel | `bindGuardedLink` slipper gjennom modifiserte klikk | `test_a_modified_click_on_the_logo_keeps_the_page_and_its_draft` | Grønn. Siden og teksten står. |
+| Adressen leses ved klikket, ikke ved bindingen | `bindGuardedLink` leser `link.href` i handleren | dekkes av radene over; merkelenken skrives om til `curate.html?mode=local` i ekte modus | Grønn. |
 
 **Hvorfor sperring er trygt.** Ordren tillater sperring eller serialisering. Valget er
 sperring: mens en retur venter på siste skriving, avvises nye beslutninger og intern
@@ -93,10 +99,6 @@ Påstandens redigerbare innhold er `value`, `assessment`, `reason` og `evidence_
 
 ## Kjente hull
 
-- **Merkelenken øverst på siden** (`.brand`) er en vanlig lenke og går utenom porten, som
-  den alltid har gjort. En ulagret kladd kan gå tapt ved å klikke den. Ordren forbyr en
-  generell bekreftelsesdialog foran vellykket navigasjon, så den er ikke lagt inn; en
-  eventuell retting hører hjemme i et eget forløp for «forlat siden helt».
 - **Nettleserkontrollene krever Chromium** og hoppes over uten Playwright, som på CI.
   Hoppet test er ikke bestått test.
 - **Sammenligningen mot Catalogs allowlist krever en Catalog-checkout**
