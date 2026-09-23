@@ -94,7 +94,7 @@ class FrontendContractTests(unittest.TestCase):
         javascript = (ROOT / "app.js").read_text(encoding="utf-8")
         self.assertIn('identified: "Identifisert"', javascript)
         self.assertIn('pending: "Venter på identifisering"', javascript)
-        self.assertIn('screenshot.alt = `Skjermbilde fra ${name}`', javascript)
+        self.assertIn('screenshot.alt = `Bilde fra CD-menyen: ${name}`', javascript)
 
     def test_entry_prefers_curated_norwegian_description_with_safe_fallback(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")

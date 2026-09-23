@@ -36,6 +36,9 @@ def build_collection(config_path: Path, output: Path):
         index = validate_frontend_data(data)
         require(index.get("schema") != "bootdisk-web-collection-1", "input must be a single-medium projection")
         medium = {"id": slug, "publication": index["publication"], "medium": index["medium"], "legacy_links": legacy}
+        for field in ("image_requirements", "images_unavailable_reason"):
+            if field in item:
+                medium[field] = deepcopy(item[field])
         manifest_ref = None
         for summary in index["entries"]:
             source_id = summary["entry"]

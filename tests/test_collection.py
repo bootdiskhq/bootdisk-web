@@ -33,7 +33,7 @@ class CollectionTests(unittest.TestCase):
         (data / (entry.lower() + '.json')).write_text(json.dumps(detail))
         (data / 'index.json').write_text(json.dumps({'publication': 'Test', 'medium': slug,
              'entries': [{'entry': entry, 'curation_status': 'pending', 'editorial_title': slug}]}))
-        self.inputs.append({'id': slug, 'data': slug, 'legacy_links': legacy})
+        self.inputs.append({'id': slug, 'data': slug, 'legacy_links': legacy, 'images_unavailable_reason': 'Synthetic test fixture has no images'})
         self.config.write_text(json.dumps({'media': self.inputs}))
         return data / (entry.lower() + '.json')
 
@@ -126,3 +126,22 @@ for(const input of ['../secret','/secret','new--../../x','<script>','new--']) {
 }
 '''
         subprocess.run([shutil.which('node'), '-e', script], cwd=ROOT, check=True)
+
+    def test_release_blocks_accidentally_empty_medium(self):
+        self.medium('new', 'Spil1', 'a')
+        self.inputs[0].pop('images_unavailable_reason')
+        self.config.write_text(json.dumps({'media':self.inputs}))
+        self.build()
+        result=subprocess.run([sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1'],capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('No images for medium new',result.stderr)
+        self.assertFalse((self.root/'release').exists())
+
+    def test_release_rejects_missing_required_image_even_with_exception(self):
+        self.medium('new', 'Spil1', 'a')
+        self.inputs[0]['image_requirements']={'all_entries':['screenshot']}
+        self.config.write_text(json.dumps({'media':self.inputs}))
+        self.build()
+        result=subprocess.run([sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1'],capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('Missing screenshot: new--Spil1',result.stderr)

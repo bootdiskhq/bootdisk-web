@@ -1,3 +1,5 @@
+> Superseded by 1.2.0-rc2: rc1 omitted all new-disc images and was not publication-ready.
+
 # 1.2.0-rc1 — two-disc public archive
 
 This release publishes both K-CD 15/2001 and K-CD 1/2000. It keeps historical
