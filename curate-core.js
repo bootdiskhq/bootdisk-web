@@ -488,6 +488,17 @@ function createCuratorController(options) {
     }, () => null);
   }
 
+  /* Leaving the screen altogether goes through the same gate as opening another entry: the
+   * draft is flushed first, and the answer is false unless the entry ends up clean, without
+   * a conflict and not in the middle of a decision. Callers navigate only on true. */
+  function leave() {
+    if (state.busy) return Promise.resolve(false);
+    return flush().then(
+      () => !dirty() && state.status !== "error" && !state.conflict,
+      () => false,
+    );
+  }
+
   function step(direction) {
     const currentNumber = curatorEntryNumber(state.entry?.key?.entry);
     const ordered = state.items;
@@ -528,6 +539,7 @@ function createCuratorController(options) {
     useProposal,
     setFilter,
     select,
+    leave,
     flush,
     save,
     resolveConflict,

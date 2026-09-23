@@ -287,3 +287,5 @@ kbd {
 }
 
 .curate-return a { color: var(--cyan); }
+/* The message that says why a return was stopped sits under the link, on its own line. */
+.curate-return .field-error { display: block; margin-top: 4px; }

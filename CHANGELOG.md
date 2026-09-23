@@ -11,6 +11,14 @@
 - Prototypens leselag er et forslag til Catalog, på sitt eget skjema, og har ingen
   skriveoperasjon. Oversikt, leselag og prøvedata er holdt utenfor den offentlige
   release-allowlisten.
+- Detaljskjermen laster bare filer den lokale tjenesten faktisk serverer, så lokal
+  kuratering starter som før. Prototypens filer lastes først når skjermen åpnes fra
+  oversikten med prøvedata.
+- «Tilbake til oversikten» venter på at siste kladd er bekreftet, og stopper returen ved
+  lagringsfeil, konflikt eller pågående beslutning. Teksten beholdes, med en forklaring.
+- Oversikten regner arbeidsbehov fra kladden, slik Catalogs tjeneste gjør, og viser endret
+  vurdering eller begrunnelse selv når verdien er den samme. En kladd som setter et felt
+  til «Belagt» vises som kladd, ikke som en ny godkjent vurdering.
 
 - Vis identiske CD-omtaler én gang under «Omtale på CD-en», med eksisterende
   kildevalg bevart og begge tekniske referanser tilgjengelige.

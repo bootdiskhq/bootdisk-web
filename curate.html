@@ -24,7 +24,10 @@
 
 <main id="main-content">
   <noscript><p class="system-message">Kurateringsskjermen trenger JavaScript.</p></noscript>
-  <p id="curate-return" class="curate-return" hidden><a id="curate-return-link" href="overview.html">← Tilbake til oversikten</a></p>
+  <p id="curate-return" class="curate-return" hidden>
+    <a id="curate-return-link" href="overview.html">← Tilbake til oversikten</a>
+    <span id="curate-return-error" class="field-error" role="alert" hidden></span>
+  </p>
   <p id="curate-notice" class="system-message" role="status" hidden></p>
   <p id="curate-fatal" class="system-message" role="alert" hidden></p>
 
@@ -152,9 +155,6 @@
 </main>
 
 <footer><span>bootdisk.no</span><span>lokal kuratering · prøvedata</span></footer>
-<script src="curator-labels.js"></script>
-<script src="curator-navigation.js"></script>
-<script src="overview-sample.js"></script>
 <script src="curate-adapter.js"></script>
 <script src="curate-core.js"></script>
 <script src="curate-live-adapter.js"></script>

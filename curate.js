@@ -2,7 +2,40 @@
  * package members are never interpreted as HTML, executable content or file links.
  * Buttons and keyboard shortcuts resolve to the same action codes in curate-core.js. */
 const FIXTURE_URL = "tests/fixtures/curator-fixtures-v1.json";
-/* Labels are shared with the overview screen; see curator-labels.js. */
+/* The overview screen carries the same vocabulary in curator-labels.js, and a test keeps
+ * the two blocks identical. It stays inline here because Catalog's local service serves the
+ * curator from a closed allowlist; a separate file would answer 404 in real local mode. */
+/* --- delt kuratorvokabular: identisk blokk i curate.js og curator-labels.js --- */
+const CONTENT_KIND_LABELS = {
+  application: "Program",
+  game: "Spill",
+  course: "Kurs",
+  image_collection: "Bildesamling",
+  font_collection: "Fontsamling",
+  reference: "Oppslagsverk",
+};
+const DISTRIBUTION_LABELS = {
+  full: "Full versjon",
+  demo: "Demo",
+  trial: "Prøveversjon",
+  update: "Oppdatering",
+  unknown: "Ukjent",
+};
+const QUEUE_STATE_LABELS = { pending: "Venter", deferred: "Utsatt", reviewed: "Gjennomgått" };
+/* Status is readable without colour: the mark carries it on its own. */
+const QUEUE_STATE_MARKS = { pending: "●", deferred: "‖", reviewed: "✓" };
+const IDENTIFICATION_LABELS = { curated: "Kuratert identitet", interpreted: "Foreløpig identitet" };
+const ASSESSMENT_LABELS = { accepted: "Belagt", unresolved: "Uavklart" };
+
+/* The stored value of the three fields both screens show as a column and as a claim.
+ * «unknown» is a stored value, not a label, and is spelled out in Norwegian here. */
+function curatorFieldText(field, value) {
+  if (field === "version") return value === "unknown" ? "Ikke oppgitt" : String(value ?? "");
+  if (field === "content_kind") return CONTENT_KIND_LABELS[value] ?? String(value ?? "");
+  if (field === "distribution_kind") return DISTRIBUTION_LABELS[value] ?? String(value ?? "");
+  return String(value ?? "");
+}
+/* --- slutt delt kuratorvokabular --- */
 const FIELD_SPECS = [
   { field: "identity", label: "Identitet og navn", control: "identity" },
   { field: "version", label: "Versjon", control: "text", help: "Bruk «Ikke oppgitt» med begrunnelse når versjonen ikke er fastslått." },
@@ -95,6 +128,12 @@ function claimValueText(field, value) {
   return curatorFieldText(field, value);
 }
 
+function returnBlockedText(state) {
+  if (state.busy) return "Beslutningen er ikke bekreftet ennå. Vent til den er ferdig før du går tilbake.";
+  if (state.conflict) return "Oppføringen er endret et annet sted. Velg hvordan konflikten skal løses før du går tilbake; teksten din er beholdt.";
+  return "Kladden er ikke lagret. Teksten er beholdt her; forsøk lagringen på nytt før du går tilbake til oversikten.";
+}
+
 function byteText(size) {
   return typeof size === "number" ? `${size.toLocaleString("nb-NO")} byte` : "ukjent størrelse";
 }
@@ -121,13 +160,7 @@ function bootstrap(fixture, providedAdapter = null, options = {}) {
       "Syntetiske prøvedata fra oversiktsprototypen. Oppdiktede programmer, ikke katalogfunn."));
   }
 
-  if (options.returnQuery !== undefined) {
-    const returnNode = document.querySelector("#curate-return");
-    returnNode.hidden = false;
-    returnNode.querySelector("a").href = options.returnQuery
-      ? `overview.html?${options.returnQuery}`
-      : "overview.html";
-  }
+  if (options.returnQuery !== undefined) bindReturnLink(options.returnQuery);
 
   if (!adapter.durable) {
     /* A session that cannot keep anything says so; it never implies a draft will survive
@@ -569,6 +602,35 @@ function bootstrap(fixture, providedAdapter = null, options = {}) {
     renderStatus(state);
   }
 
+  /* Going back to the overview passes the same gate as opening another entry: the draft is
+   * flushed and the page is left only once the write is confirmed. A plain href would
+   * navigate away mid-autosave, during a failed write, a conflict or a running decision,
+   * and the text would be gone. */
+  function bindReturnLink(query) {
+    const node = document.querySelector("#curate-return");
+    const link = document.querySelector("#curate-return-link");
+    const message = document.querySelector("#curate-return-error");
+    link.href = query ? `overview.html?${query}` : "overview.html";
+    link.addEventListener("click", event => {
+      /* A modified or middle click opens a second tab and leaves this page, and its draft,
+       * exactly as they are. */
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      message.hidden = true;
+      controller.leave().then(safe => {
+        if (safe) {
+          window.location.assign(link.href);
+          return;
+        }
+        message.textContent = returnBlockedText(controller.state);
+        message.hidden = false;
+        link.focus();
+      });
+    });
+    node.hidden = false;
+  }
+
   function openDeferForm() {
     if (nodes.deferButton.disabled) return;
     nodes.deferForm.hidden = false;
@@ -661,6 +723,21 @@ function curatorBrowserStorage() {
   }
 }
 
+/* The overview prototype's own files are fetched here and nowhere else. curate.html keeps
+ * to the files Catalog's local service serves from its closed allowlist (`STATIC` in
+ * `bootdisk_catalog/service.py`), so a prototype dependency can never be a script tag on
+ * the page: it would answer 404 in real local mode and stop curation before it starts.
+ * Sample mode only ever runs off the prototype's own static server, which serves them. */
+function loadPrototypeScripts() {
+  return Promise.all(["curator-navigation.js", "overview-sample.js"].map(name => new Promise((resolve, reject) => {
+    const node = document.createElement("script");
+    node.src = name;
+    node.addEventListener("load", () => resolve(name));
+    node.addEventListener("error", () => reject(new Error(`Fant ikke ${name}. Oversikten må serveres fra reporoten.`)));
+    document.head.append(node);
+  })));
+}
+
 /* The synthetic dataset of the overview prototype, opened on one source manifest. It reuses
  * this screen unchanged: same adapter, same decisions, same simulations. */
 function startSampleCuration(params) {
@@ -685,7 +762,7 @@ function startCuration(params) {
     document.querySelector('#fixture-banner').textContent = 'Lokal kuratering – kobler til arbeidsområdet …';
     return createLiveAdapter().then(adapter => bootstrap(null, adapter));
   }
-  if (params.get('dataset') === 'sample') return startSampleCuration(params);
+  if (params.get('dataset') === 'sample') return loadPrototypeScripts().then(() => startSampleCuration(params));
   return fetch(FIXTURE_URL).then(response => {
     if (!response.ok) throw new Error(`Fant ikke prøvedataene (${response.status}).`);
     return response.json();

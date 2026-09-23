@@ -1,5 +1,12 @@
 /* Readable Norwegian labels shared by the curator's detail screen and its overview.
- * One copy, so the same stored value can never be shown as two different things. */
+ *
+ * The block below is duplicated verbatim in curate.js, and a test keeps the two identical.
+ * It cannot be a shared file that curate.html loads: Catalog's local service serves the
+ * curator from a closed allowlist (`STATIC` in `bootdisk_catalog/service.py`), so any file
+ * curate.html loads that is not already on that list answers 404 and stops real local
+ * curation before it starts. Only this page loads this file; curate.js carries its own copy.
+ */
+/* --- delt kuratorvokabular: identisk blokk i curate.js og curator-labels.js --- */
 const CONTENT_KIND_LABELS = {
   application: "Program",
   game: "Spill",
@@ -29,6 +36,7 @@ function curatorFieldText(field, value) {
   if (field === "distribution_kind") return DISTRIBUTION_LABELS[value] ?? String(value ?? "");
   return String(value ?? "");
 }
+/* --- slutt delt kuratorvokabular --- */
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {

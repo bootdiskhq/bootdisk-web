@@ -6,6 +6,8 @@ and filters, stable pagination, the round trip to the detail screen, refresh aft
 decision and the stale-result guard) rather than the presence of function names in a file.
 """
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -18,6 +20,41 @@ HARNESS = ROOT / "tests" / "overview_harness.js"
 
 NODE = shutil.which("node")
 
+# Catalog's local curator service serves a closed set of file names: `STATIC` in
+# `bootdisk_catalog/service.py` (main 2dacd311). Anything outside it answers 404, so a new
+# `<script src=…>` on the detail screen would stop local curation before it starts. The set
+# is pinned here and cross-checked against a Catalog checkout by the test below.
+CATALOG_STATIC = {
+    "curate.html", "curate.js", "curate.css", "curate-core.js", "curate-adapter.js",
+    "curate-live-adapter.js", "styles.css", "accessibility.css",
+}
+
+VOCABULARY_START = "/* --- delt kuratorvokabular: identisk blokk i curate.js og curator-labels.js --- */"
+VOCABULARY_END = "/* --- slutt delt kuratorvokabular --- */"
+
+
+def catalog_service_source():
+    """`bootdisk_catalog/service.py` from a Catalog checkout, when one is at hand."""
+    configured = os.environ.get("BOOTDISK_CATALOG_ROOT")
+    if configured:
+        candidates = [Path(configured)]
+    else:
+        candidates = [ROOT.parent / "bootdisk-catalog", ROOT.parent / "bootdiskhq" / "bootdisk-catalog"]
+    for candidate in candidates:
+        service = candidate / "bootdisk_catalog" / "service.py"
+        if service.is_file():
+            return service.read_text(encoding="utf-8")
+    return None
+
+
+def shared_vocabulary(path: Path):
+    """The delimited block that both curator screens have to agree on, word for word."""
+    source = path.read_text(encoding="utf-8")
+    if VOCABULARY_START not in source or VOCABULARY_END not in source:
+        return None
+    body = source.split(VOCABULARY_START, 1)[1].split(VOCABULARY_END, 1)[0]
+    return body.strip()
+
 
 def behaviour(body: str) -> str:
     return f"""
@@ -27,7 +64,9 @@ const {{
   overviewStateFromQuery, overviewStateToQuery, overviewSafeReturnQuery,
   createFixtureAdapter, OVERVIEW_CONTRACT, OVERVIEW_PAGE_SIZE,
 }} = require({str(HARNESS)!r});
-const {{ overviewApplyRecord }} = require({str(ROOT / "overview-adapter.js")!r});
+const {{
+  overviewApplyRecord, overviewWorkFields, overviewDraftChanges, overviewMatchesField,
+}} = require({str(ROOT / "overview-adapter.js")!r});
 const {{ curatorFieldText, CONTENT_KIND_LABELS, DISTRIBUTION_LABELS }} = require({str(ROOT / "curator-labels.js")!r});
 const {{ CONTENT_KINDS, DISTRIBUTION_KINDS }} = require({str(ROOT / "curate-adapter.js")!r});
 
@@ -83,7 +122,7 @@ class OverviewBehaviourTests(unittest.TestCase):
   assert.ok(afterStatus < everything, "the status filter narrows the result");
 
   await harness.controller.setField("version");
-  assert.ok(harness.controller.state.items.every(row => row.open_fields.includes("version")));
+  assert.ok(harness.controller.state.items.every(row => overviewWorkFields(row).includes("version")));
   const afterField = harness.controller.state.matched;
   assert.ok(afterField <= afterStatus, "the field filter narrows it further");
 
@@ -92,7 +131,7 @@ class OverviewBehaviourTests(unittest.TestCase):
   for (const row of harness.controller.state.items) {
     assert.ok(row.search.includes("kvasar"), "every row still matches the search");
     assert.equal(row.queue_state, "pending", "every row still matches the status filter");
-    assert.ok(row.open_fields.includes("version"), "every row still matches the field filter");
+    assert.ok(overviewWorkFields(row).includes("version"), "every row still matches the field filter");
   }
 
   await search(harness, "ingensomhelstheter");
@@ -390,6 +429,139 @@ class OverviewBehaviourTests(unittest.TestCase):
   console.log("ok");
 """)
 
+    def test_a_draft_assessment_is_work_even_when_the_value_is_unchanged(self):
+        """Correction order finding 3: the work need comes from the draft, not from what was approved."""
+        self.run_behaviour("""
+  function record(accepted, draft, issues) {
+    return {
+      key: { manifest: "sample-001", entry: "K1" },
+      manifest_label: "Syntetisk CD 001",
+      title: "Prøveprogram",
+      queue_state: "reviewed",
+      accepted,
+      draft,
+      issues: issues ?? [],
+    };
+  }
+  function claim(value, assessment, reason) {
+    return { value, assessment, reason: reason ?? "", evidence_ids: ["K1-e1"] };
+  }
+  function claims(version) {
+    return {
+      identity: claim({ software_id: "software:proeve", name: "Prøveprogram" }, "accepted"),
+      version,
+      content_kind: claim("application", "accepted"),
+      distribution_kind: claim("shareware", "accepted"),
+      description: claim({ language: "nb-NO", text: "Prøvetekst." }, "accepted"),
+    };
+  }
+
+  /* Case 1: approved as «Belagt», the saved draft sets the same value to «Uavklart». */
+  const settled = { identification_status: "curated", claims: claims(claim("1.10", "accepted")) };
+  const reopened = overviewSummary(record(settled, { claims: claims(claim("1.10", "unresolved", "Må sjekkes mot esken.")) }));
+  assert.ok(reopened.open_fields.includes("version"), "the draft decides what is still open");
+  assert.ok(reopened.draft_changed_fields.includes("version"), "and the row says the draft changed");
+  assert.equal(reopened.fully_resolved, false, "so the entry is not fully resolved");
+  assert.ok(overviewMatchesField(reopened, "version"), "the field filter finds it");
+  assert.ok(overviewMatchesField(reopened, "any_open"), "and so does the work filter");
+  assert.equal(overviewMatchesField(reopened, "resolved"), false);
+  assert.equal(reopened.values.version.value_changed, false, "the value itself did not change");
+  assert.ok(reopened.values.version.assessment_changed, "the assessment did");
+  assert.ok(reopened.values.version.differs, "which is a draft change like any other");
+
+  /* Case 2: approved as «Uavklart», the draft sets the same value to «Belagt». Nobody has
+   * approved that yet, so it must not read as a settled field. */
+  const open = { identification_status: "curated", claims: claims(claim("1.10", "unresolved", "Ikke bekreftet.")) };
+  const proposed = overviewSummary(record(open, { claims: claims(claim("1.10", "accepted", "Fant esken.")) }));
+  assert.equal(proposed.open_fields.includes("version"), false, "the draft has resolved it");
+  assert.ok(proposed.accepted_open_fields.includes("version"), "but the approved state has not");
+  assert.equal(proposed.fully_resolved, false, "so the row is not shown as resolved");
+  assert.ok(overviewMatchesField(proposed, "version"), "and it stays in the field filter");
+  assert.equal(proposed.values.version.accepted_assessment, "unresolved");
+  assert.equal(proposed.values.version.draft_assessment, "accepted");
+  assert.ok(proposed.values.version.differs, "the change is presented as a draft");
+
+  /* Case 3: only the reason changed. */
+  const rereasoned = overviewSummary(record(settled, { claims: claims(claim("1.10", "accepted", "Ny begrunnelse.")) }));
+  assert.ok(rereasoned.draft_changed_fields.includes("version"), "a changed reason is a draft change");
+  assert.ok(rereasoned.values.version.reason_changed);
+  assert.equal(rereasoned.values.version.value_changed, false);
+  assert.equal(rereasoned.fully_resolved, false, "an unapproved draft leaves work behind");
+
+  /* Case 4: classification_review_required is still a control need of its own. */
+  const controlled = overviewSummary(record(settled, { claims: claims(claim("1.10", "accepted")) },
+    [{ code: "classification_review_required", field: "content_kind", message: "" }]));
+  assert.deepEqual(controlled.review_required_fields, ["content_kind"]);
+  assert.ok(overviewMatchesField(controlled, "needs_review"));
+  assert.ok(overviewMatchesField(controlled, "content_kind"));
+  assert.equal(controlled.fully_resolved, false);
+
+  /* And an entry where draft and approved agree, with nothing to control, is resolved. */
+  const done = overviewSummary(record(settled, { claims: claims(claim("1.10", "accepted")) }));
+  assert.deepEqual(done.open_fields, []);
+  assert.deepEqual(done.accepted_open_fields, []);
+  assert.deepEqual(done.draft_changed_fields, []);
+  assert.ok(done.fully_resolved, "nothing open, nothing to control, nothing unapproved");
+  assert.ok(overviewMatchesField(done, "resolved"));
+  assert.equal(overviewMatchesField(done, "any_open"), false);
+  console.log("ok");
+""")
+
+    def test_approve_undo_and_reopen_keep_the_work_need_and_the_approved_state_apart(self):
+        """Correction order finding 3, last case: the row follows the adapter through a decision."""
+        self.run_behaviour("""
+  const harness = overviewHarness({ manifests: 2 });
+  await harness.controller.start();
+  const target = openButIdentified(harness.controller.state.items);
+  assert.ok(target, "the sample data has an identified entry with an open field");
+
+  const curator = harness.curatorFor(target.key.manifest);
+  const detail = detailHarness(curator);
+  await detail.controller.start();
+  await detail.controller.select(target.key);
+
+  const field = target.open_fields[0];
+  /* Resolve every open field in the draft, the way the curator would before approving. */
+  for (const [name, claim] of Object.entries(detail.controller.state.draft.claims)) {
+    if (claim.assessment === "unresolved") {
+      detail.controller.editClaim(name, { assessment: "accepted", reason: "Bekreftet i prøvedataene." });
+    }
+  }
+  detail.scheduler.run();
+  await detail.controller.flush();
+
+  const beforeApproval = await harness.adapter.refreshEntry(target.key);
+  assert.ok(beforeApproval.draft_changed_fields.includes(field),
+    "an unapproved draft is outstanding work, not a resolution");
+  assert.equal(beforeApproval.fully_resolved, false);
+  assert.ok(overviewMatchesField(beforeApproval, field), "and the field filter still finds it");
+
+  await detail.controller.dispatch("commit");
+  const approved = await harness.adapter.refreshEntry(target.key);
+  assert.equal(approved.queue_state, "reviewed");
+  assert.deepEqual(approved.draft_changed_fields, [], "approval closed the gap");
+  assert.equal(approved.open_fields.includes(field), false, "and the field is no longer open");
+  assert.equal(approved.accepted_open_fields.includes(field), false,
+    "the approved state carries the resolution too");
+
+  /* Approving advances to the next entry, so step back to the one that was decided. */
+  await detail.controller.select(target.key);
+  await detail.controller.dispatch("undo");
+  const undone = await harness.adapter.refreshEntry(target.key);
+  assert.notEqual(undone.queue_state, "reviewed", "undo puts the entry back in the queue");
+  assert.ok(overviewMatchesField(undone, "any_open") || undone.fully_resolved,
+    "and the row reports whatever the adapter now says");
+  assert.deepEqual(undone.open_fields, overviewWorkFields(undone).filter(name => undone.open_fields.includes(name)),
+    "the work fields are derived, never carried over from the previous answer");
+
+  /* Reopening the overview on that row reads the same state back. */
+  await harness.controller.reopen({ focus: target.key });
+  const row = harness.controller.state.items.find(item => item.key.entry === target.key.entry
+    && item.key.manifest === target.key.manifest) ?? undone;
+  assert.equal(row.queue_state, undone.queue_state, "the reopened overview agrees with the adapter");
+  console.log("ok");
+""")
+
     def test_sample_data_is_deterministic_and_marked_synthetic(self):
         """The scale set is reproducible and never passes for a catalogue finding."""
         self.run_behaviour("""
@@ -469,6 +641,39 @@ class OverviewReleaseTests(unittest.TestCase):
                          "overview-sample.js", "overview.css", "curator-labels.js", "curator-navigation.js"):
                 self.assertNotIn(name, published, f"{name} must not be published")
             self.assertIn("archive.html", published, "the existing public archive still builds")
+
+    def test_the_detail_screen_only_loads_files_the_local_service_serves(self):
+        """Correction order finding 1: a script the service does not serve is a 404 that kills local curation."""
+        page = (ROOT / "curate.html").read_text(encoding="utf-8")
+        scripts = re.findall(r'<script src="([^"]+)"', page)
+        self.assertTrue(scripts, "the detail screen loads scripts at all")
+        for name in scripts:
+            self.assertIn(name, CATALOG_STATIC,
+                          f"{name} is not in Catalog's static allowlist, so the local service answers 404")
+        styles = re.findall(r'<link rel="stylesheet" href="([^"]+)"', page)
+        for name in styles:
+            self.assertIn(name, CATALOG_STATIC, f"{name} is not served by the local service either")
+
+    def test_the_pinned_allowlist_matches_the_catalog_service_when_it_is_available(self):
+        """The pinned copy above is only trustworthy while it agrees with Catalog's own source."""
+        service = catalog_service_source()
+        if service is None:
+            self.skipTest("No bootdisk-catalog checkout found (set BOOTDISK_CATALOG_ROOT to run this)")
+        block = re.search(r"STATIC = \{(.*?)\}", service, re.S)
+        self.assertIsNotNone(block, "bootdisk_catalog/service.py still declares a STATIC allowlist")
+        actual = set(re.findall(r"'([^']+)'", block.group(1)))
+        self.assertEqual(actual, CATALOG_STATIC,
+                         "Catalog's static allowlist changed; update CATALOG_STATIC and re-check curate.html")
+
+    def test_the_shared_curator_vocabulary_is_identical_in_both_copies(self):
+        """The vocabulary is duplicated on purpose, because the service's allowlist is closed."""
+        detail = shared_vocabulary(ROOT / "curate.js")
+        overview = shared_vocabulary(ROOT / "curator-labels.js")
+        self.assertIsNotNone(detail, "curate.js carries the delimited shared vocabulary block")
+        self.assertIsNotNone(overview, "curator-labels.js carries the same block")
+        self.assertEqual(detail, overview,
+                         "the two copies of the shared curator vocabulary have drifted apart")
+        self.assertIn("ASSESSMENT_LABELS", detail, "the block really is the shared vocabulary")
 
     def test_the_overview_page_is_marked_local_and_accessible(self):
         page = (ROOT / "overview.html").read_text(encoding="utf-8")

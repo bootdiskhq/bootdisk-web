@@ -121,18 +121,42 @@ function bootstrapOverview() {
     return `curate.html?${target.toString()}`;
   }
 
+  /* What the draft says about a field that the approved state does not. The value may be
+   * identical: a changed assessment or a changed reason is a draft change too, and the
+   * curator has to be able to see it from the overview. */
+  function draftNote(field, value) {
+    const parts = [];
+    if (value.value_changed || value.accepted_assessment === null) {
+      parts.push(curatorFieldText(field, value.draft));
+    } else {
+      parts.push("samme verdi");
+    }
+    if (value.assessment_changed) {
+      parts.push(`vurdert som «${ASSESSMENT_LABELS[value.draft_assessment] ?? value.draft_assessment}»`);
+    }
+    if (value.reason_changed) parts.push("endret begrunnelse");
+    return `Kladd: ${parts.join(", ")}`;
+  }
+
   function valueCell(row, field) {
     const cell = overviewElement("td");
     cell.dataset.label = OVERVIEW_COLUMN_LABELS[field];
     const value = row.values[field];
     if (row.has_accepted) {
-      cell.append(overviewElement("span", null, curatorFieldText(field, value.accepted)));
+      const accepted = overviewElement("span", null, curatorFieldText(field, value.accepted));
+      cell.append(accepted);
+      /* An approved value that is itself unresolved says so, so «Uavklart» in the approved
+       * state is never read as a settled answer. */
+      if (value.accepted_assessment === "unresolved") {
+        cell.append(overviewElement("span", "row-open", `Godkjent som «${ASSESSMENT_LABELS.unresolved}»`));
+      }
     } else {
       cell.append(overviewElement("span", "row-unaccepted", "Ingen godkjent verdi ennå"));
     }
-    /* A changed draft is labelled as a draft. It is never shown as the approved value. */
+    /* A changed draft is labelled as a draft. It is never shown as the approved value, and
+     * a draft that sets a field to «Belagt» is not a new approved assessment. */
     if (value.differs) {
-      cell.append(overviewElement("span", "row-draft", `Kladd: ${curatorFieldText(field, value.draft)}`));
+      cell.append(overviewElement("span", "row-draft", draftNote(field, value)));
     }
     return cell;
   }
@@ -146,12 +170,22 @@ function bootstrapOverview() {
       cell.append(overviewElement("span", "row-open", "Ingen godkjent verdi ennå"));
     } else if (row.open_fields.length) {
       const count = row.open_fields.length === 1 ? "1 uavklart felt" : `${row.open_fields.length} uavklarte felt`;
-      cell.append(overviewElement("span", "row-open", `${count}: ${overviewFieldList(row.open_fields)}`));
-    } else {
+      cell.append(overviewElement("span", "row-open", `${count} i kladden: ${overviewFieldList(row.open_fields)}`));
+    } else if (!row.accepted_open_fields.length && !row.review_required_fields.length && !row.draft_changed_fields.length) {
       cell.append(overviewElement("span", "row-open", "Ingen uavklarte felt"));
+    }
+    /* Fields the approved state leaves unresolved, even where the draft has already moved
+     * on. They are still open until someone approves the draft. */
+    const acceptedOnly = row.accepted_open_fields.filter(field => !row.open_fields.includes(field));
+    if (row.has_accepted && acceptedOnly.length) {
+      cell.append(overviewElement("span", "row-open", `Uavklart i godkjent verdi: ${overviewFieldList(acceptedOnly)}`));
     }
     if (row.review_required_fields.length) {
       cell.append(overviewElement("span", "row-review", `Trenger ny kontroll: ${overviewFieldList(row.review_required_fields)}`));
+    }
+    if (row.has_accepted && row.draft_changed_fields.length) {
+      cell.append(overviewElement("span", "row-draft",
+        `Kladd venter på godkjenning: ${overviewFieldList(row.draft_changed_fields)}`));
     }
     return cell;
   }

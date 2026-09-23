@@ -174,6 +174,100 @@ class OverviewBrowserTests(unittest.TestCase):
             self.assertFalse(page.locator("#overview-outside").is_hidden(),
                              "a row that no longer fits the filter says so")
 
+    @contextlib.contextmanager
+    def detail_from_overview(self, query="?status=pending"):
+        """The detail screen as the curator reaches it: by clicking a row in the overview."""
+        with self.overview(query=query) as page:
+            row = page.locator("#overview-rows tr").first
+            entry = row.locator(".row-entry").text_content()
+            row.locator("a").click()
+            page.wait_for_selector("#entry-heading:not(:empty)")
+            self.assertEqual(page.text_content("#entry-id"), entry)
+            self.assertFalse(page.locator("#curate-return").is_hidden(), "the way back is offered")
+            yield page, entry
+
+    def test_returning_right_after_typing_saves_the_text_as_a_draft(self):
+        """Correction order finding 2: a click before the autosave delay must not lose the text."""
+        with self.detail_from_overview() as (page, entry):
+            # Type and click back inside one synchronous task, so the 900 ms autosave cannot
+            # have run: only the return gate can have saved this.
+            still_here = page.evaluate("""() => {
+              const input = document.querySelector('#claim-version');
+              input.value = '7.77-retur';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('#curate-return a').click();
+              return window.location.pathname.endsWith('curate.html');
+            }""")
+            self.assertTrue(still_here, "the page is not left in the same task as the click")
+
+            page.wait_for_selector("#overview-rows tr")
+            current = page.locator("#overview-rows tr[aria-current='true']")
+            self.assertEqual(current.count(), 1, "the row that was open is back in place")
+            self.assertIn(entry, current.text_content())
+            self.assertIn("Kladd: 7.77-retur", current.text_content(),
+                          "the text came back as a draft")
+            self.assertNotIn("7.77-retur", current.locator("td").nth(2).locator("span").first.text_content(),
+                             "and never as the approved value")
+
+    def test_a_failed_save_stops_the_return_and_keeps_the_text(self):
+        """Correction order finding 2: return is blocked on a save failure, with the text intact."""
+        with self.detail_from_overview() as (page, _entry):
+            page.evaluate("""() => {
+              const fault = document.querySelector('#simulate-fault');
+              fault.value = 'write_failed';
+              fault.dispatchEvent(new Event('change', { bubbles: true }));
+              const input = document.querySelector('#claim-version');
+              input.value = '8.88-feil';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('#curate-return a').click();
+            }""")
+            page.wait_for_selector("#curate-return-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"), "the page was not left")
+            self.assertIn("lagret", page.text_content("#curate-return-error").lower())
+            self.assertEqual(page.input_value("#claim-version"), "8.88-feil", "the text is still there")
+
+    def test_a_revision_conflict_stops_the_return_and_keeps_the_text(self):
+        """Correction order finding 2: a conflict has to be resolved before leaving."""
+        with self.detail_from_overview() as (page, _entry):
+            page.evaluate("""() => {
+              const fault = document.querySelector('#simulate-fault');
+              fault.value = 'revision_conflict';
+              fault.dispatchEvent(new Event('change', { bubbles: true }));
+              const input = document.querySelector('#claim-version');
+              input.value = '9.99-konflikt';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('#curate-return a').click();
+            }""")
+            page.wait_for_selector("#curate-return-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"), "the page was not left")
+            self.assertIn("konflikt", page.text_content("#curate-return-error").lower())
+            self.assertEqual(page.input_value("#claim-version"), "9.99-konflikt", "the text is still there")
+            self.assertFalse(page.locator("#conflict-panel").is_hidden(),
+                             "and the conflict is offered for resolution instead")
+
+    def test_returning_during_a_running_decision_neither_navigates_nor_decides_twice(self):
+        """Correction order finding 2: no unsafe navigation while a decision is in flight."""
+        with self.detail_from_overview() as (page, entry):
+            page.evaluate("""() => {
+              document.querySelector('#action-commit').click();
+              document.querySelector('#curate-return a').click();
+            }""")
+            page.wait_for_selector("#curate-return-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"), "the page was not left")
+            self.assertIn("beslutningen", page.text_content("#curate-return-error").lower())
+
+            page.wait_for_function("document.querySelector('#save-state').textContent !== 'Lagrer kladd …'")
+            self.assertTrue(page.locator("#decision-error").is_hidden(),
+                            "the blocked click started no second decision that could fail")
+
+            page.click("#curate-return a")
+            page.wait_for_selector("#overview-rows tr")
+            current = page.locator("#overview-rows tr[aria-current='true']")
+            self.assertEqual(current.count(), 1, "the decided row is where it was left")
+            self.assertIn(entry, current.text_content())
+            self.assertIn("Gjennomgått", current.text_content(),
+                          "the single decision took effect")
+
     def test_the_narrow_view_keeps_every_column_without_sideways_scrolling(self):
         with self.overview(width=390, height=780) as page:
             self.assertLessEqual(

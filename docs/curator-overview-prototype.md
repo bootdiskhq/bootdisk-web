@@ -72,12 +72,24 @@ det skal ikke leses som at det er det.
 | `overview-adapter.js` | Prototypens leselag. Foreslått lesekontrakt, ingen skriveoperasjon. |
 | `overview-sample.js` | Deterministisk syntetisk datasett. Genereres i minnet, ikke lagret. |
 | `overview.js` | Binding mot siden. Tekst rendres alltid som tekst. |
-| `curator-labels.js` | Norske etiketter delt av begge kuratorskjermene. |
-| `curator-navigation.js` | Adressen til en oversiktsvisning, delt av begge skjermene. |
+| `curator-labels.js` | Norske etiketter for oversikten. Speiler blokken i `curate.js`. |
+| `curator-navigation.js` | Adressen til en oversiktsvisning. Lastes bare av oversikten. |
 
-`curate.js` er utvidet med tre ting og ellers uendret: den kan åpnes på en bestemt rad
-(`?dataset=sample&manifest=…&entry=…`), den viser en tilbakelenke når den er åpnet fra
-oversikten, og etikettene er flyttet til `curator-labels.js`.
+`curate.html` laster **bare** filer som Catalogs lokale tjeneste faktisk serverer.
+`STATIC` i `bootdisk_catalog/service.py` er en lukket liste, så en ny fil i
+`<script src=…>` ville gitt 404 og stoppet den lokale kurateringen. Derfor:
+
+- Det delte kuratorvokabularet står inline i `curate.js`, og `curator-labels.js` gjentar
+  den samme blokken ordrett for oversikten. `tests/test_overview.py` holder de to like.
+- `curator-navigation.js` og `overview-sample.js` lastes først når detaljskjermen faktisk
+  åpnes med `?dataset=sample`, altså bare i prøvevisningen fra reporoten.
+
+`curate.js` er utvidet med to ting og ellers uendret: den kan åpnes på en bestemt rad
+(`?dataset=sample&manifest=…&entry=…`), og den viser en tilbakelenke når den er åpnet fra
+oversikten. Tilbakelenken navigerer ikke direkte: den går gjennom `controller.leave()`,
+som venter på at siste kladd er bekreftet og bare slipper gjennom når siden er ren, uten
+konflikt, uten lagringsfeil og uten en pågående beslutning. Stanses returen, blir teksten
+stående og lenken får en forklarende feilmelding.
 
 ## Hvorfor paginering
 
@@ -97,10 +109,18 @@ Tre ting som lett blandes, og som vises adskilt i hver rad:
   står den under som «Kladd: …» i egen farge *og* egen tekst. Har oppføringen ingen
   godkjent verdi ennå, står det «Ingen godkjent verdi ennå»; kladden presenteres aldri
   som katalogens godkjente verdi.
+- **Endret vurdering kontra endret verdi.** En kladd teller som endret når verdien,
+  vurderingen *eller* begrunnelsen avviker fra det godkjente. Er verdien den samme, står
+  det «Kladd: samme verdi, vurdert som «Uavklart»» eller «endret begrunnelse». En kladd
+  som setter et felt til «Belagt» vises som kladd, ikke som en ny godkjent vurdering.
+- **Arbeidsbehov kontra godkjent tilstand.** «Uavklarte felt i kladden» er det som
+  gjenstår, regnet fra kladden slik Catalogs `review.py` gjør det. «Uavklart i godkjent
+  verdi» er det den godkjente tilstanden fortsatt lar stå åpent. Begge holder raden inne i
+  feltfilteret, og begge hindrer «Fullstendig avklart».
 - **Gjennomgått kontra fullstendig avklart.** «Vurderingsstatus» er køtilstanden
   (venter, utsatt, gjennomgått). «Avklaring» er noe annet: en gjennomgått oppføring kan
-  fortsatt ha uavklarte felt eller et felt som trenger ny kontroll, og da står den ikke
-  som fullstendig avklart.
+  fortsatt ha uavklarte felt, et felt som trenger ny kontroll eller en kladd som venter på
+  godkjenning, og da står den ikke som fullstendig avklart.
 - **Ukjent verdi.** Lagret `unknown` vises som «Ikke oppgitt» for versjon og «Ukjent»
   for utgave, med samme ordlyd som detaljskjermen bruker.
 
@@ -152,19 +172,34 @@ Hvert element:
   title,
   queue_state,
   identification_status,
-  open_fields: [],
+  open_fields: [],             # uavklart i kladden, som getQueue
+  accepted_open_fields: [],    # uavklart i sist godkjente tilstand
   review_required_fields: [],
+  draft_changed_fields: [],    # kladden avviker i verdi, vurdering eller begrunnelse
   has_accepted: bool,
   fully_resolved: bool,
-  values: { version:           { accepted, draft, differs },
-            content_kind:      { accepted, draft, differs },
-            distribution_kind: { accepted, draft, differs } } }
+  values: { version:           { accepted, draft, accepted_assessment, draft_assessment,
+                                 value_changed, assessment_changed, reason_changed, differs },
+            content_kind:      { ... },
+            distribution_kind: { ... } } }
 ```
 
 `accepted` og `draft` hver for seg er det minste som trengs for å slippe å presentere en
-kladd som godkjent verdi. `fully_resolved` er ikke det samme som
-`queue_state === "reviewed"` og må regnes ut der åpne felt og kontrollkrav faktisk er
-kjent, altså på tjenestesiden.
+kladd som godkjent verdi.
+
+Sist godkjent verdi og gjeldende arbeidsbehov er to forskjellige ting, og begge trengs.
+`open_fields` er arbeidsbehovet slik Catalogs egen tjeneste regner det ut: `review.py`
+henter køens åpne felt fra **kladdens** vurderinger, pluss klassifiseringsfeltene den vil
+ha kontrollert. `accepted_open_fields` er det den godkjente tilstanden fortsatt lar stå
+uavklart, slik at en oppføring ikke ser avklart ut bare fordi en kladd har satt feltet til
+«Belagt» uten at noen har godkjent det. `draft_changed_fields` sammenligner verdi,
+vurdering *og* begrunnelse, for en kladd som bare endrer begrunnelsen er også ugodkjent
+arbeid.
+
+`fully_resolved` er ikke det samme som `queue_state === "reviewed"`: den krever at
+ingenting står uavklart i kladden, ingenting står uavklart i det godkjente, ingenting
+venter på kontroll og ingen kladdendring venter på godkjenning. Den må regnes ut der åpne
+felt og kontrollkrav faktisk er kjent, altså på tjenestesiden.
 
 ## Nye kontraktobservasjoner
 
@@ -187,7 +222,9 @@ samordnet avklaring, og kommer i tillegg til de fem i
 
 9. **Kladd kontra akseptert er ikke synlig i køen.** Køelementet har ingen kladdeverdier.
    Uten dem kan ikke en oversikt skille en endret kladd fra katalogens godkjente verdi
-   uten å hente hele oppføringen.
+   uten å hente hele oppføringen. Køens `open_fields` kommer fra kladden
+   (`bootdisk_catalog/review.py`), så den sier hva som gjenstår, ikke hva som er godkjent.
+   *Forslag:* skill de to i køelementet, slik forslaget over gjør.
 
 10. **`classification_review_required` står ikke i kontraktens kodeliste.** Koden brukes
     av den lokale tjenesten og av detaljskjermen, men listen over `issues`-koder i
@@ -199,15 +236,33 @@ samordnet avklaring, og kommer i tillegg til de fem i
     pakke. Prototypen bruker derfor én adapterinstans per kildepost, noe som stemmer med at
     v1-køen er per kildepost. Verdt å bekrefte som villet før den ekte adapteren bygges.
 
+12. **Fixture-adapteren utleder åpne felt fra `accepted ?? draft`.** Den ekte tjenesten
+    bruker kladden (`review.py`). For en oppføring der kladden og den godkjente tilstanden
+    er uenige, gir de to ulike svar på hva som er uavklart. Oversikten følger tjenesten.
+    *Forslag:* rett fixture-adapteren når kontrakten avklares, så prøvedata og tjeneste
+    svarer likt.
+
+13. **Tjenestens statiske allowlist er lukket.** `STATIC` i `bootdisk_catalog/service.py`
+    er et fast sett filnavn. Web kan derfor ikke legge til en ny fil som `curate.html`
+    laster, uten en samordnet Catalog-endring. Denne prototypen laster prototypefilene
+    dynamisk, og bare i `?dataset=sample`, og gjentar det delte kuratorvokabularet i
+    `curate.js` med en test som holder de to blokkene like. *Forslag:* avklar med
+    Birk/Codex hvordan Web skal kunne dele kode mellom skjermene, enten ved å utvide
+    allowlisten eller ved å serve et navngitt sett prototypefiler.
+
 ## Tester
 
 ```sh
 python -m unittest discover -s tests -v
 ```
 
-62 tester kjører uten Playwright; 78 med. Nytt i denne leveransen er 15 atferdstester i
-`tests/test_overview.py` og 8 nettleserkontroller i `tests/test_overview_browser.py`.
-Nettleserkontrollene hoppes over uten Playwright, som på CI. Kjør dem lokalt med:
+67 tester kjører uten nettleser; 87 med Chromium. Prototypen bidrar med 20 atferdstester
+i `tests/test_overview.py` og 12 nettleserkontroller i `tests/test_overview_browser.py`.
+
+Uten Playwright hoppes de 20 nettleserkontrollene over i to klasser, som på CI. Én test
+til hopper over uten en Catalog-checkout: den som sammenligner den fastspikrede kopien av
+`STATIC` med Catalogs egen kilde. Sett `BOOTDISK_CATALOG_ROOT` til en Catalog-checkout for
+å kjøre den. Kjør nettleserkontrollene lokalt med:
 
 ```sh
 pip install playwright && playwright install chromium
@@ -226,6 +281,37 @@ Punktene fra arbeidsordren:
 | 6. Tregt gammelt søkeresultat | `test_a_slow_old_search_result_cannot_replace_a_newer_one` |
 | 7. Ingen skriving, ingen detaljkall per rad, begrenset DOM | `test_reading_the_overview_never_writes…`, `test_thousands_of_entries_render_one_bounded_page_of_rows` |
 | 8. Utenfor offentlig release | `test_public_release_excludes_the_overview_and_its_sample_data` |
+
+
+Retteordrens tre funn:
+
+| Funn | Dekket av |
+| --- | --- |
+| 1. Detaljskjermen laster bare filer tjenesten serverer | `test_the_detail_screen_only_loads_files_the_local_service_serves`, `test_the_pinned_allowlist_matches_the_catalog_service_when_it_is_available`, `test_the_shared_curator_vocabulary_is_identical_in_both_copies` |
+| 2. Retur venter på lagringen og stoppes ved feil | `test_returning_right_after_typing_saves_the_text_as_a_draft`, `test_a_failed_save_stops_the_return_and_keeps_the_text`, `test_a_revision_conflict_stops_the_return_and_keeps_the_text`, `test_returning_during_a_running_decision_neither_navigates_nor_decides_twice` |
+| 3. Kladdens vurderinger er arbeidsbehov | `test_a_draft_assessment_is_work_even_when_the_value_is_unchanged`, `test_approve_undo_and_reopen_keep_the_work_need_and_the_approved_state_apart` |
+
+### Akseptanse mot den ekte lokale tjenesten
+
+Funn 1 er også kontrollert utenfor testsuiten, mot Catalogs egen tjeneste
+(`bootdisk-catalog` main `2dacd311`) på en separat testport med et engangs arbeidsområde
+i en midlertidig mappe. Ingen eksisterende arbeidsmappe, port 8772 eller brukerdata ble
+rørt.
+
+```sh
+python -m bootdisk_catalog.service /tmp/<engangs>/review \
+  --web-root /sti/til/din/checkout/bootdisk-web --port 8794
+```
+
+Resultat: alle 12 forespørsler ved oppstart svarte 200, ingen skriptfil ga 404, ingen
+skriptfeil på siden, banneret viste «Lokal kuratering – ekte katalogdata» (altså den ekte
+adapteren, ikke fixture), simuleringspanelet var skjult, K1 «Alien vs. Predator» ble lest
+fra tjenesten med «39 i filteret», en kladd ble lagret gjennom `/api/saveDraft`, overlevde
+en ny innlasting og lå på disk i arbeidsområdet uten å ha rørt de godkjente påstandene.
+Returlenken vises ikke i `?mode=local`.
+
+Samme kontroll mot commit `7552b0c` stopper med en gang: detaljskjermen laster aldri en
+oppføring, slik retteordren beskriver.
 
 Om punkt 6: prototypens søk er synkront i minnet. Testen kjører derfor den asynkrone
 veien bevisst — to søk holdes åpne, det nyeste svares først, og det gamle slippes fram

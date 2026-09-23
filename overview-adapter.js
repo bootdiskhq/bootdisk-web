@@ -19,6 +19,22 @@ function overviewOpenFields(claims) {
   return OVERVIEW_CLAIM_FIELDS.filter(field => claims?.[field]?.assessment === "unresolved");
 }
 
+/* Every field where the draft says something else than the approved state does: another
+ * value, another assessment, or another reason. A draft that only changes the reason is
+ * still unapproved work, so value equality alone cannot decide this. */
+function overviewDraftChanges(accepted, draft) {
+  if (!draft) return [];
+  return OVERVIEW_CLAIM_FIELDS.filter(field => {
+    const before = accepted?.claims?.[field] ?? null;
+    const after = draft.claims?.[field] ?? null;
+    if (!after) return false;
+    if (!before) return true;
+    return !overviewSameValue(before.value, after.value)
+      || (before.assessment ?? null) !== (after.assessment ?? null)
+      || String(before.reason ?? "") !== String(after.reason ?? "");
+  });
+}
+
 function overviewEntryNumber(entryId) {
   const digits = String(entryId ?? "").replace(/^K/i, "");
   return Number.isFinite(Number(digits)) ? Number(digits) : Number.MAX_SAFE_INTEGER;
@@ -28,32 +44,56 @@ function overviewSameValue(left, right) {
   return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
 }
 
-/* One row of the overview, derived from the review state of one entry. `getQueue` reads
- * open fields from the accepted claims when there are any, and this mirrors that exactly so
- * the two views of the same entry cannot disagree. */
+/* One row of the overview, derived from the review state of one entry.
+ *
+ * The approved state and the current work need are two different things and are kept
+ * apart here. `open_fields` is what Catalog's own service reports: `review.py` derives the
+ * queue's open fields from the *draft's* assessments, plus the classification fields it
+ * wants controlled, so the overview reads the draft the same way. `accepted_open_fields`
+ * is what the approved state still leaves unresolved, so an entry does not look settled
+ * just because a draft has moved a field to «Belagt» without anyone approving it. */
 function overviewSummary(record) {
   const accepted = record.accepted ?? null;
-  const claims = accepted?.claims ?? record.draft?.claims ?? null;
-  const openFields = overviewOpenFields(claims);
+  const draft = record.draft ?? null;
+  /* The work need comes from the draft, the way the service does it. */
+  const openFields = overviewOpenFields(draft?.claims ?? accepted?.claims ?? null);
+  const acceptedOpenFields = overviewOpenFields(accepted?.claims ?? null);
   const reviewRequired = (record.issues ?? [])
     .filter(issue => issue.code === "classification_review_required" && issue.field)
     .map(issue => issue.field);
+  const draftChanged = overviewDraftChanges(accepted, draft);
 
   const values = {};
   for (const field of OVERVIEW_VALUE_FIELDS) {
-    const acceptedValue = accepted ? (accepted.claims?.[field]?.value ?? null) : null;
-    const draftValue = record.draft?.claims?.[field]?.value ?? null;
+    const acceptedClaim = accepted?.claims?.[field] ?? null;
+    const draftClaim = draft?.claims?.[field] ?? null;
     values[field] = {
-      accepted: acceptedValue,
-      draft: draftValue,
+      accepted: acceptedClaim ? (acceptedClaim.value ?? null) : null,
+      draft: draftClaim ? (draftClaim.value ?? null) : null,
+      accepted_assessment: acceptedClaim?.assessment ?? null,
+      draft_assessment: draftClaim?.assessment ?? null,
+      value_changed: Boolean(acceptedClaim) && Boolean(draftClaim)
+        && !overviewSameValue(acceptedClaim.value, draftClaim.value),
+      assessment_changed: Boolean(acceptedClaim) && Boolean(draftClaim)
+        && (acceptedClaim.assessment ?? null) !== (draftClaim.assessment ?? null),
+      reason_changed: Boolean(acceptedClaim) && Boolean(draftClaim)
+        && String(acceptedClaim.reason ?? "") !== String(draftClaim.reason ?? ""),
       /* A draft that differs is never presented as the catalogue's approved value. */
-      differs: accepted ? !overviewSameValue(acceptedValue, draftValue) : Boolean(record.draft),
+      differs: accepted ? draftChanged.includes(field) : Boolean(draftClaim),
     };
   }
 
   const title = record.title ?? record.source?.title ?? "";
   const entry = record.key.entry;
   const label = record.manifest_label ?? record.key.manifest;
+  /* Reviewed is a pass over the entry; resolved is an entry with nothing left to do:
+   * nothing unresolved in the draft, nothing unresolved in what was approved, nothing
+   * waiting for control, and no draft change still waiting for approval. */
+  const fullyResolved = Boolean(accepted)
+    && openFields.length === 0
+    && acceptedOpenFields.length === 0
+    && reviewRequired.length === 0
+    && draftChanged.length === 0;
   return {
     key: { manifest: record.key.manifest, entry },
     manifest_label: label,
@@ -61,10 +101,11 @@ function overviewSummary(record) {
     queue_state: record.queue_state,
     identification_status: accepted?.identification_status ?? null,
     open_fields: openFields,
+    accepted_open_fields: acceptedOpenFields,
     review_required_fields: reviewRequired,
+    draft_changed_fields: draftChanged,
     has_accepted: Boolean(accepted),
-    /* Reviewed is a pass over the entry; resolved is an entry with nothing left open. */
-    fully_resolved: Boolean(accepted) && openFields.length === 0 && reviewRequired.length === 0,
+    fully_resolved: fullyResolved,
     values,
     /* Precomputed so a keystroke over several thousand rows stays a substring scan. */
     search: `${title}\n${entry}\n${label}\n${record.key.manifest}`.toLocaleLowerCase("nb-NO"),
@@ -104,12 +145,22 @@ function overviewMatchesStatus(row, status) {
   return status === "all" || row.queue_state === status;
 }
 
+/* The work filters ask what is left to do, so they read the draft's assessments and
+ * control needs alongside what the approved state still leaves open. */
+function overviewWorkFields(row) {
+  const fields = row.open_fields.slice();
+  for (const field of [...row.accepted_open_fields, ...row.review_required_fields, ...row.draft_changed_fields]) {
+    if (!fields.includes(field)) fields.push(field);
+  }
+  return fields;
+}
+
 function overviewMatchesField(row, field) {
   if (field === "all") return true;
-  if (field === "any_open") return row.open_fields.length > 0 || row.review_required_fields.length > 0;
+  if (field === "any_open") return !row.fully_resolved;
   if (field === "resolved") return row.fully_resolved;
   if (field === "needs_review") return row.review_required_fields.length > 0;
-  return row.open_fields.includes(field) || row.review_required_fields.includes(field);
+  return overviewWorkFields(row).includes(field);
 }
 
 function overviewTerms(query) {
@@ -227,6 +278,8 @@ if (typeof module !== "undefined" && module.exports) {
     overviewApplyRecord,
     overviewComparator,
     overviewMatchesField,
+    overviewWorkFields,
+    overviewDraftChanges,
     overviewEntryNumber,
     OVERVIEW_CONTRACT,
     OVERVIEW_CLAIM_FIELDS,

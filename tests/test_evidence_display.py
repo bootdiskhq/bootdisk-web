@@ -11,8 +11,6 @@ class EvidenceDisplayTests(unittest.TestCase):
         script = r'''
 const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict');
 const context = vm.createContext({CONTENT_KINDS: [], DISTRIBUTION_KINDS: []});
-// The page loads the shared labels before curate.js; the sandbox does the same.
-vm.runInContext(fs.readFileSync('curator-labels.js','utf8'), context);
 vm.runInContext(fs.readFileSync('curate.js','utf8'), context);
 vm.runInContext(`
 const ref = {manifest:'m1', entry:'K3'};
