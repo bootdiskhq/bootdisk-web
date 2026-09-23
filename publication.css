@@ -1,0 +1,377 @@
+/* Front page, collection page and the navigation that ties them to the archive. */
+html.entry-view #landing,
+html:not(.entry-view) #entry-view {
+  display: none;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+.breadcrumbs {
+  padding-top: 22px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumbs li + li::before {
+  content: "/";
+  margin: 0 .6em;
+  color: #50616a;
+}
+
+.breadcrumbs a {
+  color: var(--cyan);
+}
+
+.breadcrumbs [aria-current="page"] {
+  color: var(--ink);
+}
+
+.collection-status {
+  margin: 24px 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+}
+
+.collection-status[data-state="error"],
+.collection-status[data-state="unknown"] {
+  border: 1px solid var(--amber);
+  color: var(--amber);
+}
+
+.collection-status[hidden] {
+  display: none;
+}
+
+/* Front page */
+.landing-hero h1 {
+  margin-bottom: .2em;
+}
+
+.section-label {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.landing-list {
+  display: grid;
+  gap: 16px;
+}
+
+.collection-feature {
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.collection-feature.is-featured {
+  border-color: #50616a;
+  box-shadow: 0 22px 60px #0008;
+}
+
+.collection-feature .eyebrow {
+  margin: 0;
+}
+
+.collection-feature h3 {
+  margin: .15em 0 .35em;
+  font-family: system-ui, sans-serif;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.collection-summary {
+  max-width: 64ch;
+  margin: 0;
+  color: #c4ced3;
+  font-family: system-ui, sans-serif;
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.collection-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 36px;
+  margin: 24px 0;
+}
+
+.collection-stats div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.collection-stats dt {
+  color: var(--muted);
+  font-size: .75rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.collection-stats dd {
+  margin: 0;
+  color: var(--cyan);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.primary-link {
+  display: inline-block;
+  padding: 12px 18px;
+  border: 1px solid var(--cyan);
+  background: #0f2a33;
+  color: var(--cyan);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.primary-link::after {
+  content: " →";
+}
+
+.primary-link:hover {
+  background: #133845;
+}
+
+.all-entries {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+.collection-jump a,
+.all-entries a,
+.collection-exits a,
+.medium-links a,
+.entry-archive-link a {
+  color: var(--cyan);
+}
+
+/* Collection page */
+.collection-hero {
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+
+.collection-history {
+  max-width: 68ch;
+  margin: 0 0 40px;
+}
+
+.collection-history h2,
+.collection-media h2,
+.collection-sources h2,
+.collection-note h2 {
+  margin: 0 0 14px;
+  font-family: system-ui, sans-serif;
+  font-size: 1.4rem;
+}
+
+.collection-history p {
+  margin: 0 0 1.1em;
+  color: #c4ced3;
+  font-family: system-ui, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.collection-media {
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.media-summary {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+.disc-year-group h3 {
+  margin: 26px 0 12px;
+  color: var(--amber);
+  font-size: .9rem;
+  letter-spacing: .12em;
+}
+
+.disc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.disc-card {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: #0d161b;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform .12s, border-color .12s, background .12s;
+}
+
+.disc-card:hover,
+.disc-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--cyan);
+  background: #122028;
+}
+
+/* A typographic stand-in: no cover archive exists, and a program screenshot is not a
+ * picture of the disc. */
+.disc-cover {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  aspect-ratio: 1;
+  border: 1px solid #50616a;
+  background: linear-gradient(135deg, #1b2a31 0%, #111b20 55%, #0b1317 100%);
+  box-shadow: inset 0 0 0 4px #0d161b, inset 0 0 0 5px #26363e;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.disc-series {
+  color: var(--amber);
+  font-size: .62rem;
+  letter-spacing: .08em;
+}
+
+.disc-number {
+  margin: 3px 0;
+  color: var(--ink);
+  font-size: .95rem;
+  font-weight: 700;
+}
+
+.disc-year {
+  color: var(--muted);
+  font-size: .62rem;
+}
+
+.disc-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.disc-label {
+  font-family: system-ui, sans-serif;
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.disc-count {
+  color: var(--cyan);
+  font-size: .78rem;
+}
+
+.disc-action {
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.collection-note {
+  margin-top: 48px;
+}
+
+.collection-note p {
+  margin: 0;
+}
+
+.collection-sources {
+  margin: 0 0 32px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.collection-sources h2 {
+  font-size: .9rem;
+  color: var(--muted);
+}
+
+.collection-sources ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.collection-sources a {
+  color: #b7c1c6;
+}
+
+.collection-exits,
+.medium-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+}
+
+.collection-exits {
+  margin: 0 0 48px;
+  font-size: .85rem;
+}
+
+.medium-links,
+.collection-jump {
+  margin: 14px 0 0;
+  font-size: .85rem;
+}
+
+.medium-links[hidden] {
+  display: none;
+}
+
+.entry-archive-link {
+  margin: 12px 0 0;
+  font-size: .85rem;
+}
+
+@media (max-width: 520px) {
+  .collection-feature {
+    padding: 20px;
+  }
+
+  .disc-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .disc-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disc-card {
+    transition: none;
+  }
+
+  .disc-card:hover,
+  .disc-card:focus-visible {
+    transform: none;
+  }
+}

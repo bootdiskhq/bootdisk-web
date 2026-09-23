@@ -823,7 +823,8 @@ class OverviewReleaseTests(unittest.TestCase):
 
             subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish),
-                 "--output", str(output), "--expected-entries", "1"],
+                 "--output", str(output), "--expected-entries", "1",
+                 "--collections", str(ROOT / "tests" / "fixtures" / "collections-test-publication.json")],
                 check=True, capture_output=True, text=True,
             )
 

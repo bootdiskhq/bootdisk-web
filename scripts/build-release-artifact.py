@@ -55,6 +55,7 @@ def main() -> None:
     parser.add_argument("--ingest-manifest", type=Path)
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--expected-entries", type=int, default=39)
+    parser.add_argument("--collections", type=Path, default=ROOT / "collections.json")
     args = parser.parse_args()
     if args.catalog_root and not args.ingest_manifest:
         parser.error("--ingest-manifest is required with --catalog-root")
@@ -77,6 +78,7 @@ def main() -> None:
         subprocess.run([
             sys.executable, str(BUILD_RELEASE), str(data), str(args.publish_root.expanduser()),
             "--output", str(release), "--expected-entries", str(args.expected_entries),
+            "--collections", str(args.collections.expanduser().resolve()),
         ], check=True)
         frontend_data_sha256 = sha256_tree(data)
 

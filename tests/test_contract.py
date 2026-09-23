@@ -40,9 +40,12 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_browser_selects_entry_document_from_query_parameter(self):
         javascript = (ROOT / "app.js").read_text(encoding="utf-8")
-        self.assertIn('new URLSearchParams(window.location.search).get("entry")', javascript)
+        self.assertIn('const parameters = new URLSearchParams(window.location.search);', javascript)
+        self.assertIn('const requested = parameters.get("entry");', javascript)
         self.assertIn('`data/${entryId}.json`', javascript)
-        self.assertIn('window.location.replace("archive.html")', javascript)
+        # The front page lives on index.html now: no entry parameter must not redirect.
+        self.assertNotIn('window.location.replace', javascript)
+        self.assertIn('if (!parameters.has("entry")) return null;', javascript)
 
     def test_entry_navigation_follows_index_instead_of_guessing_ids(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -274,7 +277,8 @@ assert.equal(ids('all').length, 3);
             }), encoding="utf-8")
 
             subprocess.run(
-                [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish), "--output", str(output), "--expected-entries", "1"],
+                [sys.executable, str(ROOT / "scripts" / "build-release.py"), str(frontend), str(publish), "--output", str(output), "--expected-entries", "1",
+                 "--collections", str(ROOT / "tests" / "fixtures" / "collections-test-publication.json")],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -286,7 +290,9 @@ assert.equal(ids('all').length, 3);
             self.assertIn("Sitemap: https://bootdisk.no/sitemap.xml", (output / "robots.txt").read_text(encoding="utf-8"))
             sitemap = ET.parse(output / "sitemap.xml")
             urls = [node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
-            self.assertEqual(urls, ["https://bootdisk.no/archive.html", "https://bootdisk.no/index.html?entry=K1"])
+            self.assertEqual(urls, ["https://bootdisk.no/", "https://bootdisk.no/archive.html",
+                                    "https://bootdisk.no/collection.html?collection=testsamling",
+                                    "https://bootdisk.no/index.html?entry=K1"])
 
     def test_release_builder_rejects_asset_path_traversal(self):
         with tempfile.TemporaryDirectory() as directory:

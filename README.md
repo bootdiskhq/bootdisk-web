@@ -38,7 +38,7 @@ Innholdet i `dist/bootdisk-web/` kan lastes direkte opp til webroten. Kjør en l
 python -m http.server --directory dist/bootdisk-web 8000
 ```
 
-Åpne `http://localhost:8000/`. Roten sender nettleseren til arkivoversikten; detaljsider bruker stabile lenker som `index.html?entry=K37`.
+Åpne `http://localhost:8000/`. Roten er Bootdisk-forsiden med samlingene; `archive.html` viser alle kildeposter, og detaljsider bruker stabile lenker som `index.html?entry=K37`.
 
 ## Bygg komplett releaseartefakt
 
@@ -68,6 +68,17 @@ python scripts/frontend_contract.py build/data --expected-entries 39
 ```
 
 Offentlige, stabile lenker og metadata er dokumentert i [`docs/url-contract.md`](docs/url-contract.md). Sitemap og `robots.txt` genereres automatisk av releasebygget.
+
+## Forside og samlinger
+
+Forsiden og samlingssidene (`collection.html?collection=komputer-for-alle`) leser
+`data/index.json` og samlingsregisteret `collections.json`. Registeret kobler hver samling
+til eksakte `publication`-verdier i mediedataene, og releasebygget stopper med en forklaring
+hvis et medium mangler samling. `build-release.py` tar `--collections` for et annet register.
+Se [forsiden og samlingen](docs/publication-landing.md) for filer, tilstander,
+kontrollmatrise og akseptanse, og [kildene](docs/publication-content-sources.md) for
+publikasjonsteksten. En pakket forhåndsvisning med syntetiske data bygges med
+`python tests/synthetic_collection.py NY_MAPPE`.
 
 ## Lokal kuratering i 1.2
 

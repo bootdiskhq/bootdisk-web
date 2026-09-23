@@ -60,3 +60,20 @@
     width: 100%;
   }
 }
+
+/* Five controls and the count do not fit one row at common desktop widths. */
+.archive-tools {
+  flex-wrap: wrap;
+}
+
+/* Long option labels must not widen a select past a 360 px screen. */
+.archive-tools select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  .archive-filter {
+    grid-template-columns: 90px minmax(0, 1fr);
+  }
+}

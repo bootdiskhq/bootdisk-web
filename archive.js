@@ -89,10 +89,52 @@ function card(entry) {
   return link;
 }
 
+/* A medium filter shows one CD as a place of its own: its name, its collection and a
+ * way back to both the collection and the whole archive. */
+function archiveContext(data, registry, mediumId) {
+  const medium = (data.media ?? []).find(item => item.id === mediumId);
+  if (!medium) return { title: "Programvarearkivet", eyebrow: `${data.publication} · ${data.medium}`, trail: [{ label: "Bootdisk", href: "./" }, { label: "Alle kildeposter" }], links: [] };
+  const collection = registry ? collectionForPublication(registry, medium.publication) : null;
+  const trail = [{ label: "Bootdisk", href: "./" }];
+  if (collection) trail.push({ label: collection.title, href: collectionHref(collection) });
+  else trail.push({ label: "Alle kildeposter", href: "archive.html" });
+  trail.push({ label: medium.medium });
+  const links = collection ? [{ label: `← Tilbake til ${collection.title}`, href: collectionHref(collection) }] : [];
+  links.push({ label: "Alle kildeposter", href: "archive.html" });
+  return { title: medium.medium, eyebrow: collection ? collection.title.toLocaleUpperCase("no") : medium.publication, trail, links, medium, collection };
+}
+
+function renderArchiveContext(context) {
+  document.querySelector("#archive-title").textContent = context.title;
+  document.querySelector("#archive-source").textContent = context.eyebrow;
+  document.querySelector("#archive-lede").textContent = context.medium
+    ? "Innholdet på CD-en, slik det er bevart. Originalomtalene vises uendret, og uavklart programidentitet er merket."
+    : "Bla i kildepostene slik de er bevart. Bekreftede opplysninger og originale CD-omtaler vises side om side.";
+  document.querySelector("#archive-breadcrumbs").replaceChildren(...context.trail.map(item => {
+    const element = document.createElement("li");
+    if (item.href) {
+      const link = document.createElement("a");
+      link.href = item.href;
+      link.textContent = item.label;
+      element.append(link);
+    } else {
+      element.textContent = item.label;
+      element.setAttribute("aria-current", "page");
+    }
+    return element;
+  }));
+  const links = document.querySelector("#medium-links");
+  links.replaceChildren(...context.links.map(item => Object.assign(document.createElement("a"), { href: item.href, textContent: item.label })));
+  links.hidden = context.links.length === 0;
+  document.title = context.medium ? `${context.title}${context.collection ? ` — ${context.collection.title}` : ""} — Bootdisk` : "Arkiv — Bootdisk";
+}
+
 async function render() {
+  const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
   const response = await fetch("data/index.json");
   if (!response.ok) throw new Error(`Cannot load archive index: ${response.status}`);
   const data = await response.json();
+  const registry = await registryRequest;
   const grid = document.querySelector("#archive-grid");
   const count = document.querySelector("#archive-count");
   const empty = document.querySelector("#archive-empty");
@@ -106,11 +148,16 @@ async function render() {
   const sort = document.querySelector("#archive-sort");
   const reset = document.querySelector("#archive-reset");
   const parameters = new URLSearchParams(window.location.search);
-  medium.value = (data.media ?? []).some(item => item.id === parameters.get("medium")) ? parameters.get("medium") : "all";
+  const requestedMedium = parameters.get("medium");
+  medium.value = (data.media ?? []).some(item => item.id === requestedMedium) ? requestedMedium : "all";
+  if (requestedMedium !== null && medium.value === "all") {
+    const notice = document.querySelector("#archive-notice");
+    notice.textContent = "Fant ikke CD-en i lenken. Viser alle kildeposter i stedet.";
+    notice.hidden = false;
+  }
   search.value = parameters.get("q") ?? "";
   status.value = ["identified", "interpreted", "pending"].includes(parameters.get("status")) ? parameters.get("status") : "all";
   sort.value = parameters.get("sort") === "name" ? "name" : "source";
-  document.querySelector("#archive-source").textContent = `${data.publication} · ${data.medium}`;
 
   function update() {
     const entries = sortEntries(filterEntries(data.entries, search.value, status.value, medium.value), sort.value);
@@ -122,6 +169,7 @@ async function render() {
     if (medium.value !== "all") next.set("medium", medium.value);
     if (status.value !== "all") next.set("status", status.value);
     if (sort.value !== "source") next.set("sort", sort.value);
+    renderArchiveContext(archiveContext(data, registry, medium.value));
     const query = next.toString();
     window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   }
@@ -142,5 +190,8 @@ async function render() {
 
 render().catch(error => {
   console.error(error);
+  const notice = document.querySelector("#archive-notice");
+  notice.textContent = "Kunne ikke laste arkivoversikten. Det betyr ikke at arkivet er tomt. Last siden på nytt.";
+  notice.hidden = false;
   document.querySelector("#archive-grid").textContent = "Kunne ikke laste arkivoversikten. Bygg frontend-data først.";
 });
