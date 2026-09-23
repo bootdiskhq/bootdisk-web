@@ -8,13 +8,13 @@ function normalized(value) {
   return String(value ?? "").toLocaleLowerCase("no");
 }
 
-function filterEntries(entries, query, status) {
+function filterEntries(entries, query, status, medium = "all") {
   const needle = normalized(query.trim());
   return entries.filter(entry => {
     const effectiveStatus = entry.identification_status === "interpreted" ? "interpreted" : entry.curation_status;
     const matchesStatus = status === "all" || effectiveStatus === status;
-    const haystack = [entry.entry, entry.editorial_title, entry.software_name, entry.version].map(normalized).join(" ");
-    return matchesStatus && haystack.includes(needle);
+    const haystack = [entry.entry, entry.editorial_title, entry.software_name, entry.version, entry.medium, entry.source_entry].map(normalized).join(" ");
+    return matchesStatus && (medium === "all" || entry.medium_id === medium) && haystack.includes(needle);
   });
 }
 
@@ -25,7 +25,7 @@ function sortEntries(entries, sort) {
       const rightName = right.software_name ?? right.editorial_title ?? right.entry;
       return leftName.localeCompare(rightName, "no", { sensitivity: "base" });
     }
-    return Number(left.entry.slice(1)) - Number(right.entry.slice(1));
+    return (left.source_order ?? Number(left.entry.slice(1))) - (right.source_order ?? Number(right.entry.slice(1)));
   });
 }
 
@@ -74,7 +74,17 @@ function card(entry) {
 
   const sourceId = document.createElement("span");
   sourceId.className = "archive-entry";
-  sourceId.textContent = entry.entry;
+  sourceId.textContent = entry.source_entry ?? entry.entry;
+  if (entry.medium) {
+    const medium = document.createElement("small");
+    medium.textContent = entry.medium;
+    copy.append(medium);
+  }
+  if (entry.curation_status === "pending") {
+    const status = document.createElement("small");
+    status.textContent = "Venter på identifisering";
+    copy.append(status);
+  }
   link.append(icon, copy, sourceId);
   return link;
 }
@@ -88,21 +98,28 @@ async function render() {
   const empty = document.querySelector("#archive-empty");
   const search = document.querySelector("#archive-search");
   const status = document.querySelector("#archive-status");
+  const medium = document.querySelector("#archive-medium");
+  for (const item of data.media ?? []) {
+    const option = document.createElement("option");
+    option.value = item.id; option.textContent = item.medium; medium.append(option);
+  }
   const sort = document.querySelector("#archive-sort");
   const reset = document.querySelector("#archive-reset");
   const parameters = new URLSearchParams(window.location.search);
+  medium.value = (data.media ?? []).some(item => item.id === parameters.get("medium")) ? parameters.get("medium") : "all";
   search.value = parameters.get("q") ?? "";
   status.value = ["identified", "interpreted", "pending"].includes(parameters.get("status")) ? parameters.get("status") : "all";
   sort.value = parameters.get("sort") === "name" ? "name" : "source";
   document.querySelector("#archive-source").textContent = `${data.publication} · ${data.medium}`;
 
   function update() {
-    const entries = sortEntries(filterEntries(data.entries, search.value, status.value), sort.value);
+    const entries = sortEntries(filterEntries(data.entries, search.value, status.value, medium.value), sort.value);
     grid.replaceChildren(...entries.map(card));
     empty.hidden = entries.length !== 0;
     count.textContent = `${entries.length} av ${data.entries.length} poster`;
     const next = new URLSearchParams();
     if (search.value.trim()) next.set("q", search.value.trim());
+    if (medium.value !== "all") next.set("medium", medium.value);
     if (status.value !== "all") next.set("status", status.value);
     if (sort.value !== "source") next.set("sort", sort.value);
     const query = next.toString();
@@ -110,10 +127,12 @@ async function render() {
   }
   search.addEventListener("input", update);
   status.addEventListener("change", update);
+  medium.addEventListener("change", update);
   sort.addEventListener("change", update);
   reset.addEventListener("click", () => {
     search.value = "";
     status.value = "all";
+    medium.value = "all";
     sort.value = "source";
     update();
     search.focus();

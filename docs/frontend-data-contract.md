@@ -49,3 +49,39 @@ provisional and has a separate browsing filter. This does not change the existin
 `curation_status` enum. Missing optional fields retain the 1.0 fallback behavior.
 The version value `unknown` is displayed as unknown in details and omitted from
 page titles and overview version labels.
+
+## Collection extension — 1.2.0-rc1
+
+A single-medium projection still follows Frontend-datakontrakt 1.0. Director source
+IDs such as `Spil1` and `K1D1` are now supported, preserving case and manifest order.
+Pure K-number projections keep their historical numeric ordering.
+
+`build-collection.py config.json --output NEW_DIRECTORY` combines individually
+validated projections. Configuration uses `media: [{id, data, legacy_links?}]`;
+`data` paths are relative to the configuration. The builder refuses an existing
+output, duplicate media/manifests, cross-source observations and route collisions.
+
+A collection index has schema `bootdisk-web-collection-1`, a `media` array with
+stable slug, publication, medium label and exact manifest digest, and entries in
+configured medium/source order. The root publication/medium describe the collection.
+Each summary and detail includes `medium_id`, `source_manifest`, `source_entry`,
+`source_order`, `publication` and `medium`. Public `entry` becomes
+`<medium-slug>--<source-entry>`, while Catalog identity and `source_context.key`
+retain the original manifest/entry pair. Filenames are lowercase public IDs.
+
+Only one explicitly configured historical medium may use `legacy_links: true`.
+It retains `K37` URLs and requires K-number IDs. The slug is an editorial route
+name, not a media identity; keep it stable between releases. Different revisions of
+one source manifest must replace that medium's projection deliberately.
+
+`source_context` is supplied by Catalog. Original description, menu groups and
+issues are observations with manifest/entry/JSON-pointer provenance. Original
+text is preferred over a curated paraphrase and rendered as plain text with line
+breaks. A missing selected description is stated explicitly. Pending entries
+remain pending; source titles never become software identities. Neither versions
+from generic installers nor source menu groups become semantic facts here.
+
+No Director images have yet been selected and published. Empty assets are valid;
+this does not imply that images do not exist on the disc. The current Director
+intake preserves launch references, not complete executable packages. No program
+downloads or hosted curator are included in the public release.

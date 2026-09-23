@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-ENTRY_ID = re.compile(r"K[0-9]+", re.IGNORECASE)
+ENTRY_ID = re.compile(r"[A-Za-z][A-Za-z0-9]{0,63}")
 
 
 def public_path(object_key: str | None) -> str | None:
@@ -59,10 +59,11 @@ def main() -> None:
             continue
         if not isinstance(entry_id, str) or not ENTRY_ID.fullmatch(entry_id):
             raise SystemExit(f"Invalid source entry id: {entry_id!r}")
-        entry_id = entry_id.upper()
-        if entry_id in seen_entries:
+        if entry_id.lower() == "index":
+            raise SystemExit("Reserved source entry id: index")
+        if entry_id.lower() in seen_entries:
             raise SystemExit(f"Duplicate source entry id: {entry_id}")
-        seen_entries.add(entry_id)
+        seen_entries.add(entry_id.lower())
         occurrence_hashes = {occurrence["artifact_id"].removeprefix("artifact:sha256:") for occurrence in entry.get("occurrences") or [] if str(occurrence.get("artifact_id", "")).startswith("artifact:sha256:")}
         joined_assets = []
         for asset in assets_by_entry.get(entry_id, []):
@@ -85,7 +86,8 @@ def main() -> None:
 
     # The index is also disposable presentation data. It intentionally contains only
     # enough information to browse into an entry; detailed evidence stays per entry.
-    index.sort(key=lambda item: int(item["entry"][1:]))
+    if all(re.fullmatch(r"K[0-9]+", item["entry"]) for item in index):
+        index.sort(key=lambda item: int(item["entry"][1:]))
     documents[args.output / "index.json"] = json.dumps({"publication": args.publication, "medium": args.medium, "entries": index}, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
     # Only replace generated JSON after every input and join has validated. This

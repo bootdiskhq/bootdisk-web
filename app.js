@@ -7,7 +7,7 @@ function requestedEntry() {
     return null;
   }
   // Entry ids become filenames only after strict validation; source values never become paths.
-  if (!/^K[0-9]+$/i.test(requested)) throw new Error(`Invalid entry id: ${requested}`);
+  if (!/^(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[a-z][a-z0-9]{0,63}$/i.test(requested)) throw new Error(`Invalid entry id: ${requested}`);
   return requested.toLowerCase();
 }
 
@@ -66,17 +66,26 @@ async function render() {
   const software = entry.software?.[0];
   const name = software?.software_name ?? entry.editorial_title ?? entry.entry;
   const knownVersion = software?.version && software.version !== "unknown" ? software.version : null;
-  const version = knownVersion ?? "Ukjent versjon";
-  const description = preferredDescription(software);
+  const version = knownVersion ?? "Ikke oppgitt";
+  const description = entry.source_context?.description?.value ?? preferredDescription(software);
+  const sourceEntry = entry.source_entry ?? entry.entry;
 
-  document.querySelector("#source-context").textContent = `${entry.publication ?? "KOMPUTER FOR ALLE"} · ${entry.medium ?? "K-CD 15/2001"} · ${entry.entry}`;
+  document.querySelector("#source-context").textContent = `${entry.publication ?? "KOMPUTER FOR ALLE"} · ${entry.medium ?? "K-CD 15/2001"} · ${sourceEntry}`;
   document.querySelector("#software-name").textContent = name;
   document.querySelector("#software-version").textContent = knownVersion ? `versjon ${version}` : version;
   const descriptionElement = document.querySelector("#software-description");
   if (description) descriptionElement.textContent = description;
+  else descriptionElement.textContent = "Ingen entydig omtale er hentet fra CD-en ennå.";
+  document.querySelector("#description-label").hidden = !entry.source_context?.description;
+  const notes = [];
+  if (entry.curation_status === "pending") notes.push("Navnet er hentet fra CD-menyen. Programidentitet, versjon og utgave er ikke bekreftet.");
+  if (entry.source_context?.issues?.value?.length) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
+  const note = document.querySelector("#source-note");
+  note.textContent = notes.join(" ");
+  note.hidden = !notes.length;
   document.querySelector("#fact-name").textContent = name;
   document.querySelector("#fact-version").textContent = version;
-  document.querySelector("#fact-entry").textContent = entry.entry;
+  document.querySelector("#fact-entry").textContent = sourceEntry;
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
   document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status, software?.status);
   setMetadata(name, knownVersion, entry, description);
