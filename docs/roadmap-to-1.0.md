@@ -28,3 +28,13 @@ Bootdisk Web forblir et lett, statisk og fullt regenererbart presentasjonslag. C
 - [x] Nye medier kan bygges uten håndredigering av frontend-kode.
 
 Rammeverksbytte og større visuell redesign er ikke et 1.0-krav. Bred kuratering kan fortsette uavhengig av webplattformens stabilitet.
+
+## Public archive update — 1.2.0-rc1
+
+Multi-medium publication and CD filtering are implemented, with original wording,
+source-conflict notes and compatibility for existing K-number links. See
+[release preparation and limitations](release-1.2.0-rc1.md).
+
+The real multi-medium curator adapter, automatic field proposals and reversible
+machine decisions remain open. They do not block publishing explicitly pending
+source entries, and are not counted as delivered by this public archive update.

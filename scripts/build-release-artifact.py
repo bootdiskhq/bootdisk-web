@@ -86,6 +86,8 @@ def main() -> None:
         "schema": "bootdisk-web-release-0.1",
         "version": version,
         "entries": len(index["entries"]),
+        "media": index.get("media", []),
+        "pending_entries": sum(e.get("curation_status") == "pending" for e in index["entries"]),
         "store_files": sum(1 for path in (release / "store").rglob("*") if path.is_file()),
         "zip": {"name": archive.name, "sha256": sha256(archive), "size": archive.stat().st_size},
         "inputs": {

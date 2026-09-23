@@ -39,3 +39,5 @@
     text-align: left;
   }
 }
+
+#software-description { white-space: pre-wrap; }
