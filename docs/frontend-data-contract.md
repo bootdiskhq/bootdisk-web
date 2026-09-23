@@ -95,3 +95,10 @@ screenshot asset without changing its kind. A collection medium may declare
 builds enforce these requirements and reject image-empty media unless a nonempty
 `images_unavailable_reason` is explicitly configured. Exceptions never waive
 positive requirements. Tests and HTTP checks do not substitute for this gate.
+
+## Original-description coverage
+
+Collection media may specify `description_requirements: {"minimum_count": 33}`.
+The release checks nonblank `source_context.description.value` for that medium
+and fails before replacing output when coverage falls below the requirement.
+The artifact report includes `description_coverage` alongside image coverage.

@@ -96,6 +96,10 @@ def main() -> None:
         "media": index.get("media", []),
         "pending_entries": sum(e.get("curation_status") == "pending" for e in index["entries"]),
         "image_coverage": coverage,
+        "description_coverage": [{"medium_id": m["id"], "entries": sum(
+            isinstance((d.get("source_context", {}).get("description") or {}).get("value"), str)
+            and bool(d["source_context"]["description"]["value"].strip())
+            for d in documents if d.get("medium_id") == m["id"])} for m in index.get("media", [])],
         "store_files": sum(1 for path in (release / "store").rglob("*") if path.is_file()),
         "zip": {"name": archive.name, "sha256": sha256(archive), "size": archive.stat().st_size},
         "inputs": {
