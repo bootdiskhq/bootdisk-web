@@ -66,6 +66,13 @@ def validate_image_coverage(index, documents):
             covered = sum(any(a["kind"] == kind for a in doc["assets"]) for doc in entries)
             if covered < minimum:
                 raise ValueError(f"Insufficient {kind} coverage for {medium['id']}: {covered} < {minimum}")
+        minimum = medium.get("description_requirements", {}).get("minimum_count", 0)
+        if type(minimum) is not int or minimum < 0:
+            raise ValueError("Invalid description coverage requirement")
+        descriptions = [(doc.get("source_context", {}).get("description") or {}).get("value") for doc in entries]
+        covered = sum(isinstance(text, str) and bool(text.strip()) for text in descriptions)
+        if covered < minimum:
+            raise ValueError(f"Insufficient description coverage for {medium['id']}: {covered} < {minimum}")
 
 
 def package(frontend_data: Path, publish_root: Path, output: Path, expected_entries: int, base_url: str = DEFAULT_BASE_URL) -> None:

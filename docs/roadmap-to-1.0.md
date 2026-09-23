@@ -38,3 +38,10 @@ source-conflict notes and compatibility for existing K-number links. See
 The real multi-medium curator adapter, automatic field proposals and reversible
 machine decisions remain open. They do not block publishing explicitly pending
 source entries, and are not counted as delivered by this public archive update.
+
+## Etter fem-CD-prøven i 1.2
+
+Se [prøverapporten](five-disc-trial.md). Neste trinn er en gjenopptakbar innlesing
+av flere medier med trinnstatus per CD, kontroll av bilde- og omtaledekning og én
+avvikskø. Innlesingsavvik skal behandles samlet; automatisk kildeimport må fortsatt
+skilles fra godkjent programidentitet, versjon og distribusjon.

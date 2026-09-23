@@ -137,6 +137,22 @@ for(const input of ['../secret','/secret','new--../../x','<script>','new--']) {
         self.assertIn('No images for medium new',result.stderr)
         self.assertFalse((self.root/'release').exists())
 
+    def test_release_blocks_missing_original_description_and_accepts_restored_source(self):
+        self.medium('new', 'K1', 'a')
+        self.inputs[0]['description_requirements']={'minimum_count':1}
+        self.config.write_text(json.dumps({'media':self.inputs}))
+        self.build()
+        detail=self.root/'output/new--k1.json'; original=detail.read_text()
+        doc=json.loads(original);doc['source_context']['description']=None;detail.write_text(json.dumps(doc))
+        command=[sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1']
+        result=subprocess.run(command,capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('Insufficient description coverage',result.stderr)
+        self.assertFalse((self.root/'release').exists())
+        detail.write_text(original)
+        result=subprocess.run(command,capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+
     def test_release_rejects_missing_required_image_even_with_exception(self):
         self.medium('new', 'Spil1', 'a')
         self.inputs[0]['image_requirements']={'all_entries':['screenshot']}
