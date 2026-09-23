@@ -130,6 +130,7 @@ function claimValueText(field, value) {
 
 function returnBlockedText(state) {
   if (state.busy) return "Beslutningen er ikke bekreftet ennå. Vent til den er ferdig før du går tilbake.";
+  if (state.leaving) return "Returen pågår allerede. Vent til den siste lagringen er bekreftet.";
   if (state.conflict) return "Oppføringen er endret et annet sted. Velg hvordan konflikten skal løses før du går tilbake; teksten din er beholdt.";
   return "Kladden er ikke lagret. Teksten er beholdt her; forsøk lagringen på nytt før du går tilbake til oversikten.";
 }
@@ -551,19 +552,23 @@ function bootstrap(fixture, providedAdapter = null, options = {}) {
 
     nodes.commit.textContent = "";
     nodes.commit.append(element("span", null, controller.commitLabel()), element("kbd", null, "G"));
-    const locked = state.busy || Boolean(state.conflict);
+    const deciding = state.busy || Boolean(state.conflict);
+    /* Decisions are also refused while a return is waiting for the last write, so the
+     * buttons say the same thing the controller does. */
+    const locked = deciding || state.leaving;
     nodes.commit.disabled = locked;
     nodes.deferButton.disabled = locked;
-    nodes.retry.disabled = state.busy;
+    nodes.retry.disabled = state.busy || state.leaving;
     nodes.undo.hidden = !state.entry?.undo;
     if (state.entry?.undo) {
       nodes.undo.textContent = "";
       nodes.undo.append(element("span", null, state.entry.undo.label), element("kbd", null, "Z"));
       nodes.undo.disabled = locked;
     }
-    /* Editing is disabled during the short approve/defer/undo operation. */
+    /* Editing is disabled during the short approve/defer/undo operation. Typing stays open
+     * while a return waits: the text is either saved by the flush or it stops the return. */
     for (const control of nodes.form.querySelectorAll("input, select, textarea, button")) {
-      control.disabled = locked;
+      control.disabled = deciding;
     }
 
     nodes.notice.hidden = !state.notice;
@@ -618,11 +623,10 @@ function bootstrap(fixture, providedAdapter = null, options = {}) {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       message.hidden = true;
-      controller.leave().then(safe => {
-        if (safe) {
-          window.location.assign(link.href);
-          return;
-        }
+      /* The navigation itself is handed to the controller, which runs it inside its own
+       * gate: the entry cannot become unsettled between the check and the page going. */
+      controller.leave(() => window.location.assign(link.href)).then(safe => {
+        if (safe) return;
         message.textContent = returnBlockedText(controller.state);
         message.hidden = false;
         link.focus();

@@ -103,6 +103,9 @@ function sampleProfile(manifest, index) {
   return {
     entry: `K${index + 1}`,
     name,
+    /* Every fourth entry carries a verbatim CD description, so the prototype exercises the
+     * read-only original text the catalogue restores rather than only editable ones. */
+    originalDescription: index % 4 === 0,
     slug: sampleSlug(name),
     license: samplePick(random, SAMPLE_LICENSES),
     version: versionKnown ? samplePick(random, SAMPLE_VERSIONS) : "unknown",
@@ -119,6 +122,18 @@ function sampleProfile(manifest, index) {
     reviewRequiredField: reviewRoll < 0.08 ? (reviewRoll < 0.04 ? "content_kind" : "distribution_kind") : null,
     proposalVersion: proposalRoll < 0.15 ? SAMPLE_VERSIONS[Math.floor(proposalRoll * 100) % SAMPLE_VERSIONS.length] : null,
   };
+}
+
+/* The CD's own words about the program, which is what the source document carries. */
+function sampleSourceDescription(profile) {
+  return `Syntetisk omtale av ${profile.name}. Oppdiktet tekst for skalatesten.`;
+}
+
+/* Some entries have had that text restored verbatim by the catalogue. For those, the
+ * description claim is exactly the source text and the detail screen keeps it read-only,
+ * the same rule the local service enforces. */
+function sampleOriginalDescription(profile) {
+  return profile.originalDescription ? sampleSourceDescription(profile) : null;
 }
 
 function sampleClaim(value, assessment, evidenceIds, reason) {
@@ -142,7 +157,11 @@ function sampleClaims(profile, evidenceIds) {
       ? sampleClaim(profile.distributionKind, "accepted", evidenceIds, "")
       : sampleClaim("unknown", "unresolved", evidenceIds, "Lisensen alene fastslår ikke utgaven."),
     description: sampleClaim(
-      { language: "nb-NO", text: `Syntetisk oppføring for ${profile.name}, laget for å måle oversikten.` },
+      {
+        language: "nb-NO",
+        text: sampleOriginalDescription(profile)
+          ?? `Syntetisk oppføring for ${profile.name}, laget for å måle oversikten.`,
+      },
       "accepted", evidenceIds, "",
     ),
   };
@@ -167,7 +186,7 @@ function sampleEntry(manifest, index) {
       id: `${profile.entry}-e1`,
       source_ref: { manifest: manifest.id, entry: profile.entry, path: `${profile.slug}/omtale.txt` },
       field: "normalized.description",
-      observation: `Syntetisk omtale av ${profile.name}. Oppdiktet tekst for skalatesten.`,
+      observation: sampleSourceDescription(profile),
     },
     {
       id: `${profile.entry}-e2`,
@@ -187,12 +206,15 @@ function sampleEntry(manifest, index) {
 
   return {
     schema: OVERVIEW_SAMPLE_SCHEMA,
+    /* A flag, exactly as the local service reports it; the protected text is the source
+     * description below. */
+    ...(profile.originalDescription ? { original_description_v1: true } : {}),
     key: { manifest: manifest.id, entry: profile.entry },
     revision: `sample-${manifest.slug}-${profile.entry}-0`,
     queue_state: profile.queueState,
     source: {
       title: profile.name,
-      description: `Syntetisk omtale av ${profile.name}. Oppdiktet tekst for skalatesten.`,
+      description: sampleSourceDescription(profile),
       target: { kind: "package", id: `package:sha256:${sampleHex(random, 64)}` },
       members: [{ path: `${profile.slug}/setup.exe`, size: 100000 + Math.floor(random() * 900000), sha256: sampleHex(random, 64) }],
     },

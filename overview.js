@@ -121,6 +121,19 @@ function bootstrapOverview() {
     return `curate.html?${target.toString()}`;
   }
 
+  /* A changed source selection is work like any other, and the row says which way it went
+   * rather than only that something moved. */
+  function evidenceNote(value) {
+    if (value.evidence_added && value.evidence_removed) return "byttet kildebelegg";
+    if (value.evidence_added) {
+      return value.evidence_added === 1 ? "lagt til kildebelegg" : `lagt til ${value.evidence_added} kildebelegg`;
+    }
+    if (value.evidence_removed) {
+      return value.evidence_removed === 1 ? "fjernet kildebelegg" : `fjernet ${value.evidence_removed} kildebelegg`;
+    }
+    return "endret kildebelegg";
+  }
+
   /* What the draft says about a field that the approved state does not. The value may be
    * identical: a changed assessment or a changed reason is a draft change too, and the
    * curator has to be able to see it from the overview. */
@@ -135,6 +148,7 @@ function bootstrapOverview() {
       parts.push(`vurdert som «${ASSESSMENT_LABELS[value.draft_assessment] ?? value.draft_assessment}»`);
     }
     if (value.reason_changed) parts.push("endret begrunnelse");
+    if (value.evidence_changed) parts.push(evidenceNote(value));
     return `Kladd: ${parts.join(", ")}`;
   }
 

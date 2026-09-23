@@ -562,6 +562,197 @@ class OverviewBehaviourTests(unittest.TestCase):
   console.log("ok");
 """)
 
+    def test_each_editable_part_of_a_claim_counts_as_draft_work_on_its_own(self):
+        """Rule B: a claim is value, assessment, reason and evidence. Changing any one is a change."""
+        self.run_behaviour("""
+  function claim(value, assessment, reason, evidence) {
+    return { value, assessment, reason: reason ?? "", evidence_ids: evidence ?? ["e1"] };
+  }
+  function claims(version) {
+    return {
+      identity: claim({ software_id: "software:p", name: "Prøve" }, "accepted"),
+      version,
+      content_kind: claim("application", "accepted"),
+      distribution_kind: claim("shareware", "accepted"),
+      description: claim({ language: "nb-NO", text: "Tekst." }, "accepted"),
+    };
+  }
+  function row(draftVersion, accepted) {
+    return overviewSummary({
+      key: { manifest: "m1", entry: "K1" },
+      manifest_label: "Kildepost 1",
+      title: "Prøve",
+      queue_state: "reviewed",
+      accepted: accepted ?? { identification_status: "curated", claims: claims(claim("1.10", "accepted", "", ["e1"])) },
+      draft: { claims: claims(draftVersion) },
+      issues: [],
+    });
+  }
+
+  /* Each part on its own, with the other three left alone. */
+  const cases = [
+    ["verdi", claim("1.11", "accepted", "", ["e1"]), "value_changed"],
+    ["vurdering", claim("1.10", "unresolved", "", ["e1"]), "assessment_changed"],
+    ["begrunnelse", claim("1.10", "accepted", "Ny begrunnelse.", ["e1"]), "reason_changed"],
+    ["kildevalg", claim("1.10", "accepted", "", ["e2"]), "evidence_changed"],
+  ];
+  for (const [label, draftClaim, flag] of cases) {
+    const changed = row(draftClaim);
+    assert.ok(changed.draft_changed_fields.includes("version"), `${label}: counts as a draft change`);
+    assert.ok(changed.values.version.differs, `${label}: the row marks it`);
+    assert.ok(changed.values.version[flag], `${label}: and says which part moved`);
+    assert.equal(changed.fully_resolved, false, `${label}: so the entry is not fully resolved`);
+    assert.ok(overviewMatchesField(changed, "version"), `${label}: the field filter finds it`);
+    assert.ok(overviewMatchesField(changed, "any_open"), `${label}: and so does the work filter`);
+  }
+
+  /* An untouched claim is not work. */
+  const same = row(claim("1.10", "accepted", "", ["e1"]));
+  assert.deepEqual(same.draft_changed_fields, [], "an unchanged claim is not a change");
+  assert.ok(same.fully_resolved, "and the entry reads as fully resolved");
+  console.log("ok");
+""")
+
+    def test_source_selection_is_compared_as_a_set_and_explained_in_the_row(self):
+        """Rule B: adding, removing and swapping a source are changes; another order is not."""
+        self.run_behaviour("""
+  function claim(evidence) {
+    return { value: "1.10", assessment: "accepted", reason: "", evidence_ids: evidence };
+  }
+  function claims(version) {
+    return {
+      identity: { value: { software_id: "software:p", name: "Prøve" }, assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      version,
+      content_kind: { value: "application", assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      distribution_kind: { value: "shareware", assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      description: { value: { language: "nb-NO", text: "Tekst." }, assessment: "accepted", reason: "", evidence_ids: ["a"] },
+    };
+  }
+  function row(before, after) {
+    return overviewSummary({
+      key: { manifest: "m1", entry: "K1" },
+      title: "Prøve",
+      queue_state: "reviewed",
+      accepted: { identification_status: "curated", claims: claims(claim(before)) },
+      draft: { claims: claims(claim(after)) },
+      issues: [],
+    });
+  }
+
+  const added = row(["a"], ["a", "b"]);
+  assert.ok(added.draft_changed_fields.includes("version"), "adding a source is a change");
+  assert.equal(added.values.version.evidence_added, 1);
+  assert.equal(added.values.version.evidence_removed, 0);
+
+  const removed = row(["a", "b"], ["a"]);
+  assert.ok(removed.draft_changed_fields.includes("version"), "removing a source is a change");
+  assert.equal(removed.values.version.evidence_added, 0);
+  assert.equal(removed.values.version.evidence_removed, 1);
+
+  const swapped = row(["a"], ["b"]);
+  assert.ok(swapped.draft_changed_fields.includes("version"), "swapping a source is a change");
+  assert.equal(swapped.values.version.evidence_added, 1);
+  assert.equal(swapped.values.version.evidence_removed, 1);
+  assert.ok(overviewMatchesField(swapped, "version"), "and it is findable in the field filter");
+  assert.equal(swapped.values.version.value_changed, false, "while the value itself is untouched");
+
+  const reordered = row(["a", "b"], ["b", "a"]);
+  assert.deepEqual(reordered.draft_changed_fields, [], "the same set in another order is the same choice");
+  assert.ok(reordered.fully_resolved);
+
+  const duplicated = row(["a"], ["a", "a"]);
+  assert.deepEqual(duplicated.draft_changed_fields, [], "a repeated id is still the same selection");
+
+  const unchanged = row(["a", "b"], ["a", "b"]);
+  assert.deepEqual(unchanged.draft_changed_fields, [], "an untouched selection is not a change");
+  console.log("ok");
+""")
+
+    def test_composite_values_are_compared_by_meaning_not_by_property_order(self):
+        """Rule B: JSON property order is not a semantic difference."""
+        self.run_behaviour("""
+  function claims(description) {
+    return {
+      identity: { value: { software_id: "software:p", name: "Prøve" }, assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      version: { value: "1.10", assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      content_kind: { value: "application", assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      distribution_kind: { value: "shareware", assessment: "accepted", reason: "", evidence_ids: ["a"] },
+      description,
+    };
+  }
+  const claim = value => ({ value, assessment: "accepted", reason: "", evidence_ids: ["a"] });
+  const row = overviewSummary({
+    key: { manifest: "m1", entry: "K1" },
+    title: "Prøve",
+    queue_state: "reviewed",
+    accepted: { identification_status: "curated", claims: claims(claim({ language: "nb-NO", text: "Tekst." })) },
+    /* Same value, properties written the other way round. */
+    draft: { claims: claims(claim({ text: "Tekst.", language: "nb-NO" })) },
+    issues: [],
+  });
+  assert.deepEqual(row.draft_changed_fields, [], "the same value is the same value");
+  assert.ok(row.fully_resolved);
+
+  const identity = overviewSummary({
+    key: { manifest: "m1", entry: "K2" },
+    title: "Prøve",
+    queue_state: "reviewed",
+    accepted: { identification_status: "curated", claims: claims(claim({ language: "nb-NO", text: "Tekst." })) },
+    draft: { claims: claims(claim({ language: "nn-NO", text: "Tekst." })) },
+    issues: [],
+  });
+  assert.ok(identity.draft_changed_fields.includes("description"), "a real difference is still found");
+  console.log("ok");
+""")
+
+    def test_a_changed_source_selection_survives_saving_approval_and_undo(self):
+        """Rule B and C through the real adapter: the draft/approved split holds across decisions."""
+        self.run_behaviour("""
+  const harness = overviewHarness({ manifests: 2 });
+  await harness.controller.start();
+  const target = harness.controller.state.items.find(item => item.has_accepted
+    && item.identification_status === "curated"
+    && item.open_fields.length === 0
+    && item.draft_changed_fields.length === 0);
+  assert.ok(target, "the sample has a settled entry to work from");
+
+  const curator = harness.curatorFor(target.key.manifest);
+  const detail = detailHarness(curator);
+  await detail.controller.start();
+  await detail.controller.select(target.key);
+
+  /* Change only which sources back the version claim. */
+  const before = detail.controller.state.draft.claims.version.evidence_ids.slice();
+  const evidence = detail.controller.state.entry.evidence ?? [];
+  const extra = evidence.map(item => item.id).find(id => !before.includes(id));
+  assert.ok(extra, "the entry offers a second source to point at");
+  detail.controller.editClaim("version", { evidence_ids: [...before, extra] });
+  detail.scheduler.run();
+  await detail.controller.flush();
+
+  const pending = await harness.adapter.refreshEntry(target.key);
+  assert.ok(pending.draft_changed_fields.includes("version"),
+    "a changed source selection is pending work in the overview");
+  assert.ok(pending.values.version.evidence_changed);
+  assert.equal(pending.values.version.value_changed, false, "with the value untouched");
+  assert.equal(pending.fully_resolved, false, "so the row is not fully resolved");
+  assert.ok(overviewMatchesField(pending, "version"));
+
+  await detail.controller.dispatch("commit");
+  const approved = await harness.adapter.refreshEntry(target.key);
+  assert.deepEqual(approved.draft_changed_fields, [],
+    "approval closes the gap only because the two states now match");
+  assert.equal(approved.values.version.evidence_changed, false);
+
+  await detail.controller.select(target.key);
+  await detail.controller.dispatch("undo");
+  const undone = await harness.adapter.refreshEntry(target.key);
+  assert.equal(undone.queue_state, "pending", "undo puts the entry back in the queue");
+  assert.ok(undone.draft_changed_fields.includes("version"),
+    "and the source change is pending work again, because the draft kept it");
+  console.log("ok");
+""")
+
     def test_sample_data_is_deterministic_and_marked_synthetic(self):
         """The scale set is reproducible and never passes for a catalogue finding."""
         self.run_behaviour("""

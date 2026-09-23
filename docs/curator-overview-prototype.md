@@ -256,10 +256,12 @@ samordnet avklaring, og kommer i tillegg til de fem i
 python -m unittest discover -s tests -v
 ```
 
-67 tester kjører uten nettleser; 87 med Chromium. Prototypen bidrar med 20 atferdstester
-i `tests/test_overview.py` og 12 nettleserkontroller i `tests/test_overview_browser.py`.
+84 tester kjører uten nettleser; 108 med Chromium og en Catalog-checkout. Prototypen
+bidrar med 24 atferdstester i `tests/test_overview.py`, 16 nettleserkontroller i
+`tests/test_overview_browser.py` og 11 rekkefølgetester i `tests/test_navigation_gate.py`.
+Reglene de kontrollerer står i [kontrollmatrisen](curator-control-matrix.md).
 
-Uten Playwright hoppes de 20 nettleserkontrollene over i to klasser, som på CI. Én test
+Uten Playwright hoppes de 24 nettleserkontrollene over i to klasser, som på CI. Én test
 til hopper over uten en Catalog-checkout: den som sammenligner den fastspikrede kopien av
 `STATIC` med Catalogs egen kilde. Sett `BOOTDISK_CATALOG_ROOT` til en Catalog-checkout for
 å kjøre den. Kjør nettleserkontrollene lokalt med:

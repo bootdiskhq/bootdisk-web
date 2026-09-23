@@ -19,20 +19,26 @@ function overviewOpenFields(claims) {
   return OVERVIEW_CLAIM_FIELDS.filter(field => claims?.[field]?.assessment === "unresolved");
 }
 
-/* Every field where the draft says something else than the approved state does: another
- * value, another assessment, or another reason. A draft that only changes the reason is
- * still unapproved work, so value equality alone cannot decide this. */
+/* A claim's editable content is its value, its assessment, its reason and its evidence.
+ * Any of the four differing is unapproved work, so none of them may be left out of the
+ * comparison: same value with another assessment, another reason or another source
+ * selection is still a change. */
+function overviewClaimChange(before, after) {
+  if (!after) return null;
+  if (!before) return { value: true, assessment: true, reason: true, evidence: true };
+  const change = {
+    value: !overviewSameValue(before.value, after.value),
+    assessment: (before.assessment ?? null) !== (after.assessment ?? null),
+    reason: String(before.reason ?? "") !== String(after.reason ?? ""),
+    evidence: !overviewSameEvidence(before.evidence_ids, after.evidence_ids),
+  };
+  return change.value || change.assessment || change.reason || change.evidence ? change : null;
+}
+
 function overviewDraftChanges(accepted, draft) {
   if (!draft) return [];
-  return OVERVIEW_CLAIM_FIELDS.filter(field => {
-    const before = accepted?.claims?.[field] ?? null;
-    const after = draft.claims?.[field] ?? null;
-    if (!after) return false;
-    if (!before) return true;
-    return !overviewSameValue(before.value, after.value)
-      || (before.assessment ?? null) !== (after.assessment ?? null)
-      || String(before.reason ?? "") !== String(after.reason ?? "");
-  });
+  return OVERVIEW_CLAIM_FIELDS.filter(field =>
+    overviewClaimChange(accepted?.claims?.[field] ?? null, draft.claims?.[field] ?? null));
 }
 
 function overviewEntryNumber(entryId) {
@@ -40,8 +46,36 @@ function overviewEntryNumber(entryId) {
   return Number.isFinite(Number(digits)) ? Number(digits) : Number.MAX_SAFE_INTEGER;
 }
 
+/* Values are compared by meaning, never by the order a JSON object happens to carry its
+ * properties in. This is the same canonicalisation the decision screen uses
+ * (`curatorCanonical` in curate-core.js), which the overview cannot load. */
+function overviewCanonical(value) {
+  if (Array.isArray(value)) return value.map(overviewCanonical);
+  if (value && typeof value === "object") {
+    return Object.keys(value).sort().reduce((result, key) => {
+      result[key] = overviewCanonical(value[key]);
+      return result;
+    }, {});
+  }
+  return value;
+}
+
 function overviewSameValue(left, right) {
-  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+  return JSON.stringify(overviewCanonical(left ?? null)) === JSON.stringify(overviewCanonical(right ?? null));
+}
+
+/* Evidence is a selection, so it is compared as a set: the same sources listed in another
+ * order are the same choice, while adding, removing or swapping one is a real change. */
+function overviewEvidenceSet(ids) {
+  return new Set((Array.isArray(ids) ? ids : []).map(String));
+}
+
+function overviewSameEvidence(left, right) {
+  const before = overviewEvidenceSet(left);
+  const after = overviewEvidenceSet(right);
+  if (before.size !== after.size) return false;
+  for (const id of before) if (!after.has(id)) return false;
+  return true;
 }
 
 /* One row of the overview, derived from the review state of one entry.
@@ -67,17 +101,22 @@ function overviewSummary(record) {
   for (const field of OVERVIEW_VALUE_FIELDS) {
     const acceptedClaim = accepted?.claims?.[field] ?? null;
     const draftClaim = draft?.claims?.[field] ?? null;
+    const change = acceptedClaim && draftClaim ? overviewClaimChange(acceptedClaim, draftClaim) : null;
+    const before = overviewEvidenceSet(acceptedClaim?.evidence_ids);
+    const after = overviewEvidenceSet(draftClaim?.evidence_ids);
     values[field] = {
       accepted: acceptedClaim ? (acceptedClaim.value ?? null) : null,
       draft: draftClaim ? (draftClaim.value ?? null) : null,
       accepted_assessment: acceptedClaim?.assessment ?? null,
       draft_assessment: draftClaim?.assessment ?? null,
-      value_changed: Boolean(acceptedClaim) && Boolean(draftClaim)
-        && !overviewSameValue(acceptedClaim.value, draftClaim.value),
-      assessment_changed: Boolean(acceptedClaim) && Boolean(draftClaim)
-        && (acceptedClaim.assessment ?? null) !== (draftClaim.assessment ?? null),
-      reason_changed: Boolean(acceptedClaim) && Boolean(draftClaim)
-        && String(acceptedClaim.reason ?? "") !== String(draftClaim.reason ?? ""),
+      value_changed: Boolean(change?.value),
+      assessment_changed: Boolean(change?.assessment),
+      reason_changed: Boolean(change?.reason),
+      evidence_changed: Boolean(change?.evidence),
+      /* Counted so the row can say what happened to the source selection rather than only
+       * that something did. */
+      evidence_added: [...after].filter(id => !before.has(id)).length,
+      evidence_removed: [...before].filter(id => !after.has(id)).length,
       /* A draft that differs is never presented as the catalogue's approved value. */
       differs: accepted ? draftChanged.includes(field) : Boolean(draftClaim),
     };
@@ -280,6 +319,9 @@ if (typeof module !== "undefined" && module.exports) {
     overviewMatchesField,
     overviewWorkFields,
     overviewDraftChanges,
+    overviewClaimChange,
+    overviewSameValue,
+    overviewSameEvidence,
     overviewEntryNumber,
     OVERVIEW_CONTRACT,
     OVERVIEW_CLAIM_FIELDS,

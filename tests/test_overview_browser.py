@@ -268,6 +268,113 @@ class OverviewBrowserTests(unittest.TestCase):
             self.assertIn("Gjennomgått", current.text_content(),
                           "the single decision took effect")
 
+    def test_the_return_link_runs_the_same_gate_from_the_keyboard(self):
+        """The link is reached by keyboard too, so Enter must not take a shortcut past the gate."""
+        with self.detail_from_overview() as (page, _entry):
+            page.evaluate("""() => {
+              const fault = document.querySelector('#simulate-fault');
+              fault.value = 'write_failed';
+              fault.dispatchEvent(new Event('change', { bubbles: true }));
+              const input = document.querySelector('#claim-version');
+              input.value = '5.55-tastatur';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              document.querySelector('#curate-return-link').focus();
+            }""")
+            page.keyboard.press("Enter")
+            page.wait_for_selector("#curate-return-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"),
+                            "keyboard activation is stopped by the same rule as a click")
+            self.assertEqual(page.input_value("#claim-version"), "5.55-tastatur", "the text is kept")
+            self.assertEqual(page.evaluate("document.activeElement.id"), "curate-return-link",
+                             "and the keyboard stays on the link that was stopped")
+
+    def test_a_modified_click_keeps_the_page_and_its_draft_where_they_are(self):
+        """Ctrl-click opens a second tab; the original page and its unsaved text must not move."""
+        with self.detail_from_overview() as (page, _entry):
+            page.fill("#claim-version", "6.66-ny-fane")
+            before = page.url
+            page.click("#curate-return-link", modifiers=["Control"])
+            page.wait_for_timeout(200)
+            self.assertEqual(page.url, before, "the original page did not navigate")
+            self.assertEqual(page.input_value("#claim-version"), "6.66-ny-fane", "and still holds its text")
+            self.assertTrue(page.locator("#curate-return-error").is_hidden(),
+                            "a modified click is ordinary browser behaviour, not a blocked return")
+
+    def test_changing_only_the_source_selection_shows_up_as_draft_work_in_the_overview(self):
+        """Correction order remaining fault 2, end to end: a new source selection is visible work."""
+        with self.detail_from_overview() as (page, entry):
+            # Point the version claim at one more source, leaving value, assessment and
+            # reason exactly as they were.
+            added = page.evaluate("""() => {
+              const boxes = Array.from(document.querySelectorAll('#claim-form input[id^="evidence-version-"]'));
+              const spare = boxes.find(box => !box.checked);
+              if (!spare) return null;
+              spare.checked = true;
+              spare.dispatchEvent(new Event('change', { bubbles: true }));
+              return spare.id;
+            }""")
+            self.assertIsNotNone(added, "the entry offers a second source to point at")
+            page.wait_for_function("document.querySelector('#save-state').dataset.status === 'saved'")
+
+            page.click("#curate-return a")
+            page.wait_for_selector("#overview-rows tr")
+            current = page.locator("#overview-rows tr[aria-current='true']")
+            self.assertEqual(current.count(), 1)
+            self.assertIn(entry, current.text_content())
+            text = current.text_content()
+            self.assertIn("kildebelegg", text, "the row says the source selection changed")
+            self.assertNotIn("Fullstendig avklart", text,
+                             "and an unapproved source change is not a resolution")
+
+    def test_a_restored_cd_description_stays_read_only_through_a_draft_and_a_return(self):
+        """Rule D: the verbatim CD text is not editable, in the page and in the data layer."""
+        # Sorted by source, the first row is K1 of the first manifest, one of the entries
+        # whose description the catalogue restored verbatim.
+        with self.overview(query="?sort=source&status=all") as page:
+            page.locator("#overview-rows tr td:first-child a").first.click()
+            page.wait_for_selector("#entry-heading:not(:empty)")
+            self.assertEqual(page.text_content("#entry-id"), "K1")
+
+            description = page.locator("#claim-description")
+            self.assertTrue(description.evaluate("box => box.readOnly"),
+                            "a restored CD description is read-only on the page")
+            original = description.input_value()
+            self.assertIn("Syntetisk omtale av", original, "and shows the CD's own words")
+            self.assertIn("Gjengitt ordrett fra CD-en",
+                          page.text_content(".claim-field:has(#claim-description)"),
+                          "with the explanation next to it")
+
+            # The curator's own notes go in the reason, and that saves normally.
+            page.click(".claim-field:has(#claim-description) .claim-detail summary")
+            page.fill("#reason-description", "Egen vurdering; originalteksten står.")
+            page.wait_for_function("document.querySelector('#save-state').dataset.status === 'saved'")
+
+            page.click("#curate-return a")
+            page.wait_for_selector("#overview-rows tr")
+            page.locator("#overview-rows tr[aria-current='true'] td:first-child a").click()
+            page.wait_for_selector("#entry-heading:not(:empty)")
+            self.assertEqual(page.locator("#claim-description").input_value(), original,
+                             "the original text survived the draft save and the round trip")
+            self.assertEqual(page.evaluate("document.querySelector('#reason-description').value"),
+                             "Egen vurdering; originalteksten står.",
+                             "while the curator's own reason was kept")
+
+            # Forcing a different text past the read-only field is refused by the adapter
+            # too, the way the local service refuses it.
+            page.evaluate("""() => {
+              const box = document.querySelector('#claim-description');
+              box.value = 'FORSØK PÅ Å SKRIVE OVER ORIGINALEN';
+              box.dispatchEvent(new Event('input', { bubbles: true }));
+            }""")
+            page.wait_for_function("document.querySelector('#save-state').dataset.status === 'error'")
+            self.assertIn("lik CD-omtalen", page.text_content("#decision-error"),
+                          "with a message that says where own notes belong")
+            self.assertFalse(page.locator("#curate-return a").is_disabled())
+            page.click("#curate-return a")
+            page.wait_for_selector("#curate-return-error:not([hidden])")
+            self.assertTrue(page.url.split("?")[0].endswith("curate.html"),
+                            "and the refused write stops the return instead of hiding it")
+
     def test_the_narrow_view_keeps_every_column_without_sideways_scrolling(self):
         with self.overview(width=390, height=780) as page:
             self.assertLessEqual(

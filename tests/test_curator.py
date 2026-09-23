@@ -517,6 +517,81 @@ class CuratorBehaviourTests(unittest.TestCase):
   await ephemeral.saveDraft({ key: entry.key, expected_revision: entry.revision, operation_id: "ephemeral-1", draft });
 """)
 
+    def test_a_deferred_entry_carries_its_reason_back_to_the_screen(self):
+        """Rule C: a field the screen reads must not be dropped on the way out of the adapter."""
+        self.run_behaviour("""
+  const { adapter, controller } = harness();
+  await controller.start();
+  await controller.select(key("K4"));
+  await controller.dispatch("defer", "Uleselig installasjonsfil.");
+
+  const deferred = await adapter.getEntry({ key: key("K4") });
+  assert.equal(deferred.queue_state, "deferred");
+  assert.equal(deferred.defer_reason, "Uleselig installasjonsfil.",
+    "the screen can show «Utsatt: …» because the adapter carries the reason");
+
+  /* Approving clears it, the way the local service does. */
+  await controller.select(key("K4"));
+  await controller.dispatch("commit");
+  const approved = await adapter.getEntry({ key: key("K4") });
+  assert.equal(approved.queue_state, "reviewed");
+  assert.equal(approved.defer_reason, null, "an approved entry is no longer deferred for a reason");
+
+  const untouched = await adapter.getEntry({ key: key("K23") });
+  assert.equal(untouched.defer_reason, null, "and an entry that was never deferred has none");
+  console.log("ok");
+""")
+
+    def test_a_restored_cd_description_cannot_be_rewritten_through_the_adapter(self):
+        """Rule D: the read-only field on the page is not the protection; the write path is."""
+        self.run_behaviour("""
+  /* The delivered bundle has no restored descriptions, so this builds one: the same shape
+   * the local service reports, with the flag on the entry and the protected text in the
+   * source document. */
+  const bundle = JSON.parse(JSON.stringify(fixture));
+  const entry = bundle.entries[0];
+  entry.original_description_v1 = true;
+  entry.draft.claims.description.value = { language: "nb-NO", text: entry.source.description };
+  if (entry.accepted) entry.accepted.claims.description.value = { language: "nb-NO", text: entry.source.description };
+
+  const adapter = createFixtureAdapter({ fixture: bundle, storage: memoryStorage(), now: () => "2026-09-20T12:00:00Z" });
+  const opened = await adapter.getEntry({ key: entry.key });
+  assert.equal(opened.original_description_v1, true,
+    "the adapter carries the flag through instead of dropping it");
+  assert.equal(opened.draft.claims.description.value.text, entry.source.description,
+    "and the description is the CD's own words");
+
+  /* Saving anything else in that field is refused, with the reason offered as the way in. */
+  const rewritten = JSON.parse(JSON.stringify(opened.draft));
+  rewritten.claims.description.value = { language: "nb-NO", text: "Egen omskrevet omtale." };
+  const refused = await adapter.saveDraft({
+    key: entry.key, expected_revision: opened.revision, operation_id: "beskytt-1", draft: rewritten,
+  }).then(() => null, error => error);
+  assert.ok(refused, "the write was refused");
+  assert.equal(refused.code, "validation_failed");
+  assert.ok(refused.field_errors.description.includes("lik CD-omtalen"));
+
+  const unchanged = await adapter.getEntry({ key: entry.key });
+  assert.equal(unchanged.draft.claims.description.value.text, entry.source.description,
+    "and nothing was stored");
+
+  /* The curator's own notes belong in the reason, and that saves. */
+  const noted = JSON.parse(JSON.stringify(opened.draft));
+  noted.claims.description.reason = "Egen vurdering; originalteksten står.";
+  const saved = await adapter.saveDraft({
+    key: entry.key, expected_revision: opened.revision, operation_id: "beskytt-2", draft: noted,
+  });
+  assert.equal(saved.entry.draft.claims.description.reason, "Egen vurdering; originalteksten står.");
+  assert.equal(saved.entry.draft.claims.description.value.text, entry.source.description);
+
+  /* Approval enforces the same rule. */
+  const approvable = validateDraft(rewritten, opened.evidence, entry);
+  assert.ok(approvable.description, "approval refuses a rewritten original too");
+  assert.deepEqual(validateDraft(noted, opened.evidence, entry).description, undefined,
+    "while an own reason is fine");
+  console.log("ok");
+""")
+
     def test_contract_validation_refuses_guesses_and_unsupported_claims(self):
         """ADR-005: unknown stays unknown, and an approval cannot certify an unsupported claim."""
         self.run_behaviour("""

@@ -19,6 +19,15 @@
 - Oversikten regner arbeidsbehov fra kladden, slik Catalogs tjeneste gjør, og viser endret
   vurdering eller begrunnelse selv når verdien er den samme. En kladd som setter et felt
   til «Belagt» vises som kladd, ikke som en ny godkjent vurdering.
+- Retur og beslutning deler nå én grense: mens en retur venter på siste skriving, avvises
+  nye beslutninger og intern navigasjon, og selve navigasjonen skjer innenfor grensen.
+- Kildevalg teller som kladdendring. Kilde-ID-er sammenlignes som et sett, sammensatte
+  verdier sammenlignes semantisk, og raden sier om belegg er lagt til, fjernet eller byttet.
+- Kvitteringer bindes til kildepost og oppføring sammen, ikke til K-ID-en alene.
+- Prøvedataadapteren beskytter den tilbakeførte CD-omtalen mot overskriving og gir
+  «Utsatt: …» tilbake til skjermen, slik den lokale tjenesten gjør.
+- [Kontrollmatrise](docs/curator-control-matrix.md) med regel, kode, test og faktisk
+  resultat for kuratorskjermene, lenket fra README.
 
 - Vis identiske CD-omtaler én gang under «Omtale på CD-en», med eksisterende
   kildevalg bevart og begge tekniske referanser tilgjengelige.
