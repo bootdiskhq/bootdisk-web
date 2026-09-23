@@ -82,12 +82,20 @@ def main() -> None:
 
     deterministic_zip(release, archive)
     index = json.loads((release / "data" / "index.json").read_text(encoding="utf-8"))
+    documents = [json.loads((release / "data" / f"{e['entry'].lower()}.json").read_text(encoding="utf-8")) for e in index["entries"]]
+    coverage = []
+    for medium in index.get("media", []):
+        selected = [d for d in documents if d.get("medium_id") == medium["id"]]
+        coverage.append({"medium_id": medium["id"], "entries": len(selected),
+                         **{kind + "_entries": sum(any(a["kind"] == kind for a in d["assets"]) for d in selected)
+                            for kind in ("icon", "screenshot")}})
     payload = {
         "schema": "bootdisk-web-release-0.1",
         "version": version,
         "entries": len(index["entries"]),
         "media": index.get("media", []),
         "pending_entries": sum(e.get("curation_status") == "pending" for e in index["entries"]),
+        "image_coverage": coverage,
         "store_files": sum(1 for path in (release / "store").rglob("*") if path.is_file()),
         "zip": {"name": archive.name, "sha256": sha256(archive), "size": archive.stat().st_size},
         "inputs": {

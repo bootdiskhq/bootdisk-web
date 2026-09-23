@@ -114,7 +114,7 @@ async function render() {
   }
   bindArrowNavigation(previous, next);
 
-  const icon = assetFor(entry.assets ?? [], "icon");
+  const icon = assetFor(entry.assets ?? [], "icon") ?? assetFor(entry.assets ?? [], "screenshot");
   const shot = assetFor(entry.assets ?? [], "screenshot");
   const iconImage = derivative(icon) ?? icon?.original;
   const shotImage = derivative(shot) ?? shot?.original;
@@ -127,7 +127,7 @@ async function render() {
   if (shotImage?.public_path) {
     const screenshot = document.querySelector("#software-shot");
     screenshot.src = shotImage.public_path;
-    screenshot.alt = `Skjermbilde fra ${name}`;
+    screenshot.alt = `Bilde fra CD-menyen: ${name}`;
     document.querySelector("#screenshot-frame").hidden = false;
   }
   document.querySelector("main").setAttribute("aria-busy", "false");

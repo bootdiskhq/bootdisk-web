@@ -85,3 +85,13 @@ No Director images have yet been selected and published. Empty assets are valid;
 this does not imply that images do not exist on the disc. The current Director
 intake preserves launch references, not complete executable packages. No program
 downloads or hosted curator are included in the public release.
+
+## Image coverage — 1.2.0-rc2
+
+The index's `icon` is an overview preview: prefer an icon asset, otherwise use a
+screenshot asset without changing its kind. A collection medium may declare
+`image_requirements.all_entries` (required kinds on every entry) and
+`image_requirements.minimum_counts` (minimum covered entries per kind). Release
+builds enforce these requirements and reject image-empty media unless a nonempty
+`images_unavailable_reason` is explicitly configured. Exceptions never waive
+positive requirements. Tests and HTTP checks do not substitute for this gate.
