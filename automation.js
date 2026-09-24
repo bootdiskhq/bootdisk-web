@@ -185,6 +185,8 @@ function bootstrapAutomationQueue() {
   /* Set while the panel was opened from this page, so closing goes back one history step
    * and the browser's own back button does the same thing. */
   let pushedPanel = false;
+  /* True once the address bar asked for sample data, whatever the loaded file says. */
+  let sampleChosen = false;
 
   function fillSelect(select, options) {
     select.replaceChildren(...options.map(([value, label]) => {
@@ -218,6 +220,7 @@ function bootstrapAutomationQueue() {
   const ERROR_TITLES = {
     missing: "Fant ikke køfilen",
     invalid_json: "Køfilen er ikke gyldig JSON",
+    mixed_fixture: "Prøvedata og ekte køfiler er blandet",
     invalid_schema: "Køfilen følger ikke kontrakten",
     unknown_value: "Køfilen har en ukjent verdi",
     no_source: "Ukjent datakilde",
@@ -321,7 +324,7 @@ function bootstrapAutomationQueue() {
     }
 
     const humansHere = result.humanMatched;
-    nodes.count.textContent = `${result.matched.toLocaleString("nb-NO")} treff av ${aqCount(result.total, "post", "poster")}`
+    nodes.count.textContent = `${model.fixture || sampleChosen ? "Prøvedata · " : ""}${result.matched.toLocaleString("nb-NO")} treff av ${aqCount(result.total, "post", "poster")}`
       + ` · ${aqCount(humansHere, "trenger", "trenger")} din vurdering · viser ${result.items.length}`;
     nodes.empty.hidden = result.matched !== 0;
     if (result.matched === 0) {
@@ -394,6 +397,10 @@ function bootstrapAutomationQueue() {
   function renderPanel(entry) {
     nodes.panelTitle.textContent = entry.title;
     const body = [];
+    if (entry.fixture || sampleChosen) {
+      body.push(aqElement("p", "aq-panel-fixture",
+        "Prøvedata: denne posten er oppdiktet og er ikke et katalogfunn eller et resultat av maskinens gjennomgang."));
+    }
     body.push(aqElement("p", "aq-row-source", aqSourceText(entry, model)));
     const stage = aqElement("p", `aq-panel-stage aq-stage-text-${entry.stage}`);
     stage.append(aqElement("strong", null, AUTOMATION_STAGE_TEXT[entry.stage].label),
@@ -509,6 +516,14 @@ function bootstrapAutomationQueue() {
   /* ---- Loading ---- */
   function show(documents) {
     model = automationCombine(documents);
+    /* The marking comes from the documents themselves, so a sample file opened through the
+     * file picker is labelled exactly like the sample chosen from the address bar. */
+    if (model.fixture && !sampleChosen) {
+      const which = documents.length === 1 ? "Den valgte filen er merket" : "De valgte filene er merket";
+      sampleBanner([`${which} som prøvedata (fixture: true). Postene er ikke katalogfunn.`, ...model.fixture_notes].join(" "));
+    } else if (!model.fixture && !sampleChosen) {
+      nodes.banner.hidden = true;
+    }
     showOnly("queue");
     renderSummary();
     renderList();
@@ -533,6 +548,7 @@ function bootstrapAutomationQueue() {
   }
 
   function sampleBanner(text) {
+    sampleChosen = sampleChosen || state.source === "prove" || state.source === "syntetisk";
     nodes.banner.hidden = false;
     nodes.bannerText.textContent = text;
   }

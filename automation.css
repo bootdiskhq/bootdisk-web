@@ -138,6 +138,14 @@
 .aq-panel h2 { font-family: system-ui, sans-serif; font-size: clamp(1.4rem, 3vw, 2rem); margin: 18px 0 4px; overflow-wrap: anywhere; }
 .aq-panel-stage { margin: 8px 0; }
 .aq-muted { color: var(--muted); }
+.aq-panel-fixture {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border: 2px dashed var(--amber);
+  background: #1d1608;
+  color: var(--amber);
+  font-size: .84rem;
+}
 .aq-block { display: block; font-size: .8rem; }
 .aq-field, .aq-tasks { margin: 18px 0; padding: 14px; border: 1px solid var(--line); background: var(--panel); }
 .aq-field-conflict { border-color: var(--amber); }

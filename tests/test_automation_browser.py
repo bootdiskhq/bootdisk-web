@@ -203,6 +203,68 @@ class AutomationQueueBrowserTests(unittest.TestCase):
             self.assertIn("betyr ikke at programmene er kuratert", self.text(page, "#aq-empty"))
             self.assertFalse(page.is_visible("#aq-error"))
 
+    # --- sample marking through the file picker ----------------------------------------------
+
+    def pick_files(self, page, documents):
+        page.set_input_files("#aq-file-input", [
+            {"name": name, "mimeType": "application/json", "buffer": json.dumps(doc).encode("utf-8")}
+            for name, doc in documents])
+
+    def real_documents(self, page, count=2):
+        """Snapshots without any sample marking, standing in for real Catalog output."""
+        return page.evaluate("""count => new Promise(resolve => {
+            const script = document.createElement('script');
+            script.src = 'automation-sample.js';
+            script.onload = () => resolve(createAutomationSampleSnapshots({ manifests: count, perManifest: 4 })
+              .map(doc => { delete doc.fixture; delete doc.fixture_note; return doc; }));
+            document.body.append(script);
+        })""", count)
+
+    def test_a_marked_file_opened_through_the_file_picker_is_labelled_as_sample_data(self):
+        with self.page("?kilde=fil", ready="#aq-file:not([hidden])") as page:
+            self.assertFalse(page.is_visible("#aq-sample-banner"))
+            # A neutral name: the marking inside the file decides, not the file name.
+            self.pick_files(page, [("resultat.json", FIXTURE)])
+            page.wait_for_selector("#aq-list li")
+            self.assertTrue(page.is_visible("#aq-sample-banner"))
+            banner = self.text(page, "#aq-sample-banner")
+            self.assertIn("Prøvedata", banner)
+            self.assertIn("fixture: true", banner)
+            self.assertIn(FIXTURE["fixture_note"], banner)
+            self.assertTrue(self.text(page, "#aq-count").startswith("Prøvedata · "))
+            page.click("#aq-list .aq-row-needs_review .aq-open")
+            page.wait_for_selector("#aq-panel:not([hidden])")
+            self.assertTrue(page.is_visible("#aq-sample-banner"), "the banner stays while reading an entry")
+            self.assertIn("Prøvedata", self.text(page, "#aq-panel .aq-panel-fixture"))
+
+    def test_real_files_opened_through_the_file_picker_are_not_labelled_as_sample_data(self):
+        with self.page("?kilde=fil", ready="#aq-file:not([hidden])") as page:
+            documents = self.real_documents(page)
+            self.pick_files(page, [(f"cd{i}.json", doc) for i, doc in enumerate(documents, 1)])
+            page.wait_for_selector("#aq-list li")
+            self.assertFalse(page.is_visible("#aq-sample-banner"))
+            self.assertNotIn("Prøvedata", self.text(page, "#aq-count"))
+            self.open_row(page)
+            self.assertEqual(page.locator("#aq-panel .aq-panel-fixture").count(), 0)
+
+    def test_mixing_real_and_sample_files_is_refused_without_counts(self):
+        with self.page("?kilde=fil", ready="#aq-file:not([hidden])") as page:
+            documents = self.real_documents(page, 1)
+            self.pick_files(page, [("cd1.json", documents[0]), ("eksempel.json", FIXTURE)])
+            page.wait_for_selector("#aq-error:not([hidden])")
+            self.assertEqual(page.get_attribute("#aq-error", "data-kind"), "mixed_fixture")
+            self.assertEqual(self.text(page, "#aq-error-title"), "Prøvedata og ekte køfiler er blandet")
+            self.assertFalse(page.is_visible("#aq-queue"))
+            self.assertEqual(page.locator("#aq-list li").count(), 0)
+
+    def test_sample_chosen_in_the_address_bar_is_marked_in_list_and_panel(self):
+        for query in ("?kilde=prove", "?kilde=syntetisk"):
+            with self.page(query) as page:
+                self.assertTrue(page.is_visible("#aq-sample-banner"))
+                self.assertTrue(self.text(page, "#aq-count").startswith("Prøvedata · "), query)
+                self.open_row(page)
+                self.assertIn("Prøvedata", self.text(page, "#aq-panel .aq-panel-fixture"), query)
+
     # --- the panel ---------------------------------------------------------------------------
 
     def test_the_panel_shows_proposal_reason_rule_and_evidence_and_nothing_is_approved(self):

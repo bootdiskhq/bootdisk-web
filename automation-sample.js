@@ -147,6 +147,8 @@ function createAutomationSampleSnapshots(options = {}) {
       input: { manifest: automationSampleManifest(ordinal), candidates_sha256: automationSampleHex(10000 + ordinal) },
       entries,
       summary: automationSampleSummary(entries),
+      fixture: true,
+      fixture_note: "Syntetiske prøveposter generert i Web. needs_review og protected er fremtidige produsenttilstander.",
     });
   }
   return snapshots;

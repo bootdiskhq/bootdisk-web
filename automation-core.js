@@ -213,12 +213,35 @@ function automationValidate(document) {
     input: { manifest, candidates_sha256: candidates },
     entries,
     summary: expected,
+    ...automationFixtureMark(doc),
   };
+}
+
+/* An explicit marking that the document is sample data (`fixture: true`, as in the contract's
+ * example file). It is carried through untouched: it is the only thing that tells a file a
+ * person picked apart from a real Catalog result, and a file name is not evidence of either.
+ * A real snapshot carries no marking and stays unmarked. */
+function automationFixtureMark(doc) {
+  if ("fixture" in doc && typeof doc.fixture !== "boolean") {
+    automationFail("invalid_schema", `fixture må være true eller false, ikke ${JSON.stringify(doc.fixture)}.`);
+  }
+  if ("fixture_note" in doc && typeof doc.fixture_note !== "string") {
+    automationFail("invalid_schema", "fixture_note må være tekst.");
+  }
+  const fixture = doc.fixture === true;
+  return { fixture, fixture_note: fixture && typeof doc.fixture_note === "string" ? doc.fixture_note : null };
 }
 
 /* Several snapshots, one per manifest, read as one queue. The same K-ID on two CDs is two
  * entries; the same manifest twice would be two answers for one CD and is refused. */
 function automationCombine(documents) {
+  /* Sample and real snapshots are never counted together: the totals would read as one real
+   * queue with invented reviews in it. */
+  const marked = documents.filter(document => document.fixture).length;
+  if (marked && marked !== documents.length) {
+    automationFail("mixed_fixture",
+      `${marked} av ${documents.length} valgte filer er merket som prøvedata (fixture: true), de andre ikke. Prøvedata og ekte køfiler vises ikke sammen; åpne dem hver for seg.`);
+  }
   const snapshots = [];
   const entries = [];
   const manifests = new Map();
@@ -228,7 +251,8 @@ function automationCombine(documents) {
     }
     const ordinal = index + 1;
     manifests.set(document.input.manifest, ordinal);
-    snapshots.push({ ordinal, rules_version: document.rules_version, input: document.input, entries: document.entries.length });
+    snapshots.push({ ordinal, rules_version: document.rules_version, input: document.input, entries: document.entries.length,
+      fixture: document.fixture, fixture_note: document.fixture_note });
     for (const entry of document.entries) {
       entries.push({
         ...entry,
@@ -236,11 +260,20 @@ function automationCombine(documents) {
         manifest_ordinal: ordinal,
         rules_version: document.rules_version,
         candidates_sha256: document.input.candidates_sha256,
+        fixture: document.fixture,
         search_text: `${entry.title}\n${entry.key.entry}\n${entry.key.manifest}`.toLocaleLowerCase("nb-NO"),
       });
     }
   });
-  return { snapshots, entries, summary: automationSummary(entries), byId: new Map(entries.map(entry => [entry.id, entry])) };
+  const notes = [...new Set(snapshots.map(snapshot => snapshot.fixture_note).filter(Boolean))];
+  return {
+    snapshots,
+    entries,
+    summary: automationSummary(entries),
+    byId: new Map(entries.map(entry => [entry.id, entry])),
+    fixture: documents.length > 0 && marked === documents.length,
+    fixture_notes: notes,
+  };
 }
 
 function automationKeyId(key) {

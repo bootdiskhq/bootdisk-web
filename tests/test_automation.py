@@ -168,6 +168,53 @@ assert.equal(page.matched, 0);
 assert.deepEqual(page.items, []);
 """)
 
+    # --- sample marking ---------------------------------------------------------------------
+
+    def test_an_explicit_fixture_marking_survives_validation_and_combination(self):
+        self.run_js("""
+const marked = await load(FIXTURE_TEXT);
+assert.equal(fixture().fixture, true, "the contract example is marked");
+assert.equal(marked.fixture, true);
+assert.match(marked.fixture_note, /syntetiske/);
+const model = core.automationCombine([marked]);
+assert.equal(model.fixture, true);
+assert.deepEqual(model.fixture_notes, [fixture().fixture_note]);
+assert.ok(model.entries.every(e => e.fixture === true));
+
+// A real snapshot has no marking and is not turned into sample data.
+const real = fixture(); delete real.fixture; delete real.fixture_note;
+const plain = await load(real);
+assert.equal(plain.fixture, false);
+assert.equal(plain.fixture_note, null);
+const realModel = core.automationCombine([plain]);
+assert.equal(realModel.fixture, false);
+assert.ok(realModel.entries.every(e => e.fixture === false));
+
+// A marking that is not a boolean is refused rather than guessed at.
+const odd = fixture(); odd.fixture = "true";
+await refused(odd, "invalid_schema", /fixture/);
+const note = fixture(); note.fixture_note = 3;
+await refused(note, "invalid_schema", /fixture_note/);
+
+// The generated sample carries the same explicit marking.
+const generated = await Promise.all(sample.createAutomationSampleSnapshots({ manifests: 2, perManifest: 3 }).map(load));
+assert.ok(generated.every(doc => doc.fixture === true));
+""")
+
+    def test_sample_and_real_snapshots_are_never_counted_together(self):
+        self.run_js("""
+const real = sample.createAutomationSampleSnapshots({ manifests: 2, perManifest: 3 }).map(doc => {
+  delete doc.fixture; delete doc.fixture_note; return doc;
+});
+const realDocs = await Promise.all(real.map(load));
+const both = core.automationCombine(realDocs);
+assert.equal(both.fixture, false, "two real files stay real");
+const marked = await load(FIXTURE_TEXT);
+assert.throws(() => core.automationCombine([realDocs[0], marked]),
+  e => e.kind === "mixed_fixture" && /1 av 2/.test(e.message));
+assert.throws(() => core.automationCombine([marked, ...realDocs]), e => e.kind === "mixed_fixture");
+""")
+
     # --- human work versus machine work ----------------------------------------------------
 
     def test_only_needs_review_can_ask_for_a_human(self):
