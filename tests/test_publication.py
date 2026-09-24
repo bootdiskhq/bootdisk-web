@@ -145,7 +145,7 @@ class SyntheticReleaseTests(unittest.TestCase):
                      "publication.css", "collections.json", "archive.html", "app.js"):
             self.assertIn(name, published)
         for path in published:
-            self.assertFalse(any(word in path for word in ("curat", "overview", "fixture", "tests/", "sample", "scripts/")), path)
+            self.assertFalse(any(word in path for word in ("curat", "overview", "automation", "fixture", "tests/", "sample", "scripts/", "docs/")), path)
         self.assertEqual(json.loads((self.release / "collections.json").read_text(encoding="utf-8")), PRODUCTION_REGISTRY)
 
     def test_sitemap_lists_front_page_collection_and_every_detail_link_exactly(self):
@@ -172,6 +172,19 @@ class SyntheticReleaseTests(unittest.TestCase):
             result = subprocess.run([*command, base, "--expected-entries", str(len(self.index["entries"]))], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Sitemap URLs do not match", result.stderr)
+
+    def test_http_verifier_refuses_a_release_that_serves_the_automation_queue(self):
+        command = [sys.executable, str(ROOT / "scripts" / "verify-deployment.py")]
+        for name in ("automation.html", "automation-adapter.js", "tests/fixtures/automation-queue-v1.json"):
+            leaked = self.root / f"leaked-{name.replace('/', '-')}"
+            shutil.copytree(self.release, leaked)
+            (leaked / name).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / name, leaked / name)
+            with serve(leaked) as base:
+                result = subprocess.run([*command, base, "--expected-entries", str(len(self.index["entries"]))], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0, name)
+            self.assertIn("Expected HTTP 404", result.stderr)
+            self.assertIn(name, result.stderr)
 
         leaked = self.root / "leaked-curator"
         shutil.copytree(self.release, leaked)

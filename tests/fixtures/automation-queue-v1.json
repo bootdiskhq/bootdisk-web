@@ -1,0 +1,457 @@
+{
+  "schema": "bootdisk-automation-queue-1",
+  "rules_version": "director-first-pass-1",
+  "mode": "read_only",
+  "input": {
+    "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+    "candidates_sha256": "9829ed0053e4a79abdf8eb030d845db7313cbf1b28b9658303e9f909d8f25060"
+  },
+  "entries": [
+    {
+      "key": {
+        "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+        "entry": "K1D1"
+      },
+      "title": "Prøveprogram – venter på maskinell undersøkelse",
+      "stage": "inspecting",
+      "requires_human": false,
+      "fields": [
+        {
+          "field": "identity",
+          "status": "inspect",
+          "proposed": null,
+          "rule": "identity-needs-package-context-1",
+          "reason": "Menynavn og identiske installasjonsfiler fastslår ikke programidentitet.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "K1D1",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "version",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "version-not-established-1",
+          "reason": "Versjon er ikke fastslått. Tall i navn og en felles installatør er ikke tilstrekkelig belegg.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "K1D1",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "content_kind",
+          "status": "candidate",
+          "proposed": "game",
+          "rule": "director-games-section-1",
+          "reason": "Den entydige spillseksjonen støtter et forslag om innholdstype Spill; det er ikke en godkjenning.",
+          "evidence": [
+            {
+              "label": "Kategori i CD-menyen",
+              "value": [
+                "games"
+              ],
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "K1D1",
+                "pointer": "/entries/0/normalized/categories"
+              }
+            }
+          ]
+        },
+        {
+          "field": "distribution_kind",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "edition-not-established-1",
+          "reason": "Utgaven er ikke fastslått. Freeware betyr ikke fullversjon, og en omtale av en demo kan gjelde et annet program.",
+          "evidence": []
+        },
+        {
+          "field": "description",
+          "status": "candidate",
+          "proposed": "  Original omtale\r\n",
+          "rule": "original-description-1",
+          "reason": "Bevar den valgte CD-omtalen ordrett, inkludert linjeskift.",
+          "evidence": [
+            {
+              "label": "Omtale på CD-en",
+              "value": "  Original omtale\r\n",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "K1D1",
+                "pointer": "/entries/0/evidence/description_source/text/cp1252_view"
+              }
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "code": "inspect_product_context",
+          "field": "identity",
+          "reason": "Undersøk programspesifikk README og installasjonsmetadata uten å kjøre programmet.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "K1D1",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "code": "inspect_product_version",
+          "field": "version",
+          "reason": "Let etter versjon med dokumentert tilknytning til programmet, ikke bare installatøren.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "K1D1",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "code": "inspect_edition",
+          "field": "distribution_kind",
+          "reason": "Let etter eksplisitt demo/prøve/full-utgave i riktig programkontekst.",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "key": {
+        "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+        "entry": "EXAMPLE2"
+      },
+      "title": "Prøvespill – forslag klare",
+      "stage": "proposals",
+      "requires_human": false,
+      "fields": [
+        {
+          "field": "identity",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "identity-needs-package-context-1",
+          "reason": "Syntetisk eksempel: maskinell undersøkelse fant ikke tilstrekkelig belegg.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE2",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "version",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "version-not-established-1",
+          "reason": "Versjon er ikke fastslått. Tall i navn og en felles installatør er ikke tilstrekkelig belegg.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE2",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "content_kind",
+          "status": "candidate",
+          "proposed": "game",
+          "rule": "director-games-section-1",
+          "reason": "Den entydige spillseksjonen støtter et forslag om innholdstype Spill; det er ikke en godkjenning.",
+          "evidence": [
+            {
+              "label": "Kategori i CD-menyen",
+              "value": [
+                "games"
+              ],
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE2",
+                "pointer": "/entries/0/normalized/categories"
+              }
+            }
+          ]
+        },
+        {
+          "field": "distribution_kind",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "edition-not-established-1",
+          "reason": "Utgaven er ikke fastslått. Freeware betyr ikke fullversjon, og en omtale av en demo kan gjelde et annet program.",
+          "evidence": []
+        },
+        {
+          "field": "description",
+          "status": "candidate",
+          "proposed": "  Original omtale\r\n",
+          "rule": "original-description-1",
+          "reason": "Bevar den valgte CD-omtalen ordrett, inkludert linjeskift.",
+          "evidence": [
+            {
+              "label": "Omtale på CD-en",
+              "value": "  Original omtale\r\n",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE2",
+                "pointer": "/entries/0/evidence/description_source/text/cp1252_view"
+              }
+            }
+          ]
+        }
+      ],
+      "tasks": []
+    },
+    {
+      "key": {
+        "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+        "entry": "EXAMPLE3"
+      },
+      "title": "Prøveprogram – motstridende versjoner",
+      "stage": "needs_review",
+      "requires_human": true,
+      "fields": [
+        {
+          "field": "identity",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "identity-needs-package-context-1",
+          "reason": "Syntetisk eksempel: maskinell undersøkelse fant ikke tilstrekkelig belegg.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE3",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "version",
+          "status": "conflict",
+          "proposed": null,
+          "rule": "version-not-established-1",
+          "reason": "Syntetisk eksempel: undersøkelsen fant to ulike programversjoner.",
+          "evidence": [
+            {
+              "label": "README – prøvebelegg",
+              "value": "Product version 1.0",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE3",
+                "pointer": "/synthetic/readme"
+              }
+            },
+            {
+              "label": "Programmetadata – prøvebelegg",
+              "value": "Product version 2.0",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE3",
+                "pointer": "/synthetic/product_version"
+              }
+            }
+          ]
+        },
+        {
+          "field": "content_kind",
+          "status": "candidate",
+          "proposed": "game",
+          "rule": "director-games-section-1",
+          "reason": "Den entydige spillseksjonen støtter et forslag om innholdstype Spill; det er ikke en godkjenning.",
+          "evidence": [
+            {
+              "label": "Kategori i CD-menyen",
+              "value": [
+                "games"
+              ],
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE3",
+                "pointer": "/entries/0/normalized/categories"
+              }
+            }
+          ]
+        },
+        {
+          "field": "distribution_kind",
+          "status": "retain_unknown",
+          "proposed": null,
+          "rule": "edition-not-established-1",
+          "reason": "Utgaven er ikke fastslått. Freeware betyr ikke fullversjon, og en omtale av en demo kan gjelde et annet program.",
+          "evidence": []
+        },
+        {
+          "field": "description",
+          "status": "candidate",
+          "proposed": "  Original omtale\r\n",
+          "rule": "original-description-1",
+          "reason": "Bevar den valgte CD-omtalen ordrett, inkludert linjeskift.",
+          "evidence": [
+            {
+              "label": "Omtale på CD-en",
+              "value": "  Original omtale\r\n",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE3",
+                "pointer": "/entries/0/evidence/description_source/text/cp1252_view"
+              }
+            }
+          ]
+        }
+      ],
+      "tasks": []
+    },
+    {
+      "key": {
+        "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+        "entry": "EXAMPLE4"
+      },
+      "title": "Prøveprogram – bevart menneskelig vurdering",
+      "stage": "protected",
+      "requires_human": false,
+      "fields": [
+        {
+          "field": "identity",
+          "status": "preserve",
+          "proposed": null,
+          "rule": "identity-needs-package-context-1",
+          "reason": "Syntetisk eksempel: eksisterende menneskelig vurdering skal bevares.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE4",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "version",
+          "status": "preserve",
+          "proposed": null,
+          "rule": "version-not-established-1",
+          "reason": "Syntetisk eksempel: eksisterende menneskelig vurdering skal bevares.",
+          "evidence": [
+            {
+              "label": "Navn i CD-menyen",
+              "value": "Example 2000",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE4",
+                "pointer": "/entries/0/normalized/title"
+              }
+            }
+          ]
+        },
+        {
+          "field": "content_kind",
+          "status": "preserve",
+          "proposed": null,
+          "rule": "director-games-section-1",
+          "reason": "Syntetisk eksempel: eksisterende menneskelig vurdering skal bevares.",
+          "evidence": [
+            {
+              "label": "Kategori i CD-menyen",
+              "value": [
+                "games"
+              ],
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE4",
+                "pointer": "/entries/0/normalized/categories"
+              }
+            }
+          ]
+        },
+        {
+          "field": "distribution_kind",
+          "status": "preserve",
+          "proposed": null,
+          "rule": "edition-not-established-1",
+          "reason": "Syntetisk eksempel: eksisterende menneskelig vurdering skal bevares.",
+          "evidence": []
+        },
+        {
+          "field": "description",
+          "status": "preserve",
+          "proposed": null,
+          "rule": "original-description-1",
+          "reason": "Syntetisk eksempel: eksisterende menneskelig vurdering skal bevares.",
+          "evidence": [
+            {
+              "label": "Omtale på CD-en",
+              "value": "  Original omtale\r\n",
+              "source_ref": {
+                "manifest": "sha256:fc7a508a330a6f20259ca0446d444d625922a1c7c09dfda2755dfae71e1287c2",
+                "entry": "EXAMPLE4",
+                "pointer": "/entries/0/evidence/description_source/text/cp1252_view"
+              }
+            }
+          ]
+        }
+      ],
+      "tasks": []
+    }
+  ],
+  "summary": {
+    "entries": 4,
+    "field_status_counts": {
+      "candidate": 6,
+      "retain_unknown": 7,
+      "inspect": 1,
+      "conflict": 1,
+      "preserve": 5
+    },
+    "stage_counts": {
+      "proposals": 1,
+      "inspecting": 1,
+      "needs_review": 1,
+      "protected": 1
+    },
+    "machine_tasks": 3,
+    "human_exceptions": 1,
+    "automatic_decisions": 0,
+    "human_decisions": 0
+  },
+  "fixture": true,
+  "fixture_note": "Bare syntetiske scenarier. needs_review og protected er fremtidige produsenttilstander."
+}

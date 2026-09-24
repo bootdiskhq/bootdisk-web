@@ -15,10 +15,13 @@ from collection_registry import collection_urls
 
 PRODUCTION = "https://bootdisk.no/"
 ROOT_CANONICAL = '<link id="canonical-url" rel="canonical" href="https://bootdisk.no/">'
-# Local curation, its prototype data layer and test fixtures must never be public.
+# Local curation, the automatic first-pass queue, their prototype data layers and test fixtures
+# must never be public.
 NOT_PUBLIC = ("curate.html", "curate.js", "curate-adapter.js", "curate-live-adapter.js", "overview.html",
               "overview-sample.js", "overview-adapter.js", "overview.js", "curator-labels.js", "curator-navigation.js",
-              "tests/fixtures/curator-fixtures-v1.json", "scripts/build-release.py")
+              "tests/fixtures/curator-fixtures-v1.json", "scripts/build-release.py",
+              "automation.html", "automation.css", "automation.js", "automation-core.js", "automation-adapter.js",
+              "automation-sample.js", "tests/fixtures/automation-queue-v1.json", "docs/automation-queue-v1.md")
 
 
 def fetch(base_url: str, path: str, expected_status: int = 200) -> bytes:

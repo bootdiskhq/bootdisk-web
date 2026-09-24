@@ -113,6 +113,20 @@ måle skalaen, leser bare, og er ikke integrert med den lokale tjenesten.
 [Prototypen](docs/curator-overview-prototype.md) beskriver hva som virker, hva som bare er
 prøvedata, forslaget til lesekontrakt og backendavhengighetene.
 
+## Automatisk førstegjennomgang (prototype)
+
+En lesevisning av maskinens førstegjennomgang: hva som trenger deg, hva maskinen fortsatt
+undersøker, hvilke forslag den har og hva som er bevart. Den leser bare og har ingen
+godkjenning.
+
+```sh
+python3 -m http.server 8803 --bind 127.0.0.1
+```
+
+Åpne `http://127.0.0.1:8803/automation.html` og velg kilde: en køfil fra maskinen din, eller
+eksplisitt valgte prøvedata. [Bruksforklaring, kontrollmatrise og Catalog-avhengigheter](docs/automation-queue-prototype.md).
+Kontrakten er [automation-queue-v1](docs/automation-queue-v1.md).
+
 ## Ekte lokal kuratering
 
 Start Catalogs lokale tjeneste med dette repoet som `--web-root`, og åpne

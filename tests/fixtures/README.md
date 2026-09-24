@@ -21,3 +21,15 @@ over. Feil, konflikter, manglende media og videre tilstander simuleres i
 
 Mappen ligger under `tests/` og er derfor utenfor den offentlige
 release-allowlisten i `scripts/build-release.py`.
+
+# Kø for automatisk førstegjennomgang
+
+`automation-queue-v1.json` er kontraktens eksempelfil, kopiert **uendret** fra vedlegget til
+arbeidsordren 24.09.2026 (utviklingskopi i Catalog-grenen `feat/automatic-first-pass`,
+`docs/fixtures/automation-queue-v1.json`). SHA-256
+`2ae1b5369eaa788056133270c6058597d28ab3433114e59f970df8c96bb2cefd`, låst i
+`tests/test_automation.py`.
+
+**Prøvedata.** Alle fire poster er syntetiske. `needs_review` og `protected` er
+fremtidsscenarier; den første maskinleveransen lager bare `proposals` og `inspecting`.
+Siden viser filen bare på `automation.html?kilde=prove`, med «Prøvedata» øverst.
