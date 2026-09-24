@@ -1,13 +1,12 @@
 /* Bootdisk Web deliberately consumes presentation data rather than archive internals.
  * The frontend is disposable: Catalog owns identity and Publish owns web assets. */
 function requestedEntry() {
-  const requested = new URLSearchParams(window.location.search).get("entry");
-  if (!requested) {
-    window.location.replace("archive.html");
-    return null;
-  }
+  const parameters = new URLSearchParams(window.location.search);
+  // Without an entry parameter index.html is the Bootdisk front page (landing.js).
+  if (!parameters.has("entry")) return null;
+  const requested = parameters.get("entry");
   // Entry ids become filenames only after strict validation; source values never become paths.
-  if (!/^(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[a-z][a-z0-9]{0,63}$/i.test(requested)) throw new Error(`Invalid entry id: ${requested}`);
+  if (!/^(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[a-z][a-z0-9]{0,63}$/i.test(requested)) throw Object.assign(new Error(`Invalid entry id: ${requested}`), { unknownEntry: true });
   return requested.toLowerCase();
 }
 
@@ -55,12 +54,41 @@ function setMetadata(name, version, entry, curatedDescription) {
   document.querySelector("#og-url").content = url.href;
 }
 
+/* Bootdisk → collection → medium → entry. The registry only adds names and links; if it
+ * cannot be read the entry still renders, with the archive as its parent. */
+function breadcrumbTrail(entry, name, registry) {
+  const trail = [{ label: "Bootdisk", href: "./" }];
+  const collection = registry ? collectionForPublication(registry, entry.publication) : null;
+  trail.push(collection ? { label: collection.title, href: collectionHref(collection) } : { label: "Alle kildeposter", href: "archive.html" });
+  if (entry.medium) trail.push({ label: entry.medium, href: entry.medium_id ? `archive.html?medium=${encodeURIComponent(entry.medium_id)}` : "archive.html" });
+  trail.push({ label: name, href: null });
+  return trail;
+}
+
+function renderBreadcrumbs(trail) {
+  const list = document.querySelector("#entry-breadcrumbs");
+  list.replaceChildren(...trail.map(item => {
+    const element = document.createElement("li");
+    if (item.href) {
+      const link = document.createElement("a");
+      link.href = item.href;
+      link.textContent = item.label;
+      element.append(link);
+    } else {
+      element.textContent = item.label;
+      element.setAttribute("aria-current", "page");
+    }
+    return element;
+  }));
+}
+
 async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
   const dataUrl = `data/${entryId}.json`;
+  const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
   const [response, indexResponse] = await Promise.all([fetch(dataUrl), fetch("data/index.json")]);
-  if (!response.ok) throw new Error(`Cannot load ${dataUrl}: ${response.status}`);
+  if (!response.ok) throw Object.assign(new Error(`Cannot load ${dataUrl}: ${response.status}`), { unknownEntry: response.status === 404 });
   if (!indexResponse.ok) throw new Error(`Cannot load archive index: ${indexResponse.status}`);
   const [entry, index] = await Promise.all([response.json(), indexResponse.json()]);
   const software = entry.software?.[0];
@@ -89,6 +117,7 @@ async function render() {
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
   document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status, software?.status);
   setMetadata(name, knownVersion, entry, description);
+  renderBreadcrumbs(breadcrumbTrail(entry, name, await registryRequest));
   document.querySelector("#fact-kind").textContent = ({application: "Program", game: "Spill", course: "Kurs / veiledning", image_collection: "Bildesamling", font_collection: "Skriftpakke", reference: "Oppslagsverk"})[software?.content_kind] ?? "Ukjent";
   document.querySelector("#fact-distribution").textContent = ({full: "Fullversjon", demo: "Demo", trial: "Prøveversjon", update: "Oppdatering", unknown: "Ukjent"})[software?.distribution_kind] ?? "Ukjent";
 
@@ -135,10 +164,19 @@ async function render() {
 
 render().catch(error => {
   console.error(error);
-  document.querySelector("#software-name").textContent = "Kunne ikke laste arkivpost";
-  document.querySelector("#software-version").textContent = "Sjekk at frontend-data og /store er tilgjengelig.";
+  // A failed entry must not keep the front page's title or canonical URL.
+  document.title = "Arkivposten ble ikke funnet — Bootdisk";
+  document.querySelector("#canonical-url")?.remove();
+  const robots = document.createElement("meta");
+  robots.name = "robots";
+  robots.content = "noindex";
+  document.head.append(robots);
+  document.querySelector("#software-name").textContent = error.unknownEntry ? "Fant ikke arkivposten" : "Kunne ikke laste arkivpost";
+  document.querySelector("#software-version").textContent = error.unknownEntry ? "Lenken er ugyldig eller utdatert." : "Sjekk at frontend-data og /store er tilgjengelig.";
+  document.querySelector("#source-context").textContent = "ARKIVPOST";
+  document.querySelector("#software-description").textContent = "Gå til alle kildeposter for å finne det du lette etter.";
   const alert = document.querySelector("#entry-error");
-  alert.textContent = "Arkivposten kunne ikke lastes.";
+  alert.textContent = error.unknownEntry ? "Det finnes ingen arkivpost med denne adressen." : "Arkivposten kunne ikke lastes.";
   alert.hidden = false;
   document.querySelector(".window").hidden = true;
   document.querySelector(".entry-navigation").hidden = true;

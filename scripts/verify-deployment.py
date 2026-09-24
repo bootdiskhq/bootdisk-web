@@ -11,6 +11,15 @@ from urllib.error import HTTPError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
+from collection_registry import collection_urls
+
+PRODUCTION = "https://bootdisk.no/"
+ROOT_CANONICAL = '<link id="canonical-url" rel="canonical" href="https://bootdisk.no/">'
+# Local curation, its prototype data layer and test fixtures must never be public.
+NOT_PUBLIC = ("curate.html", "curate.js", "curate-adapter.js", "curate-live-adapter.js", "overview.html",
+              "overview-sample.js", "overview-adapter.js", "overview.js", "curator-labels.js", "curator-navigation.js",
+              "tests/fixtures/curator-fixtures-v1.json", "scripts/build-release.py")
+
 
 def fetch(base_url: str, path: str, expected_status: int = 200) -> bytes:
     url = urljoin(base_url.rstrip("/") + "/", path)
@@ -47,7 +56,13 @@ def main() -> None:
     archive = fetch(args.base_url, "archive.html").decode("utf-8")
     if '<link rel="canonical" href="https://bootdisk.no/archive.html">' not in archive:
         raise RuntimeError("Archive canonical URL is missing or incorrect")
+    for path in ("", "index.html"):
+        front = fetch(args.base_url, path).decode("utf-8")
+        if ROOT_CANONICAL not in front or "window.location.replace" in front:
+            raise RuntimeError(f"Front page at /{path} lacks the root canonical URL or redirects")
     fetch(args.base_url, "index.html?entry=K37")
+    for path in NOT_PUBLIC:
+        fetch(args.base_url, path, expected_status=404)
     robots = fetch(args.base_url, "robots.txt").decode("utf-8")
     if "Sitemap: https://bootdisk.no/sitemap.xml" not in robots:
         raise RuntimeError("robots.txt does not advertise the production sitemap")
@@ -57,10 +72,20 @@ def main() -> None:
     entries = index.get("entries")
     if not isinstance(entries, list) or len(entries) != args.expected_entries:
         raise RuntimeError(f"Expected {args.expected_entries} entries, got {len(entries) if isinstance(entries, list) else 'invalid'}")
-    sitemap_urls = {node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")}
-    expected_urls = {"https://bootdisk.no/archive.html", *(f"https://bootdisk.no/index.html?entry={entry['entry']}" for entry in entries)}
-    if sitemap_urls != expected_urls:
-        raise RuntimeError("Sitemap URLs do not match the archive index")
+    registry = json.loads(fetch(args.base_url, "collections.json"))
+    collection_pages = collection_urls(registry, index, PRODUCTION)
+    for url in collection_pages:
+        page = fetch(args.base_url, url.removeprefix(PRODUCTION)).decode("utf-8")
+        if 'src="collection.js"' not in page:
+            raise RuntimeError(f"Collection page is not served: {url}")
+    sitemap_locations = [node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
+    sitemap_urls = set(sitemap_locations)
+    detail_urls = {f"{PRODUCTION}index.html?entry={entry['entry']}" for entry in entries}
+    expected_urls = {PRODUCTION, f"{PRODUCTION}archive.html", *collection_pages, *detail_urls}
+    if len(sitemap_locations) != len(sitemap_urls) or sitemap_urls != expected_urls:
+        raise RuntimeError("Sitemap URLs do not match the front page, archive, collections and archive index")
+    if {url for url in sitemap_urls if "index.html?entry=" in url} != detail_urls:
+        raise RuntimeError("Sitemap detail links do not match the archive index exactly")
 
     def fetch_entry(entry: dict) -> tuple[str, dict]:
         entry_id = entry["entry"]
@@ -87,6 +112,7 @@ def main() -> None:
 
     print(f"deployment entries: {len(entries)}")
     print(f"deployment assets: {len(assets)}")
+    print(f"deployment collections: {len(collection_pages)}")
     print("deployment verification: passed")
 
 

@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+TEST_COLLECTIONS = str(ROOT / 'tests' / 'fixtures' / 'collections-test-publication.json')
 sys.path.insert(0, str(ROOT / 'scripts'))
 from frontend_contract import validate_frontend_data
 spec = importlib.util.spec_from_file_location('collection', ROOT / 'scripts/build-collection.py')
@@ -100,7 +101,7 @@ class CollectionTests(unittest.TestCase):
         self.medium('new', 'Spil1', 'b')
         self.build()
         subprocess.run([sys.executable, str(ROOT / 'scripts/build-release.py'), str(self.root / 'output'),
-                        str(self.root), '--output', str(self.root / 'release'), '--expected-entries', '2'], check=True, capture_output=True)
+                        str(self.root), '--output', str(self.root / 'release'), '--expected-entries', '2', '--collections', TEST_COLLECTIONS], check=True, capture_output=True)
         files = {p.name for p in (self.root / 'release').iterdir()}
         self.assertFalse(any('curat' in p or 'overview' in p or 'review' in p for p in files))
         self.assertTrue((self.root / 'release/data/k1.json').exists())
@@ -132,7 +133,7 @@ for(const input of ['../secret','/secret','new--../../x','<script>','new--']) {
         self.inputs[0].pop('images_unavailable_reason')
         self.config.write_text(json.dumps({'media':self.inputs}))
         self.build()
-        result=subprocess.run([sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1'],capture_output=True,text=True)
+        result=subprocess.run([sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1','--collections',TEST_COLLECTIONS],capture_output=True,text=True)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('No images for medium new',result.stderr)
         self.assertFalse((self.root/'release').exists())
@@ -144,7 +145,7 @@ for(const input of ['../secret','/secret','new--../../x','<script>','new--']) {
         self.build()
         detail=self.root/'output/new--k1.json'; original=detail.read_text()
         doc=json.loads(original);doc['source_context']['description']=None;detail.write_text(json.dumps(doc))
-        command=[sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1']
+        command=[sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1','--collections',TEST_COLLECTIONS]
         result=subprocess.run(command,capture_output=True,text=True)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('Insufficient description coverage',result.stderr)
@@ -158,6 +159,6 @@ for(const input of ['../secret','/secret','new--../../x','<script>','new--']) {
         self.inputs[0]['image_requirements']={'all_entries':['screenshot']}
         self.config.write_text(json.dumps({'media':self.inputs}))
         self.build()
-        result=subprocess.run([sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1'],capture_output=True,text=True)
+        result=subprocess.run([sys.executable,str(ROOT/'scripts/build-release.py'),str(self.root/'output'),str(self.root),'--output',str(self.root/'release'),'--expected-entries','1','--collections',TEST_COLLECTIONS],capture_output=True,text=True)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('Missing screenshot: new--Spil1',result.stderr)

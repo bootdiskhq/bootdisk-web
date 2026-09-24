@@ -1,5 +1,21 @@
 # Upubliserte endringer
 
+- Bootdisk-forside på rotadressen i stedet for omdirigering til arkivet. Komputer for
+  alle presenteres som første samling, med antall CD-er og kildeposter hentet fra data
+  og en lenke til alle kildeposter.
+- Samlingsside (`collection.html?collection=komputer-for-alle`) med ny historietekst,
+  kilder og alle CD-ene gruppert etter år, nyeste utgave først og numerisk sortert.
+- CD-visning i arkivet (`archive.html?medium=…`) med CD-navn, vei tilbake til samlingen
+  og til alle kildeposter. Detaljsiden har brødsmuler: Bootdisk → samling → CD → post.
+- Web-eid samlingsregister (`collections.json`) med byggeport: et medium uten samling,
+  en dobbel kobling eller en ukjent kildepost stopper releasen med en forklaring.
+- Egne tilstander for lasting, tom samling, ukjent samling, ukjent post og datafeil.
+  Feil vises aldri som null CD-er. Et medium som registeret ikke kobler til en samling,
+  gir feilmelding også i nettleseren, ikke en lavere telling.
+- Sitemap tar med forsiden og samlingssidene. HTTP-verifikatoren kontrollerer forsiden,
+  samlingssidene og at kuratorfilene ikke er offentlige.
+- Arkivets filterlinje gir ikke lenger horisontal rulling ved 1280 eller 360 px bredde.
+
 - Kurateringsoversikt (`overview.html`) som prototype: søk på navn og kildepost,
   status- og feltfiltre, sortering, sidevisning på 50 rader, og åpning av en rad i den
   eksisterende kurateringsflyten med retur til samme søk, filtre, side og tastaturfokus.

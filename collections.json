@@ -1,0 +1,23 @@
+{
+  "schema": "bootdisk-web-collections-1",
+  "collections": [
+    {
+      "id": "komputer-for-alle",
+      "title": "Komputer for alle",
+      "publication_values": ["KOMPUTER FOR ALLE"],
+      "summary": "Komputer for alle er PC-bladet bak K-CD-ene. CD-ene fulgte med bladet rundt årtusenskiftet og var fylt med spill, verktøy og kurs i vanlig PC-bruk. Sammen viser de hvilke programmer som ble delt ut til vanlige PC-brukere.",
+      "history_title": "Om bladet og CD-ene",
+      "lede": "Komputer for alle er PC-bladet bak K-CD-ene: CD-er med programmer, spill og kurs som fulgte med bladet rundt årtusenskiftet. Her kan du bla i innholdet på CD-ene Bootdisk har bevart.",
+      "history": [
+        "CD-ene gir et konkret bilde av hvordan PC-en ble tatt i bruk rundt år 2000. Ved siden av spill og verktøy som Winamp og WinZip finner vi kurs som Wordskolen, PowerPoint-skolen og Digitalkameraskolen, laget for å lære bort vanlige oppgaver på egen PC. Noen spill kom som demoer, for eksempel MechCommander 2, og K-CD 15/2001 hadde med bladets årsregister, der leserne kunne finne igjen artikler og programmer i bladet og på CD-en.",
+        "En CD fra et blad er et øyeblikksbilde. Den viser hvilke programmer som ble delt ut til lesere, sammen med menyen og omtalene de møtte på skjermen. Derfor tar Bootdisk vare på både programmene og CD-ens egne tekster.",
+        "Samlingen viser CD-ene slik de ble utgitt den gang, og sier ingenting om hvordan bladet lages eller distribueres i dag. Bootdisk er et uavhengig bevaringsprosjekt og er ikke utgiverens nettsted."
+      ],
+      "sources": [
+        {"label": "CD-omtalen av årsregisteret (K-CD 15/2001)", "href": "index.html?entry=K26"},
+        {"label": "CD-omtalen av MechCommander 2 (K-CD 15/2001)", "href": "index.html?entry=K13"},
+        {"label": "CD-omtalen av Wordskolen (K-CD 15/2001)", "href": "index.html?entry=K32"}
+      ]
+    }
+  ]
+}

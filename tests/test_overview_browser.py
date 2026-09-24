@@ -61,6 +61,11 @@ class OverviewBrowserTests(unittest.TestCase):
             raise unittest.SkipTest(f"No Chromium available: {error}")
         cls._stack.callback(cls.browser.close)
 
+    @classmethod
+    def tearDownClass(cls):
+        # Release the browser and Playwright so a later browser class can start its own.
+        cls._stack.close()
+
     @contextlib.contextmanager
     def overview(self, width=1280, height=900, query=""):
         page = self.browser.new_page(viewport={"width": width, "height": height})

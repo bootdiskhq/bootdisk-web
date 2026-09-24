@@ -1,0 +1,14 @@
+{
+  "schema": "bootdisk-web-collections-1",
+  "collections": [
+    {
+      "id": "testsamling",
+      "title": "Testsamling (fiktiv)",
+      "publication_values": ["Test"],
+      "summary": "Fiktiv samling for enhetstester av releasebygget. Ikke produksjonsinnhold.",
+      "lede": "Fiktiv samling for enhetstester av releasebygget.",
+      "history": [],
+      "sources": []
+    }
+  ]
+}

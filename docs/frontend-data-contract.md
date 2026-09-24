@@ -81,10 +81,11 @@ breaks. A missing selected description is stated explicitly. Pending entries
 remain pending; source titles never become software identities. Neither versions
 from generic installers nor source menu groups become semantic facts here.
 
-No Director images have yet been selected and published. Empty assets are valid;
-this does not imply that images do not exist on the disc. The current Director
-intake preserves launch references, not complete executable packages. No program
-downloads or hosted curator are included in the public release.
+Director discs now publish selected CD images and original icons (see image
+coverage below and [the five-disc trial](five-disc-trial.md)). Empty assets remain
+valid for an individual entry and do not imply that no image exists on the disc.
+The Director intake preserves launch references, not complete executable packages.
+No program downloads or hosted curator are included in the public release.
 
 ## Image coverage — 1.2.0-rc2
 
@@ -102,3 +103,50 @@ Collection media may specify `description_requirements: {"minimum_count": 33}`.
 The release checks nonblank `source_context.description.value` for that medium
 and fails before replacing output when coverage falls below the requirement.
 The artifact report includes `description_coverage` alongside image coverage.
+
+## Collection registry — public front page
+
+The front page and collection pages combine the collection index with a small
+Web-owned registry, `collections.json`. The registry is presentation configuration,
+not a Catalog identity, and no field is added to the generated data.
+
+```json
+{
+  "schema": "bootdisk-web-collections-1",
+  "collections": [{
+    "id": "komputer-for-alle",
+    "title": "Komputer for alle",
+    "publication_values": ["KOMPUTER FOR ALLE"],
+    "summary": "Front page text",
+    "lede": "Collection page introduction",
+    "history_title": "Optional heading",
+    "history": ["Paragraph", "Paragraph"],
+    "sources": [{"label": "Source", "href": "index.html?entry=K26"}]
+  }]
+}
+```
+
+- `id` is a stable lowercase slug and the `collection` URL parameter.
+- `publication_values` binds the collection to exact `media[].publication` values in
+  the index (for a 1.0 single-medium index: the root `publication`). This is the only
+  grouping rule: nothing is inferred from file names, medium slugs or the collection
+  index root, which describes the whole archive.
+- `sources[].href` is an entry link, an archive link or an `https://` URL.
+- Collections are presented in registry order; one without media is not shown.
+
+`scripts/collection_registry.py` (run by `build-release.py`) refuses to package when
+a medium's publication is bound to no collection or to more than one, when an id is
+repeated or unsafe, when a source link is not allowed, or when a cited entry is not
+in the index. The error names the medium and the value to configure. The browser
+applies the same rules in `collection-core.js`, including that every medium in the
+index is bound to a collection, and shows an explicit error state instead of sample
+data, zero counts or a count that silently leaves out unbound media (a stale registry
+beside a newer index).
+
+Counts are derived from the index alone: media are counted by `media[].id`, and
+entries by `medium_id`. An entry count is source entries, not unique programs.
+Media sort newest first by the trailing `<issue>/<year>` of the medium label, compared
+numerically; the issue number is not a month. Labels without that pattern follow in
+natural order. Adding a disc or a second publication is a data and registry change;
+the pages do not change. The 1.0 single-medium index remains supported as one medium
+whose content is the whole archive.
