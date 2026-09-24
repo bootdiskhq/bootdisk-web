@@ -252,6 +252,34 @@ assert.deepEqual(Array.from(view.years[0].media, m => m.label), ['K-CD 15/2001',
 assert.equal(view.entryCount, 27);
 """, registry=PRODUCTION_REGISTRY, index=index)
 
+    @unittest.skipUnless(shutil.which("node"), "Node required")
+    def test_media_without_a_collection_are_an_error_not_left_out(self):
+        run_node(NODE_CORE + r"""
+const bindingProblem = core('bindingProblem'), collectionView = core('collectionView'), publishedCollections = core('publishedCollections');
+const kfa = DATA.registry.collections[0];
+assert.equal(bindingProblem(DATA.registry, DATA.index), null);
+// Partly unbound: one disc's publication is missing from the registry (stale registry, newer index).
+const partial = structuredClone(DATA.index);
+partial.media[0].publication = 'UNREGISTERED';
+assert.match(bindingProblem(DATA.registry, partial), new RegExp(`1 medium .*ikke koblet.*${partial.media[0].id}`));
+assert.throws(() => publishedCollections(DATA.registry, partial), /ikke koblet til noen samling/);
+assert.throws(() => collectionView(DATA.registry, partial, kfa), /ikke koblet til noen samling/);
+// Wholly unbound: the archive must not read as empty.
+const none = structuredClone(DATA.registry);
+none.collections[0].publication_values = ['INGEN MEDIER HAR DENNE VERDIEN'];
+assert.match(bindingProblem(none, DATA.index), new RegExp(`^${DATA.index.media.length} medier `));
+assert.throws(() => publishedCollections(none, DATA.index), /ikke koblet til noen samling/);
+assert.throws(() => collectionView(none, DATA.index, none.collections[0]), /ikke koblet til noen samling/);
+// The legacy single-medium index is checked the same way, named by its label.
+const legacy = {publication: 'UNREGISTERED', medium: 'K-CD 15/2001', entries: [{entry: 'K1'}]};
+assert.match(bindingProblem(DATA.registry, legacy), /K-CD 15\/2001/);
+assert.throws(() => publishedCollections(DATA.registry, legacy));
+// A truly empty index is empty, not an error.
+const empty = {...DATA.index, media: [], entries: []};
+assert.equal(bindingProblem(DATA.registry, empty), null);
+assert.equal(publishedCollections(DATA.registry, empty).length, 0);
+""", registry=PRODUCTION_REGISTRY, index=self.index)
+
 
 @unittest.skipUnless(shutil.which("node"), "Node required")
 class CollectionCoreTests(unittest.TestCase):
@@ -290,7 +318,12 @@ const index = {schema: 'bootdisk-web-collection-1', publication: 'Bootdisk', med
           {id: 'annet-1', publication: 'ANNET BLAD', medium: 'Annet 1/1999'}],
   entries: [{entry: 'kcd-1-2000--K1', medium_id: 'kcd-1-2000'}, {entry: 'annet-1--K1', medium_id: 'annet-1'}]};
 const kfa = DATA.registry.collections[0];
-const view = core('collectionView')(DATA.registry, index, kfa);
+assert.equal(core('collectionForPublication')(DATA.registry, 'ANNET BLAD'), null);
+assert.equal(core('collectionForPublication')(DATA.registry, 'Komputer for alle'), null, 'binding is exact');
+// Once another collection claims the other publication, each view holds only its own media.
+const registry = structuredClone(DATA.registry);
+registry.collections.push({...structuredClone(kfa), id: 'annet-blad', publication_values: ['ANNET BLAD']});
+const view = core('collectionView')(registry, index, registry.collections[0]);
 assert.deepEqual(Array.from(view.media, m => m.id), ['kcd-1-2000']);
 assert.equal(view.entryCount, 1);
 for (const id of [null, '', '../komputer-for-alle', 'KOMPUTER-FOR-ALLE', '<script>', 'finnes-ikke'])

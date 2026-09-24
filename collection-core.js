@@ -105,9 +105,26 @@ function collectionHref(collection) {
   return `collection.html?collection=${encodeURIComponent(collection.id)}`;
 }
 
+/* Every medium in the index must belong to a collection. The build refuses an unbound
+ * medium (scripts/collection_registry.py); the browser repeats the check because a
+ * stale registry next to a newer index would otherwise drop discs from the counts and
+ * look like a smaller, or empty, archive. */
+function bindingProblem(registry, index) {
+  const unbound = indexMedia(index).filter(medium => !collectionForPublication(registry, medium.publication));
+  if (unbound.length === 0) return null;
+  const names = unbound.map(medium => medium.id ?? medium.label).join(", ");
+  return `${countLabel(unbound.length, "medium", "medier")} i indeksen er ikke koblet til noen samling: ${names}.`;
+}
+
+function assertBound(registry, index) {
+  const problem = bindingProblem(registry, index);
+  if (problem) throw new Error(problem);
+}
+
 /* Media are counted by stable medium id, never by entry names: the same program can
  * appear on several discs, and every source entry counts once on its own disc. */
 function collectionView(registry, index, collection) {
+  assertBound(registry, index);
   const media = indexMedia(index)
     .filter(medium => collectionForPublication(registry, medium.publication) === collection)
     .sort(compareMedia);
@@ -122,6 +139,7 @@ function collectionView(registry, index, collection) {
 }
 
 function publishedCollections(registry, index) {
+  assertBound(registry, index);
   return registry.collections.map(collection => collectionView(registry, index, collection)).filter(view => view.media.length > 0);
 }
 

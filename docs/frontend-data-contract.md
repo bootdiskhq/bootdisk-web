@@ -138,8 +138,10 @@ not a Catalog identity, and no field is added to the generated data.
 a medium's publication is bound to no collection or to more than one, when an id is
 repeated or unsafe, when a source link is not allowed, or when a cited entry is not
 in the index. The error names the medium and the value to configure. The browser
-applies the same rules in `collection-core.js` and shows an explicit error state
-instead of sample data or zero counts.
+applies the same rules in `collection-core.js`, including that every medium in the
+index is bound to a collection, and shows an explicit error state instead of sample
+data, zero counts or a count that silently leaves out unbound media (a stale registry
+beside a newer index).
 
 Counts are derived from the index alone: media are counted by `media[].id`, and
 entries by `medium_id`. An entry count is source entries, not unique programs.

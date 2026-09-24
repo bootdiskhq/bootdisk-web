@@ -10,7 +10,8 @@
 - Web-eid samlingsregister (`collections.json`) med byggeport: et medium uten samling,
   en dobbel kobling eller en ukjent kildepost stopper releasen med en forklaring.
 - Egne tilstander for lasting, tom samling, ukjent samling, ukjent post og datafeil.
-  Feil vises aldri som null CD-er.
+  Feil vises aldri som null CD-er. Et medium som registeret ikke kobler til en samling,
+  gir feilmelding også i nettleseren, ikke en lavere telling.
 - Sitemap tar med forsiden og samlingssidene. HTTP-verifikatoren kontrollerer forsiden,
   samlingssidene og at kuratorfilene ikke er offentlige.
 - Arkivets filterlinje gir ikke lenger horisontal rulling ved 1280 eller 360 px bredde.

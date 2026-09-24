@@ -56,6 +56,7 @@ class PublicationBrowserTests(unittest.TestCase):
         result = synthetic.package(data, publish, work / "wider-release", work / "registry.json")
         if result.returncode:
             raise AssertionError(result.stderr)
+        cls.index = json.loads((work / "release/data/index.json").read_text(encoding="utf-8"))
         cls.base = cls._stack.enter_context(serve(work / "release")).rstrip("/")
         cls.wider = cls._stack.enter_context(serve(work / "wider-release")).rstrip("/")
         playwright = cls._stack.enter_context(sync_playwright())
@@ -210,13 +211,26 @@ class PublicationBrowserTests(unittest.TestCase):
         def body(text):
             return lambda route: route.fulfill(status=200, content_type="application/json", body=text)
 
-        empty_registry = copy.deepcopy(PRODUCTION_REGISTRY)
-        empty_registry["collections"][0]["publication_values"] = ["INGEN MEDIER HAR DENNE VERDIEN"]
+        # Truly empty: an index with no media, and a registered collection no medium belongs to.
+        empty_index = {**self.index, "media": [], "entries": []}
+        with_fictional = copy.deepcopy(PRODUCTION_REGISTRY)
+        with_fictional["collections"].append(FICTIONAL)
+        # Not empty: media the registry does not bind (a stale registry beside a newer
+        # index) must fail, never be dropped from the counts.
+        one_unbound = copy.deepcopy(self.index)
+        one_unbound["media"][0]["publication"] = "UNREGISTERED"
+        none_bound = copy.deepcopy(PRODUCTION_REGISTRY)
+        none_bound["collections"][0]["publication_values"] = ["INGEN MEDIER HAR DENNE VERDIEN"]
+        kfa = "/collection.html?collection=komputer-for-alle"
         cases = [
             ("/", [("**/collections.json", fail(404))], "#landing-status", "error", "ikke at arkivet er tomt"),
             ("/", [("**/data/index.json", body("{ ugyldig"))], "#landing-status", "error", "ikke at arkivet er tomt"),
-            ("/", [("**/collections.json", body(json.dumps(empty_registry)))], "#landing-status", "empty", "Ingen samlinger er publisert"),
-            ("/collection.html?collection=komputer-for-alle", [("**/collections.json", body(json.dumps(empty_registry)))], "#media-status", "empty", "ingen publiserte CD-er"),
+            ("/", [("**/data/index.json", body(json.dumps(empty_index)))], "#landing-status", "empty", "Ingen samlinger er publisert"),
+            ("/", [("**/data/index.json", body(json.dumps(one_unbound)))], "#landing-status", "error", "ikke at arkivet er tomt"),
+            ("/", [("**/collections.json", body(json.dumps(none_bound)))], "#landing-status", "error", "ikke at arkivet er tomt"),
+            ("/collection.html?collection=testbladet-fiktiv", [("**/collections.json", body(json.dumps(with_fictional)))], "#media-status", "empty", "ingen publiserte CD-er"),
+            (kfa, [("**/data/index.json", body(json.dumps(one_unbound)))], "#media-status", "error", "ikke at samlingen er tom"),
+            (kfa, [("**/collections.json", body(json.dumps(none_bound)))], "#media-status", "error", "ikke at samlingen er tom"),
             ("/collection.html?collection=komputer-for-alle", [("**/data/index.json", fail(500))], "#media-status", "error", "ikke at samlingen er tom"),
             ("/collection.html?collection=komputer-for-alle", [("**/data/index.json", body('{"entries": 3}'))], "#media-status", "error", "ikke at samlingen er tom"),
             ("/collection.html?collection=komputer-for-alle", [("**/collections.json", body("[]"))], "#collection-status", "error", "ikke at samlingen er tom"),
