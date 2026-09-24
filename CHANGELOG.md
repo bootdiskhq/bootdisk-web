@@ -1,3 +1,9 @@
+# 1.2.0-rc5 — 24. september 2026
+
+- K-CD 15/2001 utvides med 29 Tools-kildeposter med original norsk omtale og bilder: 68 kildeposter på CD-en, 207 totalt fra sju CD-er.
+- Historiske K-lenker og tidligere identifiseringer beholdes; nye Tools-poster er uavklarte og får navneromsatte lenker.
+- Lokal lesevisning for automatisk førstegjennomgang er utviklet, men følger ikke med offentlig pakke.
+
 # 1.2.0-rc4 — 24. september 2026
 
 Offentlig pakke med godkjent Bootdisk-forside og Komputer for alle-samling.
