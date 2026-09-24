@@ -18,7 +18,7 @@ python3 -m http.server 8803 --bind 127.0.0.1
 | Adresse | Hva du ser |
 | --- | --- |
 | `http://127.0.0.1:8803/automation.html` | Valg av datakilde. Ingenting lastes før du velger. |
-| `http://127.0.0.1:8803/automation.html?kilde=fil` | Velg én eller flere køfiler fra Catalogs førstegjennomgang (én fil per CD-manifest). Filene leses i nettleseren og endres ikke. |
+| `http://127.0.0.1:8803/automation.html?kilde=fil` | Velg én eller flere køfiler fra Catalogs førstegjennomgang (én fil per CD-manifest). Filene leses i nettleseren og endres ikke. En fil merket `fixture: true` vises med «Prøvedata»; ekte og merkede filer kan ikke åpnes sammen. |
 | `http://127.0.0.1:8803/automation.html?kilde=prove` | **Prøvedata**: kontraktens eksempelfil med fire poster. |
 | `http://127.0.0.1:8803/automation.html?kilde=syntetisk` | **Prøvedata**: 5 000 syntetiske poster på 125 CD-er. |
 
@@ -74,7 +74,14 @@ endrer kontrakten; de er beskrevet slik at Catalog kan bekrefte eller korrigere 
    for å vises som noe kjent.
 5. **Ukjent form på et belegg (`value`) vises som tekst** og merkes som uventet, slik
    kontrakten ber om, i stedet for å avvise filen.
-6. **Ikke alle fem felt kreves.** En post må ikke ha samme felt to ganger, men et manglende
+6. **`fixture: true` er et eksplisitt prøvedatasignal.** Det står i kontraktens
+   eksempelfil (sammen med `fixture_note`), men ikke i kontraktteksten. Web bevarer det
+   gjennom validering og sammenslåing og merker liste, panel og banner ut fra det, også når
+   filen åpnes med filvelgeren. Filnavnet brukes ikke. Mangler feltet, er filen ekte. En
+   verdi som ikke er true/false avvises. Ekte og merkede filer valgt sammen avvises
+   (`mixed_fixture`), så tellinger aldri blander oppdiktede og ekte poster. Den syntetiske
+   generatoren merker sine filer på samme måte.
+7. **Ikke alle fem felt kreves.** En post må ikke ha samme felt to ganger, men et manglende
    felt vises bare ikke. Kontrakten sier ikke om alle fem alltid er med.
 
 ## Kontraktsavvik og brukerbehov (til Catalog/Birk)
@@ -85,6 +92,7 @@ endrer kontrakten; de er beskrevet slik at Catalog kan bekrefte eller korrigere 
 | A2 | Snapshot per manifest | Ingen liste over snapshots eller samlet dokument for flere CD-er. | Oversikten skal være samlet. Web leser nå flere filer valgt for hånd. Tjenesten trenger en måte å liste snapshots på. |
 | A3 | Menneskelig navn på CD | Bare `sha256:`-digest identifiserer CD-en. | «CD 2 av 125 (a931ac80)» er ikke lesbart. Et medienavn (for eksempel «K-CD 15/2001») per snapshot ville gjort radene forståelige. |
 | A4 | `tasks[].code` | Bare maskinkode, ingen visningstekst. | Web viser `reason` og legger koden under teknisk detalj. Greit nå; en fast liste med koder ville gjort filtrering på oppgavetype mulig. |
+| A6 | `fixture` / `fixture_note` | Brukt i eksempelfilen, ikke beskrevet i kontrakten. | Web trenger et eksplisitt signal for prøvedata. Kontrakten bør nevne feltene, og at ekte køfiler aldri har `fixture: true`. |
 | A5 | Tidspunkt/alder | Bevisst utelatt (reproduserbart), men da kan ikke Web si hvor gammel kjøringen er. | Ved integrasjon bør tjenesten si når snapshotet ble laget, utenfor selve dokumentet. |
 
 ## Fremtidige Catalog-avhengigheter (ikke gjort)
@@ -108,7 +116,7 @@ Tjenesteintegrasjonen er **ikke gjennomført**. En fri statisk server er ikke Ca
 
 ## Kontrollmatrise
 
-Kjørt på head av `feat/automation-queue` (se PR), Chromium 141 (Playwright 1.63,
+Kjørt på head `4f0a28d` av `feat/automation-queue` (første head `251fd18`), Chromium 141 (Playwright 1.63,
 `CURATOR_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`), Node 22.22,
 Python 3.11, Linux. «Feiler på feil kode» betyr at testen ble kjørt mot en bevisst
 ødelagt variant og feilet (se «Mutasjonskontroll»).
@@ -125,6 +133,7 @@ Python 3.11, Linux. «Feiler på feil kode» betyr at testen ble kjørt mot en b
 | null vises som «Ikke fastslått» | Aldri «null», aldri sletting | Som forventet | samme paneltest (M2) |
 | Tomt, laster, mangler, ugyldig JSON, ugyldig skjema, ukjent enum | Seks ulike skjermer; feil viser ingen tall og ingen prøvedata | Som forventet | `test_loading_is_its_own_state`, `test_missing_invalid_json_invalid_schema_and_unknown_values_are_different_errors`, `test_an_empty_run_says_so_…`, `test_missing_invalid_and_unknown_are_different_errors_and_never_sample_data` (M4, M8, M10), skjermbilde 04 |
 | Summary stemmer med postene | Avvik avviser filen | Som forventet | `test_the_summary_must_add_up_and_decisions_stay_zero` (M5) |
+| Prøvedata er merket uansett vei inn (P2 fra gjennomgang av `251fd18`) | Fil med `fixture: true` via filvelger gir banner, «Prøvedata ·» i tellingen og merknad i panelet; ekte filer gir ingen merking; blanding avvises | Som forventet | `test_a_marked_file_opened_through_the_file_picker_is_labelled_as_sample_data`, `test_real_files_opened_through_the_file_picker_are_not_labelled_as_sample_data`, `test_mixing_real_and_sample_files_is_refused_without_counts`, `test_sample_chosen_in_the_address_bar_is_marked_in_list_and_panel`, `test_an_explicit_fixture_marking_survives_validation_and_combination`, `test_sample_and_real_snapshots_are_never_counted_together`. Fem av seks feiler på `251fd18`; den sjette (ekte filer umerket) er en vakt mot overmerking og består på begge. |
 | Ingen prøvedata uten eksplisitt valg | Uten `kilde` lastes ingenting | Som forventet | `test_without_a_chosen_source_nothing_is_loaded_and_no_sample_is_shown`, `test_sample_data_is_loaded_only_when_chosen`, skjermbilde 05 |
 | HTML-lignende kildetekst vises bokstavelig | Ingen `<b>`/`<script>` i DOM; tekst lik kilden | Som forventet | `test_the_original_description_keeps_its_spaces_and_line_breaks_and_markup_stays_text` (M3), `test_source_text_is_never_parsed_as_html` |
 | Originalomtale beholder linjeskift og mellomrom | `textContent` lik kilden, `white-space: pre-wrap` | Som forventet | samme test (M13) |
@@ -152,12 +161,15 @@ menneskekø kalt ferdig · M13 linjeskift slått sammen i CSS.
 | Kjøring | Funnet | Kjørt | Bestått | Feilet | Hoppet over |
 | --- | --- | --- | --- | --- | --- |
 | Main `ae12d52`, Chromium + Catalog-checkout | 165 | 165 | 165 | 0 | 0 |
-| Denne grenen, Chromium + Catalog-checkout | 199 | 199 | 199 | 0 | 0 |
-| Denne grenen, som CI (uten Playwright og Catalog) | 199 | 136 | 136 | 0 | 63 |
+| `251fd18`, Chromium + Catalog-checkout | 199 | 199 | 199 | 0 | 0 |
+| `251fd18`, som CI (uten Playwright og Catalog) | 199 | 136 | 136 | 0 | 63 |
+| `4f0a28d`, Chromium + Catalog-checkout | 205 | 205 | 205 | 0 | 0 |
+| `4f0a28d`, uten Playwright, med Catalog-checkout | 205 | 139 | 139 | 0 | 66 |
+| `4f0a28d`, som CI (uten Playwright og Catalog) | 205 | 138 | 138 | 0 | 67 |
 
-Nye tester: 18 i `tests/test_automation.py`, 15 i `tests/test_automation_browser.py`, 1 i
-`tests/test_publication.py`. De 63 hoppede i CI-kjøringen er nettlesertester og
-Catalog-sammenligningen; hoppet er ikke bestått.
+Nye tester: 20 i `tests/test_automation.py`, 19 i `tests/test_automation_browser.py`, 1 i
+`tests/test_publication.py`. De hoppede er nettlesertester og (uten Catalog) allowlist-
+sammenligningen; hoppet er ikke bestått.
 
 ### Målt respons, 5 000 poster
 
