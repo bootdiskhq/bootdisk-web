@@ -43,7 +43,6 @@ def build_collection(config_path: Path, output: Path):
         for summary in index["entries"]:
             source_id = summary["entry"]
             require(re.fullmatch(r"[A-Za-z][A-Za-z0-9]{0,63}", source_id), "invalid source id")
-            require(not legacy or re.fullmatch(r"K[0-9]+", source_id), "legacy links require historical K-number ids")
             document = json.loads((data / f"{source_id.lower()}.json").read_text(encoding="utf-8"))
             key = document.get("source_context", {}).get("key", {})
             require(key.get("entry") == source_id and MANIFEST.fullmatch(str(key.get("manifest", ""))), "missing/mismatched source binding")
@@ -55,7 +54,7 @@ def build_collection(config_path: Path, output: Path):
                 if observation is not None:
                     ref = observation.get("source_ref", {})
                     require(all(ref.get(k) == v for k, v in key.items()), "cross-source observation")
-            route = source_id if legacy else slug + "--" + source_id
+            route = source_id if legacy and re.fullmatch(r"K[0-9]+", source_id) else slug + "--" + source_id
             require(route.lower() not in documents, "case-insensitive public route collision")
             metadata = {"entry": route, "source_entry": source_id, "source_manifest": manifest_ref,
                         "medium_id": slug, "medium": index["medium"], "publication": index["publication"],

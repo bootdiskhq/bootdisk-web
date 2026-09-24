@@ -22,6 +22,7 @@ def main() -> None:
     parser.add_argument("catalog_root", type=Path)
     parser.add_argument("ingest_manifest", type=Path)
     parser.add_argument("publish_manifest", type=Path)
+    parser.add_argument("--previous-manifest", type=Path, help="Verified append-only predecessor for existing decisions")
     parser.add_argument("--output", type=Path, default=ROOT / "data")
     parser.add_argument("--publication", default="KOMPUTER FOR ALLE")
     parser.add_argument("--medium", default="K-CD 15/2001")
@@ -30,7 +31,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="bootdisk-web-") as temporary:
         projection = Path(temporary) / "catalog-presentation.json"
         result = subprocess.run(
-            [sys.executable, "-m", "bootdisk_catalog.presentation", str(args.catalog_root.expanduser()), str(args.ingest_manifest.expanduser())],
+            [sys.executable, "-m", "bootdisk_catalog.presentation", str(args.catalog_root.expanduser()), str(args.ingest_manifest.expanduser())] + (["--previous-manifest", str(args.previous_manifest.expanduser())] if args.previous_manifest else []),
             check=True,
             capture_output=True,
             text=True,

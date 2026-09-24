@@ -108,7 +108,7 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
             for key in ("medium_id", "source_entry", "source_manifest"):
                 require(document.get(key) == summary.get(key) and isinstance(document.get(key), str), f"{path.name}: {key} mismatch")
             require(document["source_manifest"] == context.get("source_manifest"), f"{path.name}: manifest mismatch")
-            expected_id = document["source_entry"] if context.get("legacy_links") else context["id"] + "--" + document["source_entry"]
+            expected_id = document["source_entry"] if context.get("legacy_links") and re.fullmatch(r"K[0-9]+", document["source_entry"]) else context["id"] + "--" + document["source_entry"]
             require(entry_id == expected_id, f"{path.name}: qualified entry mismatch")
             key = document.get("source_context", {}).get("key", {})
             require(key == {"entry": document["source_entry"], "manifest": document["source_manifest"]}, f"{path.name}: source binding mismatch")

@@ -53,6 +53,22 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(new['source_context']['description']['value'], 'Original\r\ntekst')
         self.assertEqual(new['source_context']['key']['entry'], 'K1')
 
+    def test_tools_entries_in_legacy_medium_get_namespaced_routes(self):
+        path = self.medium('old', 'K1', 'a', True)
+        doc = json.loads(path.read_text())
+        doc['entry'] = 'I1'
+        doc['source_context']['key']['entry'] = 'I1'
+        doc['source_context']['description']['source_ref']['entry'] = 'I1'
+        (path.parent/'i1.json').write_text(json.dumps(doc))
+        index_path = path.parent/'index.json'
+        index = json.loads(index_path.read_text())
+        index['entries'].append({'entry':'I1','curation_status':'pending','editorial_title':'Tool'})
+        index_path.write_text(json.dumps(index))
+        result = self.build()
+        self.assertEqual([e['entry'] for e in result['entries']], ['K1', 'old--I1'])
+        validate_frontend_data(self.root/'output', 2)
+        self.assertEqual(json.loads((self.root/'output/old--i1.json').read_text())['source_context']['key']['entry'], 'I1')
+
     def test_director_ids_preserve_case_and_source_order(self):
         self.medium('director', 'Spil1', 'a')
         result = self.build()
