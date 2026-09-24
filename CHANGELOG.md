@@ -1,3 +1,9 @@
+# 1.2.0-rc4 — 24. september 2026
+
+Offentlig pakke med godkjent Bootdisk-forside og Komputer for alle-samling.
+Sju CD-er, 178 kildeposter og 576 bildefiler; kildedata er uendret fra rc3.
+Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
+
 # Upubliserte endringer
 
 - Bootdisk-forside på rotadressen i stedet for omdirigering til arkivet. Komputer for
