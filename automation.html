@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automatisk førstegjennomgang — Bootdisk</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Lokal lesevisning av maskinens førstegjennomgang. Prototype som kjøres lokalt og inngår ikke i den offentlige releasen.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="accessibility.css">
+<link rel="stylesheet" href="automation.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Hopp til innholdet</a>
+<header class="site-header">
+  <a class="brand" href="overview.html">BOOTDISK<span class="cursor">_</span></a>
+  <span class="tagline">automatisk førstegjennomgang</span>
+</header>
+
+<p id="aq-sample-banner" class="aq-banner" hidden>
+  <strong>Prøvedata</strong>
+  <span id="aq-sample-text"></span>
+</p>
+
+<main id="main-content">
+  <noscript><p class="aq-state">Siden trenger JavaScript.</p></noscript>
+
+  <h1 class="aq-title">Automatisk førstegjennomgang</h1>
+  <p class="aq-lede">
+    Hva maskinen har funnet, og hva som faktisk trenger deg. Siden leser bare: den godkjenner,
+    lagrer eller angrer ingenting. <a href="overview.html">Til kurateringsoversikten</a>.
+  </p>
+
+  <section id="aq-source" class="aq-source" aria-labelledby="aq-source-title" hidden>
+    <h2 id="aq-source-title">Velg datakilde</h2>
+    <p id="aq-source-text">
+      Ingen datakilde er valgt. Siden henter ikke noe av seg selv og viser aldri prøvedata uten at du ber om det.
+      Koblingen til den lokale Catalog-tjenesten er ikke laget ennå.
+    </p>
+    <ul class="aq-source-list">
+      <li><a href="automation.html?kilde=fil">Åpne en køfil fra maskinen din</a> (én eller flere <code>automation-queue-v1</code>-filer)</li>
+      <li><a href="automation.html?kilde=prove">Prøvedata: kontraktens eksempel med fire poster</a></li>
+      <li><a href="automation.html?kilde=syntetisk">Prøvedata: 5 000 syntetiske poster på 125 CD-er</a></li>
+    </ul>
+    <div id="aq-file" class="aq-file" hidden>
+      <label for="aq-file-input">Køfil (JSON)</label>
+      <input id="aq-file-input" type="file" accept=".json,application/json" multiple>
+    </div>
+  </section>
+
+  <p id="aq-loading" class="aq-state" role="status" hidden>Laster køen …</p>
+  <div id="aq-error" class="aq-state aq-error" role="alert" hidden>
+    <h2 id="aq-error-title"></h2>
+    <p id="aq-error-text"></p>
+    <p>Ingen tall vises, fordi køen ikke kunne leses. Siden viser ikke prøvedata i stedet.</p>
+  </div>
+
+  <div id="aq-queue" hidden>
+    <section id="aq-summary" class="aq-summary" aria-labelledby="aq-summary-title">
+      <h2 id="aq-summary-title" class="aq-visually-hidden">Sammendrag</h2>
+      <ul id="aq-stages" class="aq-stages"></ul>
+      <p id="aq-human-note" class="aq-note"></p>
+      <p id="aq-unknown" class="aq-unknown"></p>
+      <details class="aq-legend">
+        <summary>Hva betyr feltstatusene?</summary>
+        <dl id="aq-legend"></dl>
+      </details>
+    </section>
+
+    <div id="aq-list-view">
+      <form id="aq-filters" class="aq-filters" role="search">
+        <div class="aq-control aq-control-wide">
+          <label for="aq-search">Søk etter programnavn eller kildepost</label>
+          <input id="aq-search" type="search" autocomplete="off" placeholder="for eksempel Kvasarskriv eller K12">
+        </div>
+        <div class="aq-control">
+          <label for="aq-stage">Inngang</label>
+          <select id="aq-stage"></select>
+        </div>
+        <div class="aq-control">
+          <label for="aq-field">Felt</label>
+          <select id="aq-field"></select>
+        </div>
+        <div class="aq-control">
+          <label for="aq-status">Feltstatus</label>
+          <select id="aq-status"></select>
+        </div>
+        <div class="aq-control">
+          <label for="aq-sort">Sortering</label>
+          <select id="aq-sort">
+            <option value="stage">Inngang, så navn</option>
+            <option value="title">Programnavn</option>
+            <option value="source">CD og kildepost</option>
+          </select>
+        </div>
+        <div class="aq-control aq-control-action">
+          <button type="button" id="aq-reset">Tilbakestill søk og filtre</button>
+        </div>
+      </form>
+
+      <h2 id="aq-results-title" class="aq-results-title" tabindex="-1">Poster</h2>
+      <p id="aq-count" class="aq-count" role="status" aria-live="polite"></p>
+      <p id="aq-empty" class="aq-state" hidden></p>
+      <p id="aq-missing" class="aq-state aq-warning" role="status" hidden></p>
+      <ul id="aq-list" class="aq-list"></ul>
+      <nav class="aq-pager" aria-label="Sider i køen">
+        <button type="button" id="aq-previous">Forrige side</button>
+        <p id="aq-page" class="aq-count"></p>
+        <button type="button" id="aq-next">Neste side</button>
+      </nav>
+    </div>
+
+    <section id="aq-panel" class="aq-panel" aria-labelledby="aq-panel-title" hidden>
+      <button type="button" id="aq-close" class="aq-close">Tilbake til køen</button>
+      <h2 id="aq-panel-title" tabindex="-1"></h2>
+      <div id="aq-panel-body"></div>
+      <button type="button" id="aq-close-bottom" class="aq-close">Tilbake til køen</button>
+    </section>
+  </div>
+</main>
+
+<footer><span>bootdisk.no</span><span>lokal kuratering · prototype · lesevisning</span></footer>
+<script src="curator-labels.js"></script>
+<script src="automation-core.js"></script>
+<script src="automation-adapter.js"></script>
+<script src="automation.js"></script>
+</body>
+</html>
