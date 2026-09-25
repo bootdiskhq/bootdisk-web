@@ -56,6 +56,16 @@ def validate_image_coverage(index, documents):
     """A readable archive is not complete when a whole medium lost its images."""
     for medium in index.get("media", []):
         entries = [doc for _, doc in documents if doc.get("medium_id") == medium["id"]]
+        scoped = medium.get("supplemental_image_requirements", {})
+        if set(scoped) != set(medium.get("supplemental_manifests", [])):
+            raise ValueError("Supplemental image requirements must cover exactly the added manifests")
+        for manifest, kinds in scoped.items():
+            if not isinstance(kinds,list) or not kinds or any(k not in ("icon","screenshot") for k in kinds):
+                raise ValueError("Invalid supplemental image requirements")
+            selected=[d for d in entries if d.get("source_manifest")==manifest]
+            if not selected or any(not any(a["kind"]==k for a in d["assets"]) for d in selected for k in kinds):
+                raise ValueError("Missing supplemental source artwork")
+        entries=[d for d in entries if d.get("source_manifest") not in scoped]
         assets = [asset for doc in entries for asset in doc["assets"]]
         exception = medium.get("images_unavailable_reason")
         if not assets and not (isinstance(exception, str) and exception.strip()):

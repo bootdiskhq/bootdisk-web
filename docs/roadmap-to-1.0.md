@@ -127,3 +127,7 @@ kuratering for å øke antallet poster. Lokale funn og manifestfiler er bevart u
 Retrotelleren er delegert til Claude i separat arbeidsordre og endrer ikke
 rekkefølgen over. Automatisk kuratering/køintegrasjon er fortsatt uferdig og
 skal ikke fremstilles som levert av disse innholdsmilepælene.
+
+### 2026-09-25 — Verktøyhyllene på de seks øvrige CD-ene
+
+162 ekstra kildeposter er observert med original omtale og menyillustrasjon. Samlet arkiv blir 369 poster. Se [rc7 og kildeavvik](release-1.2.0-rc7.md). Ved videre innlesing skal akseptansen eksplisitt avstemme hovedmeny, Tools.dtx eller Director-verktøyhyller, bilder og uavklarte seksjoner. En vellykket hovedmenyimport alene beviser ikke at CD-en er ferdig innlest. Full seksjonsavstemming og kursinnhold gjenstår som egne milepæler.
