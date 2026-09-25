@@ -1,0 +1,143 @@
+{
+  "assets": [
+    {
+      "derivatives": [
+        {
+          "generator": {
+            "name": "Pillow",
+            "version": "12.3.0"
+          },
+          "height": 240,
+          "kind": "thumbnail",
+          "media_type": "image/webp",
+          "object_key": "derivatives/thumbnails/webp/sha256/35/e2/35e2e2a07c62af8abda93653d425578e42acb88b26d8d1ba6e59c8330d815836.webp",
+          "public_path": "store/derivatives/thumbnails/webp/sha256/35/e2/35e2e2a07c62af8abda93653d425578e42acb88b26d8d1ba6e59c8330d815836.webp",
+          "sha256": "35e2e2a07c62af8abda93653d425578e42acb88b26d8d1ba6e59c8330d815836",
+          "size": 23936,
+          "source_sha256": "9f819cc9cd166d0005038a5a57cbcadc82d633a94bd141619b3e5b9d57f53610",
+          "width": 320
+        }
+      ],
+      "entry": "kcd-8-2001--K5",
+      "kind": "screenshot",
+      "original": {
+        "object_key": "assets/sha256/9f/81/9f819cc9cd166d0005038a5a57cbcadc82d633a94bd141619b3e5b9d57f53610",
+        "public_path": "store/assets/sha256/9f/81/9f819cc9cd166d0005038a5a57cbcadc82d633a94bd141619b3e5b9d57f53610",
+        "sha256": "9f819cc9cd166d0005038a5a57cbcadc82d633a94bd141619b3e5b9d57f53610",
+        "size": 230454
+      },
+      "source_path": "Freesaver/Shot.bmp"
+    },
+    {
+      "derivatives": [
+        {
+          "generator": {
+            "name": "Pillow",
+            "version": "12.3.0"
+          },
+          "height": 32,
+          "kind": "thumbnail",
+          "media_type": "image/webp",
+          "object_key": "derivatives/thumbnails/webp/sha256/86/92/8692e88964443bee8f70b3a0b6ae173d4aa7a6f08535d5480aae08efa9865c80.webp",
+          "public_path": "store/derivatives/thumbnails/webp/sha256/86/92/8692e88964443bee8f70b3a0b6ae173d4aa7a6f08535d5480aae08efa9865c80.webp",
+          "sha256": "8692e88964443bee8f70b3a0b6ae173d4aa7a6f08535d5480aae08efa9865c80",
+          "size": 256,
+          "source_sha256": "26782892d4ac7df07785c678d61fb700a4b9fcbefaa99002a958f231e0ad8325",
+          "width": 32
+        }
+      ],
+      "entry": "kcd-8-2001--K5",
+      "kind": "icon",
+      "original": {
+        "object_key": "assets/sha256/26/78/26782892d4ac7df07785c678d61fb700a4b9fcbefaa99002a958f231e0ad8325",
+        "public_path": "store/assets/sha256/26/78/26782892d4ac7df07785c678d61fb700a4b9fcbefaa99002a958f231e0ad8325",
+        "sha256": "26782892d4ac7df07785c678d61fb700a4b9fcbefaa99002a958f231e0ad8325",
+        "size": 3126
+      },
+      "source_path": "Freesaver/Ikon.bmp"
+    }
+  ],
+  "curation_status": "pending",
+  "editorial_title": "Freesaver MP3",
+  "entry": "kcd-8-2001--K5",
+  "medium": "K-CD 8/2001",
+  "medium_id": "kcd-8-2001",
+  "occurrences": [
+    {
+      "artifact_id": "artifact:sha256:d924284727811bdc0a73f170fa37846676efa851ac4dce5652504317bce158e4",
+      "path": "Freesaver/FreeSaverMP3.exe"
+    },
+    {
+      "artifact_id": "artifact:sha256:26782892d4ac7df07785c678d61fb700a4b9fcbefaa99002a958f231e0ad8325",
+      "path": "Freesaver/Ikon.bmp"
+    },
+    {
+      "artifact_id": "artifact:sha256:3efe0a16c9313b45cb66177787002df81f39c8e170a39c29c204d7601f060a45",
+      "path": "Freesaver/No.rtf"
+    },
+    {
+      "artifact_id": "artifact:sha256:9f819cc9cd166d0005038a5a57cbcadc82d633a94bd141619b3e5b9d57f53610",
+      "path": "Freesaver/Shot.bmp"
+    }
+  ],
+  "publication": "KOMPUTER FOR ALLE",
+  "software": [],
+  "source_context": {
+    "description": {
+      "source_ref": {
+        "entry": "K5",
+        "manifest": "sha256:ec196ed229af3375a3f90e69478e2db68e501b8b91360ac6ab6be5ee58465f19",
+        "pointer": "/entries/18/raw/Global"
+      },
+      "value": "Nå kan du skifte ut pauseskjermen din selv. Du fyller bare FreeSaver MP3 med lyd og bilder og angir selv i hvilken rekkefølge de skal rotere."
+    },
+    "issues": {
+      "source_ref": {
+        "entry": "K5",
+        "manifest": "sha256:ec196ed229af3375a3f90e69478e2db68e501b8b91360ac6ab6be5ee58465f19",
+        "pointer": "/entries/18/issues"
+      },
+      "value": []
+    },
+    "key": {
+      "entry": "K5",
+      "manifest": "sha256:ec196ed229af3375a3f90e69478e2db68e501b8b91360ac6ab6be5ee58465f19"
+    },
+    "menu_groups": {
+      "source_ref": {
+        "entry": "K5",
+        "manifest": "sha256:ec196ed229af3375a3f90e69478e2db68e501b8b91360ac6ab6be5ee58465f19",
+        "pointer": "/entries/18/normalized/categories"
+      },
+      "value": [
+        "Bonus"
+      ]
+    }
+  },
+  "source_entry": "K5",
+  "source_manifest": "sha256:ec196ed229af3375a3f90e69478e2db68e501b8b91360ac6ab6be5ee58465f19",
+  "source_order": 145,
+  "source_documents": [
+    {
+      "key": {
+        "manifest": "sha256:ec196ed229af3375a3f90e69478e2db68e501b8b91360ac6ab6be5ee58465f19",
+        "entry": "K5"
+      },
+      "pointer": "/entries/18/files/discovered/description_rtf",
+      "path": "Freesaver/No.rtf",
+      "sha256": "3efe0a16c9313b45cb66177787002df81f39c8e170a39c29c204d7601f060a45",
+      "size": 4405,
+      "method": "rtf-ansi-text-terminal-nul-1",
+      "text": null,
+      "warning": "unsupported RTF font charset",
+      "observation_manifest": "sha256:6fc66859f6e44aa51eb0148f273bbc07226b529c65b4c639a0c0b666de72ae07",
+      "original": {
+        "sha256": "3efe0a16c9313b45cb66177787002df81f39c8e170a39c29c204d7601f060a45",
+        "size": 4405,
+        "object_key": "documents/sha256/3e/3efe0a16c9313b45cb66177787002df81f39c8e170a39c29c204d7601f060a45.rtf",
+        "public_path": "store/documents/sha256/3e/3efe0a16c9313b45cb66177787002df81f39c8e170a39c29c204d7601f060a45.rtf",
+        "media_type": "application/rtf"
+      }
+    }
+  ]
+}

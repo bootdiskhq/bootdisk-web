@@ -1,0 +1,143 @@
+{
+  "assets": [
+    {
+      "derivatives": [
+        {
+          "generator": {
+            "name": "Pillow",
+            "version": "12.3.0"
+          },
+          "height": 240,
+          "kind": "thumbnail",
+          "media_type": "image/webp",
+          "object_key": "derivatives/thumbnails/webp/sha256/7a/ca/7acae1ceb031f18f95fcd8c0757aacc98ee27ab63fe1ca882f23e81c2999d3d6.webp",
+          "public_path": "store/derivatives/thumbnails/webp/sha256/7a/ca/7acae1ceb031f18f95fcd8c0757aacc98ee27ab63fe1ca882f23e81c2999d3d6.webp",
+          "sha256": "7acae1ceb031f18f95fcd8c0757aacc98ee27ab63fe1ca882f23e81c2999d3d6",
+          "size": 109546,
+          "source_sha256": "7ff788e7951ee710af759997fa23e79fb8252c58edd3b940b16b3b6955458466",
+          "width": 320
+        }
+      ],
+      "entry": "kcd-1-2001--K1",
+      "kind": "screenshot",
+      "original": {
+        "object_key": "assets/sha256/7f/f7/7ff788e7951ee710af759997fa23e79fb8252c58edd3b940b16b3b6955458466",
+        "public_path": "store/assets/sha256/7f/f7/7ff788e7951ee710af759997fa23e79fb8252c58edd3b940b16b3b6955458466",
+        "sha256": "7ff788e7951ee710af759997fa23e79fb8252c58edd3b940b16b3b6955458466",
+        "size": 230454
+      },
+      "source_path": "Asterix/Shot.bmp"
+    },
+    {
+      "derivatives": [
+        {
+          "generator": {
+            "name": "Pillow",
+            "version": "12.3.0"
+          },
+          "height": 32,
+          "kind": "thumbnail",
+          "media_type": "image/webp",
+          "object_key": "derivatives/thumbnails/webp/sha256/63/ad/63ad41cb61f8b8a05c597066f1f9759d9e3bc8bae74ba9ccb60e3a14250aa609.webp",
+          "public_path": "store/derivatives/thumbnails/webp/sha256/63/ad/63ad41cb61f8b8a05c597066f1f9759d9e3bc8bae74ba9ccb60e3a14250aa609.webp",
+          "sha256": "63ad41cb61f8b8a05c597066f1f9759d9e3bc8bae74ba9ccb60e3a14250aa609",
+          "size": 530,
+          "source_sha256": "c12183a23c8c0496c7b8cf72a8d45736eca4fa216c16111a5a044ea1f1aaaf25",
+          "width": 32
+        }
+      ],
+      "entry": "kcd-1-2001--K1",
+      "kind": "icon",
+      "original": {
+        "object_key": "assets/sha256/c1/21/c12183a23c8c0496c7b8cf72a8d45736eca4fa216c16111a5a044ea1f1aaaf25",
+        "public_path": "store/assets/sha256/c1/21/c12183a23c8c0496c7b8cf72a8d45736eca4fa216c16111a5a044ea1f1aaaf25",
+        "sha256": "c12183a23c8c0496c7b8cf72a8d45736eca4fa216c16111a5a044ea1f1aaaf25",
+        "size": 3126
+      },
+      "source_path": "Asterix/Ikon.bmp"
+    }
+  ],
+  "curation_status": "pending",
+  "editorial_title": "Asterix",
+  "entry": "kcd-1-2001--K1",
+  "medium": "K-CD 1/2001",
+  "medium_id": "kcd-1-2001",
+  "occurrences": [
+    {
+      "artifact_id": "artifact:sha256:c12183a23c8c0496c7b8cf72a8d45736eca4fa216c16111a5a044ea1f1aaaf25",
+      "path": "Asterix/Ikon.bmp"
+    },
+    {
+      "artifact_id": "artifact:sha256:04bcfed6c8b822f4593ae7fb436a22cbc8a27f80505a2bedbfd0dbeac7972c9f",
+      "path": "Asterix/No.rtf"
+    },
+    {
+      "artifact_id": "artifact:sha256:ecd793a0fdde6eaafd64f693062cfd2bd37d61f37bacfc526760f72171d8296d",
+      "path": "Asterix/Setup.exe"
+    },
+    {
+      "artifact_id": "artifact:sha256:7ff788e7951ee710af759997fa23e79fb8252c58edd3b940b16b3b6955458466",
+      "path": "Asterix/Shot.bmp"
+    }
+  ],
+  "publication": "KOMPUTER FOR ALLE",
+  "software": [],
+  "source_context": {
+    "description": {
+      "source_ref": {
+        "entry": "K1",
+        "manifest": "sha256:f50e2b8ffb99c25e5d398c9f1ed1b7afd74a53ecff3976f11f6bf4d9f6a6dfcc",
+        "pointer": "/entries/0/evidence/description_rtf/text"
+      },
+      "value": "Asterix \nI dette spillet skal du hjelpe Asterix og Obelix med å befri Gallia og løse en rekke oppgaver underveis. \n\nNår du har startet spillet, får du et vindu som i tillegg til ”Play”-knappen også inneholder en ”Settings”-knapp der du kan endre oppsettet for grafikkavviklingen i spillet. Du kan også velge å se den flerspråklige ”Readme”-filen som beskriver spillet i minste detalj. Ignorer knappene ”Update install” og  ”Extras”. \n\nKlikk på ”Play”-knappen, så kommer du til den berømte lille landsbyen i Gallia. På treskiltet kan du velge mellom ”new game”, ”load game”, ”options”, ”practice levels”, ”credits” og ”quit the game”. Du velger naturligvis å starte et nytt spill med ”new game”.\n\nPå landkartet ser du nå de okkuperte byene og den lille frie, gjeve gallerbyen. Du begynner med å helle opptjent trylledrikk i den store gryten i landsbyen. Bruk venstre musetast til å klikke et antall porsjoner ned i gryten. Når du er ferdig, skal du samle krigere ved å klikke med samme venstre musetast på gryten. Da blir sverdet du bærer ladet opp, og du kan angripe en naboby som er okkupert. Antallet krigere har betydning for om du kan overvinne fienden. Pass på at hjembyen din ikke blir blottstilt for fiendens tropper. Du må alltid etterlate en styrke der eller i de byene du etter hvert selv overtar. Du bruker musen til å rekruttere krigere og gå videre til neste naboby.\n\nI noen byer er det mulighet til å spille et plattformspill med enten Obelix eller Asterix, som skal utføre en oppgave. Her bruker du musetasten til å styre figuren rundt, mens A-tasten får figuren til å hoppe, og S-tasten får figuren til å slå ut romerne.\n\nTastene har også en annen funksjon når du kommer til den banen der Obelix skal kaste med romere. I disse spesielle spillbanene kan du øve deg. Velg ”practice levels” før du går i gang med et spill. Her er S-tasten tildelt funksjonen ”snurr Obelix” rundt, mens A-tasten må trykkes akkurat i riktig øyeblikk for at romeren kan kastes oppover banen.\n\nFor å avslutte et spill taster du Esc. Så kan du velge ”quit” fra menyen med piltastene og Enter-tasten.\n"
+    },
+    "issues": {
+      "source_ref": {
+        "entry": "K1",
+        "manifest": "sha256:f50e2b8ffb99c25e5d398c9f1ed1b7afd74a53ecff3976f11f6bf4d9f6a6dfcc",
+        "pointer": "/entries/0/issues"
+      },
+      "value": []
+    },
+    "key": {
+      "entry": "K1",
+      "manifest": "sha256:f50e2b8ffb99c25e5d398c9f1ed1b7afd74a53ecff3976f11f6bf4d9f6a6dfcc"
+    },
+    "menu_groups": {
+      "source_ref": {
+        "entry": "K1",
+        "manifest": "sha256:f50e2b8ffb99c25e5d398c9f1ed1b7afd74a53ecff3976f11f6bf4d9f6a6dfcc",
+        "pointer": "/entries/0/normalized/categories"
+      },
+      "value": [
+        "Spil"
+      ]
+    }
+  },
+  "source_entry": "K1",
+  "source_manifest": "sha256:f50e2b8ffb99c25e5d398c9f1ed1b7afd74a53ecff3976f11f6bf4d9f6a6dfcc",
+  "source_order": 173,
+  "source_documents": [
+    {
+      "key": {
+        "manifest": "sha256:f50e2b8ffb99c25e5d398c9f1ed1b7afd74a53ecff3976f11f6bf4d9f6a6dfcc",
+        "entry": "K1"
+      },
+      "pointer": "/entries/0/files/discovered/description_rtf",
+      "path": "Asterix/No.rtf",
+      "sha256": "04bcfed6c8b822f4593ae7fb436a22cbc8a27f80505a2bedbfd0dbeac7972c9f",
+      "size": 7037,
+      "method": "rtf-ansi-text-terminal-nul-1",
+      "text": "Asterix \nI dette spillet skal du hjelpe Asterix og Obelix med å befri Gallia og løse en rekke oppgaver underveis. \n\nNår du har startet spillet, får du et vindu som i tillegg til ”Play”-knappen også inneholder en ”Settings”-knapp der du kan endre oppsettet for grafikkavviklingen i spillet. Du kan også velge å se den flerspråklige ”Readme”-filen som beskriver spillet i minste detalj. Ignorer knappene ”Update install” og  ”Extras”. \n\nKlikk på ”Play”-knappen, så kommer du til den berømte lille landsbyen i Gallia. På treskiltet kan du velge mellom ”new game”, ”load game”, ”options”, ”practice levels”, ”credits” og ”quit the game”. Du velger naturligvis å starte et nytt spill med ”new game”.\n\nPå landkartet ser du nå de okkuperte byene og den lille frie, gjeve gallerbyen. Du begynner med å helle opptjent trylledrikk i den store gryten i landsbyen. Bruk venstre musetast til å klikke et antall porsjoner ned i gryten. Når du er ferdig, skal du samle krigere ved å klikke med samme venstre musetast på gryten. Da blir sverdet du bærer ladet opp, og du kan angripe en naboby som er okkupert. Antallet krigere har betydning for om du kan overvinne fienden. Pass på at hjembyen din ikke blir blottstilt for fiendens tropper. Du må alltid etterlate en styrke der eller i de byene du etter hvert selv overtar. Du bruker musen til å rekruttere krigere og gå videre til neste naboby.\n\nI noen byer er det mulighet til å spille et plattformspill med enten Obelix eller Asterix, som skal utføre en oppgave. Her bruker du musetasten til å styre figuren rundt, mens A-tasten får figuren til å hoppe, og S-tasten får figuren til å slå ut romerne.\n\nTastene har også en annen funksjon når du kommer til den banen der Obelix skal kaste med romere. I disse spesielle spillbanene kan du øve deg. Velg ”practice levels” før du går i gang med et spill. Her er S-tasten tildelt funksjonen ”snurr Obelix” rundt, mens A-tasten må trykkes akkurat i riktig øyeblikk for at romeren kan kastes oppover banen.\n\nFor å avslutte et spill taster du Esc. Så kan du velge ”quit” fra menyen med piltastene og Enter-tasten.\n",
+      "warning": null,
+      "observation_manifest": "sha256:ce17a900476c1e6edf09239392937f721527c540680db2f83601a8d9f17c5113",
+      "original": {
+        "sha256": "04bcfed6c8b822f4593ae7fb436a22cbc8a27f80505a2bedbfd0dbeac7972c9f",
+        "size": 7037,
+        "object_key": "documents/sha256/04/04bcfed6c8b822f4593ae7fb436a22cbc8a27f80505a2bedbfd0dbeac7972c9f.rtf",
+        "public_path": "store/documents/sha256/04/04bcfed6c8b822f4593ae7fb436a22cbc8a27f80505a2bedbfd0dbeac7972c9f.rtf",
+        "media_type": "application/rtf"
+      }
+    }
+  ]
+}

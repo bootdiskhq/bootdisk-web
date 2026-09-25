@@ -1,28 +1,83 @@
+/* Original RTF descriptions from the CD, as extracted by Ingest (bootdisk-source-documents-1).
+ * The text is a source observation next to the menu description, never a replacement for it.
+ * It is set as text, never parsed as HTML or RTF; `warning` is technical and not shown. */
+const RTF_PATH = /^store\/documents\/sha256\/([a-f0-9]{2})\/([a-f0-9]{64})\.rtf$/;
+
+function sameSourceKey(a, b) {
+  return Boolean(a && b) && a.manifest === b.manifest && a.entry === b.entry;
+}
+
+// Only Publish's own content-addressed store path becomes a link; anything else stays inert.
+function publishedRtfPath(doc) {
+  const original = doc.original ?? {};
+  const match = RTF_PATH.exec(original.public_path ?? "");
+  if (!match || match[1] !== match[2].slice(0, 2) || match[2] !== original.sha256 || doc.sha256 !== original.sha256) return null;
+  if (original.media_type !== "application/rtf") return null;
+  return original.public_path;
+}
+
+function formatFileSize(bytes) {
+  if (!Number.isInteger(bytes) || bytes < 0) return null;
+  if (bytes < 1024) return `${bytes} byte`;
+  return `${new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 1 }).format(bytes / 1024)} kB`;
+}
+
+function sourceFileName(doc) {
+  const name = String(doc.path ?? "").split(/[\\/]/).pop();
+  return name || `${doc.original?.sha256 ?? "omtale"}.rtf`;
+}
+
 function renderSourceDocuments(entry, description) {
   const container = document.querySelector("#source-documents");
   if (!container) return;
   container.replaceChildren();
+  // Whitespace-only differences are the same text: it must not be shown twice.
   const normalize = value => (value ?? "").replace(/\s+/g, " ").trim();
   for (const doc of entry.source_documents ?? []) {
-    const original = doc.original ?? {};
-    if (!/^[a-f0-9]{64}$/.test(original.sha256 ?? "") || original.public_path !== `store/documents/sha256/${original.sha256.slice(0, 2)}/${original.sha256}.rtf`) continue;
-    const block = document.createElement("details");
-    const summary = document.createElement("summary");
-    const same = normalize(doc.text) === normalize(description);
-    summary.textContent = same ? "Original omtale som RTF" : "Les originaltekst fra CD-en (RTF)";
-    block.append(summary);
-    if (doc.text && !same) {
+    if (!sameSourceKey(doc.key, entry.source_context?.key)) continue;
+    const href = publishedRtfPath(doc);
+    const readable = typeof doc.text === "string" && normalize(doc.text) !== "";
+    if (!href && !readable) continue;
+    const block = document.createElement("div");
+    block.className = "source-document";
+    if (readable && normalize(doc.text) !== normalize(description)) {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = "Les originaltekst fra CD-en (RTF)";
       const text = document.createElement("div");
-      text.className = "rtf-source-text"; text.textContent = doc.text; block.append(text);
-    } else if (!doc.text) {
-      const note = document.createElement("p"); note.textContent = "Teksten kunne ikke vises. Originalfilen er tilgjengelig nedenfor."; block.append(note);
+      text.className = "rtf-source-text";
+      text.textContent = doc.text;
+      details.append(summary, text);
+      block.append(details);
+    } else if (readable) {
+      const note = document.createElement("p");
+      note.className = "source-document-note";
+      note.textContent = "Samme tekst finnes i originalfilen fra CD-en.";
+      block.append(note);
+    } else {
+      const note = document.createElement("p");
+      note.className = "source-document-note";
+      note.textContent = "Originalteksten fra CD-en kan ikke vises her, men originalfilen kan lastes ned.";
+      block.append(note);
     }
-    const source = document.createElement("p"); source.className = "provenance";
-    source.textContent = `Kilde: ${doc.path}`; block.append(source);
-    const link = document.createElement("a"); link.href = original.public_path;
-    link.download = (doc.path ?? "omtale.rtf").split("/").pop();
-    link.textContent = `Last ned originalfil (RTF, ${Math.ceil(original.size / 1024)} kB)`;
-    block.append(link); container.append(block);
+    const file = document.createElement("p");
+    file.className = "source-document-file";
+    const meta = document.createElement("span");
+    meta.className = "source-document-meta";
+    meta.textContent = [doc.path || sourceFileName(doc), "RTF", formatFileSize(doc.original?.size)].filter(Boolean).join(" · ");
+    if (href) {
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = sourceFileName(doc);
+      link.type = "application/rtf";
+      link.textContent = "Last ned originalfil";
+      file.append(link, " ", meta);
+    } else {
+      meta.textContent = `${meta.textContent} · originalfilen er ikke tilgjengelig`;
+      file.append(meta);
+    }
+    block.append(file);
+    container.append(block);
   }
   container.hidden = !container.children.length;
 }
@@ -205,6 +260,8 @@ render().catch(error => {
   document.querySelector("#software-version").textContent = error.unknownEntry ? "Lenken er ugyldig eller utdatert." : "Sjekk at frontend-data og /store er tilgjengelig.";
   document.querySelector("#source-context").textContent = "ARKIVPOST";
   document.querySelector("#software-description").textContent = "Gå til alle kildeposter for å finne det du lette etter.";
+  const documents = document.querySelector("#source-documents");
+  if (documents) documents.hidden = true;
   const alert = document.querySelector("#entry-error");
   alert.textContent = error.unknownEntry ? "Det finnes ingen arkivpost med denne adressen." : "Arkivposten kunne ikke lastes.";
   alert.hidden = false;
