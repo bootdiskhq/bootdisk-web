@@ -1,3 +1,9 @@
+// Workshop route keys encode source labels; they are not names printed on the CD.
+function sourceLabel(entry) {
+  const id = entry.source_entry ?? entry.entry;
+  return /^(?:[a-z0-9-]+--)?Tool(?:[0-9a-f]{2})+$/i.test(id) ? "Verktøymenyen" : id;
+}
+
 /* Original RTF descriptions from the CD, as extracted by Ingest (bootdisk-source-documents-1).
  * The text is a source observation next to the menu description, never a replacement for it.
  * It is set as text, never parsed as HTML or RTF; `warning` is technical and not shown. */
@@ -127,7 +133,7 @@ function bindArrowNavigation(previous, next) {
 
 function setMetadata(name, version, entry, curatedDescription) {
   const title = `${name}${version ? ` ${version}` : ""} — Bootdisk`;
-  const description = curatedDescription ?? `${name}${version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${entry.entry}.`;
+  const description = curatedDescription ?? `${name}${version ? ` ${version}` : ""} fra ${entry.medium ?? "Bootdisk-arkivet"}, kildepost ${sourceLabel(entry)}.`;
   const url = new URL("index.html", "https://bootdisk.no/");
   url.searchParams.set("entry", entry.entry);
   document.title = title;
@@ -180,7 +186,7 @@ async function render() {
   const knownVersion = software?.version && software.version !== "unknown" ? software.version : null;
   const version = knownVersion ?? "Ikke oppgitt";
   const description = entry.source_context?.description?.value ?? preferredDescription(software);
-  const sourceEntry = entry.source_entry ?? entry.entry;
+  const sourceEntry = sourceLabel(entry);
 
   document.querySelector("#source-context").textContent = `${entry.publication ?? "KOMPUTER FOR ALLE"} · ${entry.medium ?? "K-CD 15/2001"} · ${sourceEntry}`;
   document.querySelector("#software-name").textContent = name;
@@ -214,16 +220,16 @@ async function render() {
     const link = document.querySelector("#previous-entry");
     link.href = `index.html?entry=${encodeURIComponent(previous.entry)}`;
     link.textContent = `← ${entryName(previous)}`;
-    link.setAttribute("aria-label", `Forrige post: ${entryName(previous)} (${previous.entry})`);
-    link.title = previous.entry;
+    link.setAttribute("aria-label", `Forrige post: ${entryName(previous)} (${sourceLabel(previous)})`);
+    link.title = entryName(previous);
     link.hidden = false;
   }
   if (next) {
     const link = document.querySelector("#next-entry");
     link.href = `index.html?entry=${encodeURIComponent(next.entry)}`;
     link.textContent = `${entryName(next)} →`;
-    link.setAttribute("aria-label", `Neste post: ${entryName(next)} (${next.entry})`);
-    link.title = next.entry;
+    link.setAttribute("aria-label", `Neste post: ${entryName(next)} (${sourceLabel(next)})`);
+    link.title = entryName(next);
     link.hidden = false;
   }
   bindArrowNavigation(previous, next);
