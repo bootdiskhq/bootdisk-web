@@ -131,3 +131,14 @@ skal ikke fremstilles som levert av disse innholdsmilepælene.
 ### 2026-09-25 — Verktøyhyllene på de seks øvrige CD-ene
 
 162 ekstra kildeposter er observert med original omtale og menyillustrasjon. Samlet arkiv blir 369 poster. Se [rc7 og kildeavvik](release-1.2.0-rc7.md). Ved videre innlesing skal akseptansen eksplisitt avstemme hovedmeny, Tools.dtx eller Director-verktøyhyller, bilder og uavklarte seksjoner. En vellykket hovedmenyimport alene beviser ikke at CD-en er ferdig innlest. Full seksjonsavstemming og kursinnhold gjenstår som egne milepæler.
+
+### Neste arbeidsøkt — RTF-dekning og tydelig kildemerking (avtalt 2026-09-25)
+
+Prioriter dette før videre innholdsutvidelse. Dagens «Les originaltekst fra CD-en (RTF)» gjelder en separat, kildebundet RTF-fil. Menyomtalen er også originaltekst; fravær av feltet beviser derfor verken at omtalen mangler eller at CD-en ikke har en RTF-fil.
+
+- Undersøk RTF-filer for de 162 nye verktøypostene fra seks CD-er. De har menyomtale, men ingen tilknyttede RTF-er i dagens innlesing. Bevar originalfil og lesbar tekst der koblingen til riktig post kan dokumenteres; ikke koble bare på lignende programnavn.
+- Lag en dekningsrapport per CD som skiller mellom tilknyttet og lesbar RTF, samme tekst som menyomtalen, uleselig RTF, undersøkt uten funn og ennå ikke undersøkt eller tvetydig kobling. «Ikke funnet» må ikke fremstilles som «finnes ikke».
+- Gjør ordlyden tydeligere i frontend, for eksempel «Les vedlagt tekstfil fra CD-en (RTF)». Menyomtalen og den vedlagte filen skal være forståelige som ulike kilder. Behold nedlasting og forklar hvorfor lesefeltet eventuelt ikke vises.
+- Bevar menyomtalen ordrett, eksisterende kildekoblinger, kuratering og URL-er. Identisk tekst skal fortsatt ikke gjentas unødvendig; uleselig tekst skal fortsatt ha originalnedlasting når filen er tilgjengelig.
+
+Ferdig når de seks CD-ene er undersøkt eller konkrete hindringer dokumentert, sikre RTF-koblinger er tatt gjennom Ingest → Catalog → Publish → Web, og visningen er kontrollert for alle tilfellene over. Bruk vanlig PR/test/merge-modell og lag ny pakke først når dette er gjennomført. Dette er planlagt arbeid, ikke en del av rc9.
