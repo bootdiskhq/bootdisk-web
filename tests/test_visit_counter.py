@@ -267,7 +267,7 @@ class VisitAdapterTests(unittest.TestCase):
     # En lokal HTTP-server som svarer som en tjeneste eller proxy kan: fullt svar, ugyldig JSON,
     # eller svarhoder straks og så bare begynnelsen av kroppen med forbindelsen åpen.
     # Nodes egen fetch brukes, så tidsfristen prøves mot ekte strømlesing. Hvert kall
-    # kappløper mot en vakt på 2 sekunder, så en tidsfrist som ikke virker gir en feilet test,
+    # kappløper mot en vakt på 8 sekunder, så en tidsfrist som ikke virker gir en feilet test,
     # ikke en test som henger.
     STALL_SERVER = """
     const http = require('node:http');
@@ -289,9 +289,12 @@ class VisitAdapterTests(unittest.TestCase):
     server.bodies = [];
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     const base = `http://127.0.0.1:${server.address().port}/besok?mode=`;
-    const adapterFor = mode => createHttpVisitCounterAdapter({ endpoint: base + mode, fetchImpl: fetch, parse: core.visitParseResponse, timeoutMs: 200 });
+    // Bare det hengende svaret får kort frist; fullstendige svar får god tid, så en treg
+    // CI-maskin ikke gjør et vellykket kall til et tidsavbrudd.
+    const adapterFor = mode => createHttpVisitCounterAdapter({ endpoint: base + mode, fetchImpl: fetch,
+      parse: core.visitParseResponse, timeoutMs: mode === 'stall' ? 200 : 5000 });
     const guarded = promise => Promise.race([promise.then(value => ({ value }), error => ({ error })),
-      new Promise(resolve => setTimeout(() => resolve({ unsettled: true }), 2000))]);
+      new Promise(resolve => setTimeout(() => resolve({ unsettled: true }), 8000))]);
     const stop = () => { for (const response of open) response.destroy(); server.close(); };
     """
 
