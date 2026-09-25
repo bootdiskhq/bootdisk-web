@@ -78,6 +78,9 @@ vedlegg før den generelle publiseringsflyten utvides.
 
 ### 3. Videokurs med innebygd YouTube-spiller
 
+Avventer innlesing av nyere K-CD-distribusjoner som faktisk inneholder videokurs.
+Ingen videopilot eller spillerimplementering startes på dagens CD-er.
+
 Stian ønsker at videokurs fra senere K-CD-er kan spilles på Bootdisk via en
 innebygd YouTube-spiller, med videoene lastet opp på en valgt YouTube-kanal.
 Dette er en planlagt integrasjon; ingen kanal eller videoer er opprettet/lastet opp.

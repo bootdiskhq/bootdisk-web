@@ -35,6 +35,8 @@ def referenced_assets(document: dict) -> set[PurePosixPath]:
         for candidate in candidates:
             if candidate.get("public_path"):
                 paths.add(checked_asset_path(candidate["public_path"]))
+    for doc in document.get("source_documents", []):
+        paths.add(checked_asset_path(doc["original"]["public_path"]))
     return paths
 
 

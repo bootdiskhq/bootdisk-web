@@ -46,6 +46,8 @@ def asset_paths(document: dict) -> set[str]:
             path = item.get("public_path")
             if path:
                 paths.add(path)
+    for doc in document.get("source_documents", []):
+        paths.add(doc["original"]["public_path"])
     return paths
 
 

@@ -98,6 +98,15 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
         document = json.loads(path.read_text(encoding="utf-8"))
         require(isinstance(document, dict), f"{path.name} must contain an object")
         require(document.get("entry") == entry_id, f"{path.name}: entry mismatch")
+        for source_doc in document.get("source_documents", []):
+            require(source_doc.get("key") == document.get("source_context", {}).get("key"), "cross-source RTF")
+            original = source_doc.get("original", {})
+            digest = original.get("sha256", "")
+            require(SHA256.fullmatch(str(digest)) is not None, "invalid RTF hash")
+            require(original.get("public_path") == f"store/documents/sha256/{digest[:2]}/{digest}.rtf", "invalid RTF path")
+            require(original.get("media_type") == "application/rtf" and type(original.get("size")) is int and original["size"] >= 0, "invalid RTF metadata")
+            require(source_doc.get("sha256") == digest and source_doc.get("size") == original["size"], "RTF original mismatch")
+            require(source_doc.get("text") is None or isinstance(source_doc["text"], str), "invalid RTF text")
         context = index
         if collection:
             matches = [m for m in media if m["id"] == summary.get("medium_id")]

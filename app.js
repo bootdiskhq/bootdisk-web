@@ -1,3 +1,32 @@
+function renderSourceDocuments(entry, description) {
+  const container = document.querySelector("#source-documents");
+  if (!container) return;
+  container.replaceChildren();
+  const normalize = value => (value ?? "").replace(/\s+/g, " ").trim();
+  for (const doc of entry.source_documents ?? []) {
+    const original = doc.original ?? {};
+    if (!/^[a-f0-9]{64}$/.test(original.sha256 ?? "") || original.public_path !== `store/documents/sha256/${original.sha256.slice(0, 2)}/${original.sha256}.rtf`) continue;
+    const block = document.createElement("details");
+    const summary = document.createElement("summary");
+    const same = normalize(doc.text) === normalize(description);
+    summary.textContent = same ? "Original omtale som RTF" : "Les originaltekst fra CD-en (RTF)";
+    block.append(summary);
+    if (doc.text && !same) {
+      const text = document.createElement("div");
+      text.className = "rtf-source-text"; text.textContent = doc.text; block.append(text);
+    } else if (!doc.text) {
+      const note = document.createElement("p"); note.textContent = "Teksten kunne ikke vises. Originalfilen er tilgjengelig nedenfor."; block.append(note);
+    }
+    const source = document.createElement("p"); source.className = "provenance";
+    source.textContent = `Kilde: ${doc.path}`; block.append(source);
+    const link = document.createElement("a"); link.href = original.public_path;
+    link.download = (doc.path ?? "omtale.rtf").split("/").pop();
+    link.textContent = `Last ned originalfil (RTF, ${Math.ceil(original.size / 1024)} kB)`;
+    block.append(link); container.append(block);
+  }
+  container.hidden = !container.children.length;
+}
+
 /* Bootdisk Web deliberately consumes presentation data rather than archive internals.
  * The frontend is disposable: Catalog owns identity and Publish owns web assets. */
 function requestedEntry() {
@@ -105,6 +134,7 @@ async function render() {
   if (description) descriptionElement.textContent = description;
   else descriptionElement.textContent = "Ingen entydig omtale er hentet fra CD-en ennå.";
   document.querySelector("#description-label").hidden = !entry.source_context?.description;
+  renderSourceDocuments(entry, description);
   const notes = [];
   if (entry.curation_status === "pending") notes.push("Navnet er hentet fra CD-menyen. Programidentitet, versjon og utgave er ikke bekreftet.");
   if (entry.source_context?.issues?.value?.length) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
