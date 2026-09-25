@@ -37,15 +37,20 @@ M = [
  ("M18 PHP nøkler huskes 1 time", "counter/besok.php", "const VISIT_KEY_TTL = 48 * 3600;", "const VISIT_KEY_TTL = 3600;"),
  ("M19 backend i releasen", "scripts/build-release.py", '"visit-counter.js", "VERSION")', '"visit-counter.js", "counter/besok.php", "VERSION")'),
  ("M20 aktivert konfig pakkes", "visit-counter-config.js", "endpoint: null });", "endpoint: \"/api/besok.php\" });"),
- ("M21 adapter uten tidsavbrudd", "visit-counter-adapter.js", "if (controller) controller.abort();", ""),
+ ("M21 tidsfristen stopper ved svarhodene (adapteren fra 7fffafc, P2)", "visit-counter-adapter.js", "GIT:7fffafc", None),
+ ("M22 tidsfristen avgjør ikke løftet selv", "visit-counter-adapter.js", "return await Promise.race([exchange(options, expectCounted, controller), deadline]);", "return await exchange(options, expectCounted, controller);"),
 ]
 only = sys.argv[1:]
 for name, rel, old, new in M:
     if only and not any(name.startswith(o+" ") for o in only): continue
     path = ROOT / rel
     src = path.read_text()
-    pairs = old if isinstance(old, list) else [(old, new)]
-    mutated = src
+    if isinstance(old, str) and old.startswith("GIT:"):
+        mutated = subprocess.run(["git", "show", f"{old[4:]}:{rel}"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+        pairs = []
+    else:
+        pairs = old if isinstance(old, list) else [(old, new)]
+        mutated = src
     for o, n in pairs:
         assert mutated.count(o) == 1, (name, o, mutated.count(o))
         mutated = mutated.replace(o, n)

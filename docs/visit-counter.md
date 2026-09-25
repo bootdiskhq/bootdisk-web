@@ -80,7 +80,7 @@ nøkkelen som bekreftet, og senere sidevisninger i besøket leser bare totalen.
 | Slettet nettleserlagring, ny nettleser, annen enhet | Nytt besøk, telles. |
 | Privat vindu | Egen lagring; telles som et eget besøk, og lagringen forsvinner når vinduet lukkes. |
 | Blokkert eller full lagring | Sidevisningen telles ikke (ellers ville hver side blitt et nytt besøk); totalen leses og vises. |
-| Tidsavbrudd (5 s) eller tapt svar | Feltet viser «Teller utilgjengelig». Nøkkelen er ubekreftet og sendes **på nytt med samme nøkkel** ved neste sidevisning; tjenesten har den allerede og teller ikke igjen. |
+| Tidsavbrudd (5 s) eller tapt svar | Fristen gjelder hele svaret, også lesingen av kroppen: en tjeneste eller proxy som sender svarhodene og så stopper, gir tidsavbrudd, ikke evig lasting. Feltet viser «Teller utilgjengelig». Nøkkelen er ubekreftet og sendes **på nytt med samme nøkkel** ved neste sidevisning; tjenesten har den allerede og teller ikke igjen. |
 | Et ubekreftet besøk holdes i live i mer enn 12 timer | Nettleseren slutter å sende nøkkelen og leser bare. Tjenesten husker nøkler i 48 timer, så en ny innsending treffer alltid en kjent nøkkel (testet mot konstantene i begge filer). |
 | Klokken i nettleseren går bakover | Samme besøk; ingen ny telling. |
 | Roboter og søkemotorer uten JavaScript | Telles ikke. |
@@ -214,6 +214,7 @@ Faktiske resultater på grenen `feat/visit-counter`. Testene i `tests/test_visit
 | Omstart og ny opplasting nullstiller ikke | database utenfor `/www` | `test_restart_keeps_the_total…`, `test_redeploying_the_static_site…` | Bestått |
 | Manglende database er utilgjengelig, ikke null | `open_counter` | `test_missing_database_is_unavailable_not_zero` (begge filer) | Bestått: 503, ingen ny fil |
 | Nettverksfeil, 503, ugyldig svar | adapter, `visitParseResponse` | `test_failures_show_unavailable_while_the_archive_keeps_working` (6 feiltyper) | Bestått: «Teller utilgjengelig», ingen sifre, arkivet virker |
+| Svarhoder kommer, kroppen stopper halvveis (GET og POST) | fristen i `call()` omslutter fetch og `response.json()` | `test_timeout_covers_a_body_that_stops_halfway_for_get_and_post`, `test_a_stalled_body_keeps_the_visit_key_for_the_next_view` (ekte HTTP-server i Node) | Bestått: `timeout`, ikke `invalid`; ufullstendig men avsluttet JSON er `invalid`; samme nøkkel sendes ved neste visning. Feilet på `7fffafc` (P2 i gjennomgangen) |
 | Blokkert lagring | `visitRun` | `test_blocked_storage…` (begge filer) | Bestått: total vises, ingen POST |
 | Ingen forespørsler til produksjon fra lokal kjøring og tester | `origin`-sjekk, `endpoint: null` | alle nettlesertester avbryter og feiler på andre verter; `test_an_activated_production_config_stays_silent_outside_bootdisk_no` | Bestått: 0 forespørsler utenfor testserveren |
 | Grenser mot misbruk | minutt- og døgngrense | `test_minute_and_day_limits…`, `test_malformed_foreign_or_oversized_requests_change_nothing` | Bestått |
@@ -248,8 +249,19 @@ Hver feil under ble lagt inn i koden, testene kjørt, og koden satt tilbake.
 | PHP husker nøkler i 1 time | 2 tester, også konstantsammenligningen |
 | PHP-fil med i releasen | releasetestene |
 | Aktivert konfigurasjon i pakken | releasetest (**fant et hull i testen**: den sjekket teksten `endpoint: null`, som også står i kommentaren) |
-| Adapteren uten tidsavbrudd | adaptertest (**fant et hull i testoppsettet**: et løfte som aldri ble avgjort lot Node avslutte med kode 0; testene krever nå en ferdig-markør) |
+| Adapteren fra `7fffafc` (fristen ryddes når svarhodene kommer, P2) | 3 adaptertester |
+| Fristen avgjør ikke løftet selv (bare avbrudd av fetch) | 3 adaptertester, også en kropp som ignorerer avbruddet |
 | Uten Web Locks | **Ikke pålitelig fanget.** Parallellfanetesten feilet i 1 av 5 kjøringer uten låsen. Lesing og skriving av `localStorage` skjer i én synkron blokk, så kappløpet er smalt. Testen er en sannsynlighetssjekk, ikke et bevis. |
+
+Mutasjonskjøringen fant også et hull i testoppsettet: et løfte som aldri ble avgjort lot Node
+avslutte med kode 0, så en hengende test så bestått ut. Node-testene krever nå en ferdig-markør.
+
+**Hull som gjennomgangen fant (P2 på `7fffafc`):** tidsfristen ble ryddet så snart svarhodene
+kom, så en kropp som stoppet halvveis ga evig «lastes». Testene dekket bare en fetch som aldri
+svarte. Nå kjører adaptertestene mot en ekte HTTP-server som sender hodene og deretter bare
+`{"total":`, for både GET og POST, og tidsfristen er et eget løfte som omslutter hele
+utvekslingen. Kjør `python tests/visit_counter_mutations.py M21` for å se de nye testene feile
+på den gamle adapteren.
 
 ## Kjente begrensninger
 

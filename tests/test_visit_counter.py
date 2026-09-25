@@ -256,10 +256,82 @@ class VisitAdapterTests(unittest.TestCase):
           [async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('x'); } }), 'invalid'],
           [async () => ({ ok: true, status: 200, json: async () => ({ total: -4, since: '2026-09-25' }) }), 'invalid'],
           [(url, options) => new Promise((resolve, reject) => options.signal.addEventListener('abort', () => reject(new Error('aborted')))), 'timeout'],
+          // svarhoder kom, men kroppen blir aldri ferdig og bryr seg ikke om avbruddet
+          [async () => ({ ok: true, status: 200, json: () => new Promise(() => {}) }), 'timeout'],
         ];
         for (const [fetchImpl, kind] of cases) {
           await assert.rejects(make(fetchImpl).read(), error => error instanceof VisitCounterError && error.kind === kind, kind);
         }
+        """)
+
+    # En lokal HTTP-server som svarer som en tjeneste eller proxy kan: fullt svar, ugyldig JSON,
+    # eller svarhoder straks og så bare begynnelsen av kroppen med forbindelsen åpen.
+    # Nodes egen fetch brukes, så tidsfristen prøves mot ekte strømlesing. Hvert kall
+    # kappløper mot en vakt på 2 sekunder, så en tidsfrist som ikke virker gir en feilet test,
+    # ikke en test som henger.
+    STALL_SERVER = """
+    const http = require('node:http');
+    const open = new Set();
+    const server = http.createServer((request, response) => {
+      open.add(response);
+      let body = '';
+      request.on('data', chunk => { body += chunk; });
+      request.on('end', () => {
+        server.bodies.push(body);
+        const mode = new URL(request.url, 'http://x').searchParams.get('mode');
+        response.setHeader('Content-Type', 'application/json');
+        if (mode === 'ok') return response.end(JSON.stringify({ total: 7, since: '2026-09-25', counted: true }));
+        if (mode === 'invalid') return response.end('{"total":');
+        response.flushHeaders();
+        response.write('{"total":');   // resten kommer aldri
+      });
+    });
+    server.bodies = [];
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const base = `http://127.0.0.1:${server.address().port}/besok?mode=`;
+    const adapterFor = mode => createHttpVisitCounterAdapter({ endpoint: base + mode, fetchImpl: fetch, parse: core.visitParseResponse, timeoutMs: 200 });
+    const guarded = promise => Promise.race([promise.then(value => ({ value }), error => ({ error })),
+      new Promise(resolve => setTimeout(() => resolve({ unsettled: true }), 2000))]);
+    const stop = () => { for (const response of open) response.destroy(); server.close(); };
+    """
+
+    def test_timeout_covers_a_body_that_stops_halfway_for_get_and_post(self):
+        node(self.STALL_SERVER + """
+        try {
+          await adapterFor('ok').read();   // forbindelsen er oppe, så svarhodene kommer lenge før fristen
+          for (const [name, call] of [['GET', a => a.read()], ['POST', a => a.record('c'.repeat(32))]]) {
+            const outcome = await guarded(call(adapterFor('stall')));
+            assert.ok(!outcome.unsettled, `${name}: svaret ble aldri avgjort`);
+            assert.ok(outcome.error instanceof VisitCounterError, `${name}: ${outcome.error}`);
+            assert.equal(outcome.error.kind, 'timeout', `${name} skal være timeout, ikke ${outcome.error.kind}`);
+          }
+          const invalid = await guarded(adapterFor('invalid').read());
+          assert.equal(invalid.error && invalid.error.kind, 'invalid', 'fullstendig, men ugyldig JSON er invalid');
+          const ok = await guarded(adapterFor('ok').record('d'.repeat(32)));
+          assert.deepEqual(ok.value, { total: 7, since: '2026-09-25', counted: true });
+        } finally { stop(); }
+        """)
+
+    def test_a_stalled_body_keeps_the_visit_key_for_the_next_view(self):
+        node(self.STALL_SERVER + """
+        try {
+          await adapterFor('ok').read();
+          server.bodies.length = 0;
+          const storage = memoryStorage(); let clock = 0;
+          const view = mode => guarded(core.visitRun({ adapter: adapterFor(mode), storage, now: () => clock, newKey, withLock: direct }));
+          const first = await view('stall');
+          assert.ok(!first.unsettled, 'sidevisningen ble aldri avgjort');
+          assert.equal(first.error.kind, 'timeout');
+          const pending = JSON.parse(storage.getItem(core.VISIT_STORAGE_KEY));
+          assert.equal(pending.confirmed, false);
+          clock += 60000;
+          const second = await view('ok');
+          assert.ok(second.value, String(second.error || 'uavklart'));
+          assert.equal(second.value.total, 7);
+          const keys = server.bodies.filter(Boolean).map(body => JSON.parse(body).visit);
+          assert.deepEqual(keys, [pending.key, pending.key], 'ny innsending bruker samme nøkkel');
+          assert.equal(JSON.parse(storage.getItem(core.VISIT_STORAGE_KEY)).confirmed, true);
+        } finally { stop(); }
         """)
 
     def test_client_gives_up_resending_well_before_the_service_forgets_a_key(self):
