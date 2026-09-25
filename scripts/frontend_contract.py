@@ -72,6 +72,9 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
         for medium in media:
             require(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", medium["id"]) is not None, "invalid medium id")
             require(re.fullmatch(r"sha256:[0-9a-f]{64}", str(medium.get("source_manifest", ""))) is not None, "invalid source manifest")
+            extra = medium.get("supplemental_manifests", [])
+            require(isinstance(extra, list) and all(isinstance(v,str) and re.fullmatch(r"sha256:[0-9a-f]{64}",v) for v in extra), "invalid supplemental manifests")
+            require(len(set(extra)) == len(extra) and medium["source_manifest"] not in extra, "duplicate supplemental manifest")
             for field in ("publication", "medium"):
                 require(isinstance(medium.get(field), str) and bool(medium[field].strip()), f"missing medium {field}")
     entry_ids: list[str] = []
@@ -116,7 +119,7 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
                 require(summary.get(label) == context[label], f"{path.name}: summary {label} mismatch")
             for key in ("medium_id", "source_entry", "source_manifest"):
                 require(document.get(key) == summary.get(key) and isinstance(document.get(key), str), f"{path.name}: {key} mismatch")
-            require(document["source_manifest"] == context.get("source_manifest"), f"{path.name}: manifest mismatch")
+            require(document["source_manifest"] in [context.get("source_manifest"), *context.get("supplemental_manifests", [])], f"{path.name}: manifest mismatch")
             expected_id = document["source_entry"] if context.get("legacy_links") and re.fullmatch(r"K[0-9]+", document["source_entry"]) else context["id"] + "--" + document["source_entry"]
             require(entry_id == expected_id, f"{path.name}: qualified entry mismatch")
             key = document.get("source_context", {}).get("key", {})
