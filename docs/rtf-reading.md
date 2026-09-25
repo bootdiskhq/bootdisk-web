@@ -99,6 +99,19 @@ Datatester som også kjører i CI: de ekte eksemplene er byte-identiske med leve
 ekstra lag), ingen testfil er i releaselisten, og `renderSourceDocuments` bruker ingen
 HTML-sink.
 
+### Testresultater
+
+Hele `python -m unittest discover -s tests` på `feat/rtf-reading`:
+
+| Miljø | Kjørt | Bestått | Hoppet over | Feilet |
+| --- | --- | --- | --- | --- |
+| Lokalt med Chromium | 222 | 221 | 1 | 0 |
+| Som CI (uten Playwright) | 222 | 145 | 77 | 0 |
+
+Den ene som hoppes over lokalt, sammenligner Catalogs allowlist og trenger en
+Catalog-checkout. Nye tester i `tests/test_rtf_reading.py`: 15 (5 datatester som også
+kjører i CI, 10 nettlesertester). Birks head `021fc35` hadde 207 tester.
+
 ### Fanger testene reelle feil?
 
 18 bevisste feil ble lagt inn én om gangen i `app.js` og `styles.css`, og
