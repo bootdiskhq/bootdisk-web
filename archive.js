@@ -80,7 +80,7 @@ function card(entry) {
 
   const sourceId = document.createElement("span");
   sourceId.className = "archive-entry";
-  sourceId.textContent = sourceLabel(entry);
+  sourceId.textContent = sourceLabel(entry) === "Verktøymenyen" ? "" : sourceLabel(entry);
   if (entry.medium) {
     const medium = document.createElement("small");
     medium.textContent = entry.medium;
