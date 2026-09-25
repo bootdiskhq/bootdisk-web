@@ -80,6 +80,14 @@ kontrollmatrise og akseptanse, og [kildene](docs/publication-content-sources.md)
 publikasjonsteksten. En pakket forhåndsvisning med syntetiske data bygges med
 `python tests/synthetic_collection.py NY_MAPPE`.
 
+## Besøksteller (ikke aktivert)
+
+Bunnteksten på forsiden, samlingen, arkivet og detaljsidene har plass til en retro
+besøksteller. Den er avslått i pakken (`visit-counter-config.js` har `endpoint: null`) fordi
+det ikke er dokumentert at hostingen kan kjøre den foreslåtte PHP/SQLite-tjenesten i
+`counter/`. [Besøkstelleren](docs/visit-counter.md) beskriver besøksdefinisjonen, lagringen,
+misbruksgrensene, hva som mangler før aktivering, sikkerhetskopi og kontrollmatrisen.
+
 ## Lokal kuratering i 1.2
 
 Kurateringsskjermen kjører lokalt mot prøvedata. Start den fra reporoten, fordi

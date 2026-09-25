@@ -14,7 +14,9 @@ from frontend_contract import validate_frontend_data
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_FILES = ("index.html", "archive.html", "collection.html", "404.html", "styles.css", "accessibility.css", "archive-controls.css",
-                "entry-controls.css", "publication.css", "app.js", "archive.js", "landing.js", "collection.js", "collection-core.js", "VERSION")
+                "entry-controls.css", "publication.css", "app.js", "archive.js", "landing.js", "collection.js", "collection-core.js",
+                "visit-counter.css", "visit-counter-config.js", "visit-counter-core.js", "visit-counter-adapter.js",
+                "visit-counter.js", "VERSION")
 DEFAULT_COLLECTIONS = ROOT / "collections.json"
 DEFAULT_BASE_URL = "https://bootdisk.no/"
 

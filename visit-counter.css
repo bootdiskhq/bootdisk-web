@@ -1,0 +1,63 @@
+/* Besøkstelleren i bunnteksten: mørke sifferfelt med lyse tall og en tynn delelinje som på
+ * en mekanisk teller. Ingen animasjon. Feltene brytes aldri og kuttes aldri; flere sifre gjør
+ * bare telleren bredere. */
+.visit-counter {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  min-height: 2rem;
+}
+
+.visit-counter[hidden] {
+  display: none;
+}
+
+.visit-counter-digits {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #50616a;
+  background: #030607;
+  box-shadow: inset 0 0 0 1px #000;
+}
+
+.visit-counter-digit {
+  display: inline-block;
+  min-width: 1.2em;
+  padding: 1px 3px;
+  background: linear-gradient(#141c20 0 49%, #000 49% 51%, #0c1215 51% 100%);
+  color: #f2f6f7;
+  font-size: .95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: pre;
+  font-variant-numeric: tabular-nums;
+}
+
+.visit-counter-caption,
+.visit-counter-unavailable {
+  color: #93a1a8;
+  white-space: nowrap;
+}
+
+.visit-counter-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Bredt oppsett: sentrer telleren vertikalt mot de to tekstene. Mobiloppsettet i styles.css
+ * (venstrestilt kolonne) beholdes uendret. */
+@media (min-width: 721px) {
+  footer:has(.visit-counter:not([hidden])) {
+    align-items: center;
+  }
+}
