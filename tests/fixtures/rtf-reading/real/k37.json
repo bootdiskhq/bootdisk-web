@@ -1,0 +1,170 @@
+{
+  "assets": [
+    {
+      "derivatives": [
+        {
+          "generator": {
+            "name": "Pillow",
+            "version": "12.3.0"
+          },
+          "height": 240,
+          "kind": "thumbnail",
+          "media_type": "image/webp",
+          "object_key": "derivatives/thumbnails/webp/sha256/3e/4f/3e4f3cb933d49db02aec18b3e94ce9f1998f275ee581eb530d4851422acd96a3.webp",
+          "public_path": "store/derivatives/thumbnails/webp/sha256/3e/4f/3e4f3cb933d49db02aec18b3e94ce9f1998f275ee581eb530d4851422acd96a3.webp",
+          "sha256": "3e4f3cb933d49db02aec18b3e94ce9f1998f275ee581eb530d4851422acd96a3",
+          "size": 120760,
+          "source_sha256": "965537af4b401d36e59aa1105bfa63b09503b10d86f6c5e6b4ab61b432ad2560",
+          "width": 320
+        }
+      ],
+      "entry": "K37",
+      "kind": "screenshot",
+      "original": {
+        "object_key": "assets/sha256/96/55/965537af4b401d36e59aa1105bfa63b09503b10d86f6c5e6b4ab61b432ad2560",
+        "public_path": "store/assets/sha256/96/55/965537af4b401d36e59aa1105bfa63b09503b10d86f6c5e6b4ab61b432ad2560",
+        "sha256": "965537af4b401d36e59aa1105bfa63b09503b10d86f6c5e6b4ab61b432ad2560",
+        "size": 44359
+      },
+      "source_path": "WinAmp/Shot.jpg"
+    },
+    {
+      "derivatives": [
+        {
+          "generator": {
+            "name": "Pillow",
+            "version": "12.3.0"
+          },
+          "height": 32,
+          "kind": "thumbnail",
+          "media_type": "image/webp",
+          "object_key": "derivatives/thumbnails/webp/sha256/b2/92/b292fa57df72eb70c4deaff0a87f609bfc099b3493e64237ab88045deadaa5aa.webp",
+          "public_path": "store/derivatives/thumbnails/webp/sha256/b2/92/b292fa57df72eb70c4deaff0a87f609bfc099b3493e64237ab88045deadaa5aa.webp",
+          "sha256": "b292fa57df72eb70c4deaff0a87f609bfc099b3493e64237ab88045deadaa5aa",
+          "size": 342,
+          "source_sha256": "efef393468eba63f2f1fc778a9cb82874f18b663351caaaf3abc89dca238e478",
+          "width": 32
+        }
+      ],
+      "entry": "K37",
+      "kind": "icon",
+      "original": {
+        "object_key": "assets/sha256/ef/ef/efef393468eba63f2f1fc778a9cb82874f18b663351caaaf3abc89dca238e478",
+        "public_path": "store/assets/sha256/ef/ef/efef393468eba63f2f1fc778a9cb82874f18b663351caaaf3abc89dca238e478",
+        "sha256": "efef393468eba63f2f1fc778a9cb82874f18b663351caaaf3abc89dca238e478",
+        "size": 3126
+      },
+      "source_path": "WinAmp/Ikon.bmp"
+    }
+  ],
+  "curation_status": "identified",
+  "decision_source": {
+    "entry": "K37",
+    "manifest": "sha256:ae29b1d2976ee7c7439b2e12fe18b774d1d57e77c9a20bc3567d2e5079257281"
+  },
+  "editorial_title": "WinAmp 2.76",
+  "entry": "K37",
+  "medium": "K-CD 15/2001",
+  "medium_id": "kcd-15-2001",
+  "occurrences": [
+    {
+      "artifact_id": "artifact:sha256:efef393468eba63f2f1fc778a9cb82874f18b663351caaaf3abc89dca238e478",
+      "path": "WinAmp/Ikon.bmp"
+    },
+    {
+      "artifact_id": "artifact:sha256:de06896e8ff713c35c4bada33f022ebae04cfeec60745d8f5583fea77684a7af",
+      "path": "WinAmp/No.rtf"
+    },
+    {
+      "artifact_id": "artifact:sha256:965537af4b401d36e59aa1105bfa63b09503b10d86f6c5e6b4ab61b432ad2560",
+      "path": "WinAmp/Shot.jpg"
+    },
+    {
+      "artifact_id": "artifact:sha256:b609c58ca767f0809fe30775e2dd9f28315f85f2972196b2a5aca4a84a2964ad",
+      "path": "WinAmp/WinAmp276_full.exe"
+    },
+    {
+      "artifact_id": "artifact:sha256:201ea7ce2f9426f02c0d2c90daffdf0f8eb981060398c6b2af246c0ab8842385",
+      "path": "WinAmp/winamp.pdf"
+    }
+  ],
+  "publication": "KOMPUTER FOR ALLE",
+  "software": [
+    {
+      "content_kind": "application",
+      "descriptions": [
+        {
+          "description_id": "description:release:winamp:2.76:nb-NO",
+          "language": "nb-NO",
+          "text": "Med WinAmp kan du spille musikk-cd-er og mp3-filer."
+        }
+      ],
+      "distribution_kind": null,
+      "identification_id": "identification:97e260274a5258dae047c0f6294ee1da53b50d22a3f5e588e41da8b23aef5f04",
+      "package_id": null,
+      "release_id": "release:winamp:2.76",
+      "software_id": "software:winamp",
+      "software_name": "Winamp",
+      "status": "curated",
+      "version": "2.76"
+    }
+  ],
+  "source_context": {
+    "description": {
+      "source_ref": {
+        "entry": "K37",
+        "manifest": "sha256:2e5f128883b3a0afea67604f1fd2518397e4b5c1fb128c2cd3f9d33aac6b3f50",
+        "pointer": "/entries/11/raw/Global"
+      },
+      "value": "Med WinAmp kan du spille musikk-cd-er og mp3-filer."
+    },
+    "issues": {
+      "source_ref": {
+        "entry": "K37",
+        "manifest": "sha256:2e5f128883b3a0afea67604f1fd2518397e4b5c1fb128c2cd3f9d33aac6b3f50",
+        "pointer": "/entries/11/issues"
+      },
+      "value": []
+    },
+    "key": {
+      "entry": "K37",
+      "manifest": "sha256:2e5f128883b3a0afea67604f1fd2518397e4b5c1fb128c2cd3f9d33aac6b3f50"
+    },
+    "menu_groups": {
+      "source_ref": {
+        "entry": "K37",
+        "manifest": "sha256:2e5f128883b3a0afea67604f1fd2518397e4b5c1fb128c2cd3f9d33aac6b3f50",
+        "pointer": "/entries/11/normalized/categories"
+      },
+      "value": [
+        "Tilbehør"
+      ]
+    }
+  },
+  "source_entry": "K37",
+  "source_manifest": "sha256:2e5f128883b3a0afea67604f1fd2518397e4b5c1fb128c2cd3f9d33aac6b3f50",
+  "source_order": 11,
+  "source_documents": [
+    {
+      "key": {
+        "manifest": "sha256:2e5f128883b3a0afea67604f1fd2518397e4b5c1fb128c2cd3f9d33aac6b3f50",
+        "entry": "K37"
+      },
+      "pointer": "/entries/11/files/discovered/description_rtf",
+      "path": "WinAmp/No.rtf",
+      "sha256": "de06896e8ff713c35c4bada33f022ebae04cfeec60745d8f5583fea77684a7af",
+      "size": 613,
+      "method": "rtf-ansi-text-terminal-nul-1",
+      "text": "WinAmp \nMed WinAmp kan du spille musikk-cd-er og mp3-filer. Du kan lage lister over de numrene du vil høre, i en bestemt rekkefølge. \n\nKlikk på \"Les guide\" for å se en omfattende veiledning til programmet. \n",
+      "warning": null,
+      "observation_manifest": "sha256:339f4eeb36f5b3aa7d95a16c32bac7162bedf28db0e4396a1279b459dae303b0",
+      "original": {
+        "sha256": "de06896e8ff713c35c4bada33f022ebae04cfeec60745d8f5583fea77684a7af",
+        "size": 613,
+        "object_key": "documents/sha256/de/de06896e8ff713c35c4bada33f022ebae04cfeec60745d8f5583fea77684a7af.rtf",
+        "public_path": "store/documents/sha256/de/de06896e8ff713c35c4bada33f022ebae04cfeec60745d8f5583fea77684a7af.rtf",
+        "media_type": "application/rtf"
+      }
+    }
+  ]
+}
