@@ -1,3 +1,9 @@
+// Workshop route keys encode source labels; they are not names printed on the CD.
+function sourceLabel(entry) {
+  const id = entry.source_entry ?? entry.entry;
+  return /^(?:[a-z0-9-]+--)?Tool(?:[0-9a-f]{2})+$/i.test(id) ? "Verktøymenyen" : id;
+}
+
 /* Archive browsing consumes only the disposable index projection. Detailed Catalog
  * evidence and Publish metadata remain on the entry document, not duplicated here. */
 function imageFor(asset) {
@@ -74,7 +80,7 @@ function card(entry) {
 
   const sourceId = document.createElement("span");
   sourceId.className = "archive-entry";
-  sourceId.textContent = entry.source_entry ?? entry.entry;
+  sourceId.textContent = sourceLabel(entry);
   if (entry.medium) {
     const medium = document.createElement("small");
     medium.textContent = entry.medium;
