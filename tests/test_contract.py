@@ -52,7 +52,7 @@ class FrontendContractTests(unittest.TestCase):
         javascript = (ROOT / "app.js").read_text(encoding="utf-8")
         self.assertIn('id="previous-entry"', html)
         self.assertIn('id="next-entry"', html)
-        self.assertIn('fetch("data/index.json")', javascript)
+        self.assertIn('fetch("data/index.json", { cache: "no-cache" })', javascript)
         self.assertIn('index.entries[position - 1]', javascript)
         self.assertIn('index.entries[position + 1]', javascript)
         self.assertNotIn('Number(entry.entry.slice(1))', javascript)
@@ -138,7 +138,7 @@ assert.equal(ids('all').length, 3);
     def test_archive_links_back_to_generic_entry_renderer(self):
         javascript = (ROOT / "archive.js").read_text(encoding="utf-8")
         self.assertIn('index.html?entry=${encodeURIComponent(entry.entry)}', javascript)
-        self.assertIn('fetch("data/index.json")', javascript)
+        self.assertIn('fetch("data/index.json", { cache: "no-cache" })', javascript)
         self.assertNotIn("innerHTML", javascript)
 
     def test_archive_filters_are_shareable_and_preserve_source_truth(self):
