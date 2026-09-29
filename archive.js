@@ -128,7 +128,7 @@ function renderArchiveContext(context) {
 
 async function render() {
   const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
-  const response = await fetch("data/index.json");
+  const response = await fetch("data/index.json", { cache: "no-cache" });
   if (!response.ok) throw new Error(`Cannot load archive index: ${response.status}`);
   const data = await response.json();
   const registry = await registryRequest;

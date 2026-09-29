@@ -177,7 +177,7 @@ async function render() {
   if (!entryId) return;
   const dataUrl = `data/${entryId}.json`;
   const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
-  const [response, indexResponse] = await Promise.all([fetch(dataUrl), fetch("data/index.json")]);
+  const [response, indexResponse] = await Promise.all([fetch(dataUrl, { cache: "no-cache" }), fetch("data/index.json", { cache: "no-cache" })]);
   if (!response.ok) throw Object.assign(new Error(`Cannot load ${dataUrl}: ${response.status}`), { unknownEntry: response.status === 404 });
   if (!indexResponse.ok) throw new Error(`Cannot load archive index: ${indexResponse.status}`);
   const [entry, index] = await Promise.all([response.json(), indexResponse.json()]);

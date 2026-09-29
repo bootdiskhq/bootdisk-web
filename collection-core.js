@@ -148,7 +148,7 @@ function countLabel(count, singular, plural) {
 }
 
 async function loadJson(url, fetcher = fetch) {
-  const response = await fetcher(url);
+  const response = await fetcher(url, { cache: "no-cache" });
   if (!response.ok) throw new Error(`Kunne ikke hente ${url}: HTTP ${response.status}`);
   try {
     return await response.json();
