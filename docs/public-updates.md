@@ -303,8 +303,22 @@ Merknader:
   ser. `preview` viser kodetellingen.
 - De 23 teknisk uavklarte i den siste runden er blant de 281. Tallet gjelder bare den
   runden, ikke alle uavklarte poster i arkivet.
-- rc12 er allerede publisert uten feed. Registeret fra steg 4 hører derfor til neste
-  utgave som bygges fra rc12-dataene; Birk avgjør pakken og kvalifiseringen.
+- rc12 og rc13 er allerede publisert uten feed. Registeret fra steg 4 beskriver rc12-dataene
+  og kan ikke sendes med en pakke bygget fra rc13-dataene (bygget avviser det). Før en
+  pakke fra rc13-dataene får historikk, må rc13 registreres i samme kjede med sitt faktiske
+  publiseringstidspunkt. Med release-notatet for rc13 forventes 3 nye kildeposter og 0
+  oppdaterte, men det er ikke kontrollert her:
+
+  ```sh
+  RC13=…   # rc13-pakkens mappe (med data/ og store/)
+  python3 scripts/public_updates.py record "$RC12/data" "$RC13/data" --register "$OUT/public-updates.json" \
+    --release-id 1.2.0-rc13 --published-at "$RC13_PUBLISHED_AT" --output "$OUT/public-updates-rc13.json" \
+    --expect-added 3 --expect-updated 0
+  python3 scripts/build-release.py "$RC13/data" "$RC13" --output "$OUT/site-rc13" --expected-entries 372 \
+    --updates "$OUT/public-updates-rc13.json"
+  ```
+
+  Birk avgjør pakken og kvalifiseringen.
 
 ## Lokal forhåndsvisning med testdata
 
