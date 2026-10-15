@@ -26,7 +26,7 @@ the program files are absent. Feature route identifiers are presented as
   counted as passes. Three real pages and their navigation checked in the app
   browser against the built package, including original illustrations and notes.
 - Release: 372 unique routes, 822 asset files; three added JSON documents and
-  six added artwork files. Only VERSION, app.js, index and sitemap change among
+  six added artwork files. Only VERSION, app.js, index.html, data index and sitemap change among
   existing files. Protected curator state is unchanged.
 - No executable CD content, private curator workspace, preserved containers or
   test fixtures are part of the upload. Existing counter behavior is unchanged.
@@ -34,3 +34,5 @@ the program files are absent. Feature route identifiers are presented as
 Release inputs and verification receipts are retained locally under
 `local-results/feature-release-2026-10-15/`; a deterministic archive and report
 are generated as `bootdisk-web-1.2.0-rc13`.
+
+Production browser verification exposed a cached rc11 app.js reference. The detail-page script URL is bumped to rc13 so cached script bytes cannot hide the new source labels and notes.
