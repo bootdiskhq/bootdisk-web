@@ -50,6 +50,8 @@ vm.runInContext(fs.readFileSync('app.js','utf8').split('async function render()'
 const rows=[{entry:'K1',curation_status:'pending',source_catalog_status:'documented'},
 {entry:'K2',curation_status:'pending'}];
 ctx.rows=rows;
+assert.equal(vm.runInContext('archiveStatusParameter("source_documented")',ctx),'source_documented');
+assert.equal(vm.runInContext('archiveStatusParameter("invalid")',ctx),'all');
 assert.equal(vm.runInContext('filterEntries(rows,"","pending").length',ctx),1);
 assert.equal(vm.runInContext('filterEntries(rows,"","source_documented")[0].entry',ctx),'K1');
 assert.equal(vm.runInContext('statusLabel("pending",null,"documented")',ctx),'Oppgitt på CD-en');
