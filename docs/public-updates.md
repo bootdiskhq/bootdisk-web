@@ -1,3 +1,5 @@
+> Ny kildekatalogstatus bruker v3 / visible-v3. Se [source-catalog-status.md](source-catalog-status.md). Beskrivelsen av v2 nedenfor dokumenterer forrige publiserte kontrakt.
+
 # Sist lagt til og oppdatert
 
 Besøkende kan se hvilke kildeposter som er nye i arkivet, og hvilke eksisterende poster som

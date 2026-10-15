@@ -11,7 +11,7 @@ ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 CURATION_STATUSES = {"identified", "pending"}
 # A published package keeps its update history beside the projection
-# (bootdisk-public-updates-v2, validated by public_updates.py). The name cannot be an
+# (bootdisk-public-updates-v3, validated by public_updates.py). The name cannot be an
 # entry file: entry ids need "--" before any hyphen.
 UPDATES_FEED = "public-updates.json"
 
@@ -142,6 +142,17 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
         require(document.get("medium") == context["medium"], f"{path.name}: medium mismatch")
         require(document.get("curation_status") in CURATION_STATUSES, f"{path.name}: invalid curation_status")
         require(document.get("curation_status") == summary.get("curation_status"), f"{path.name}: summary status mismatch")
+        source_catalog = document.get("source_catalog")
+        require(summary.get("source_catalog_status") == (source_catalog or {}).get("status"),
+                f"{path.name}: source catalog summary mismatch")
+        if source_catalog is not None:
+            require(source_catalog.get("rule") == "source-catalog-readiness-1", "unknown source catalog rule")
+            require(source_catalog.get("status") in ("documented", "needs_inspection"), "invalid source catalog status")
+            require(source_catalog.get("key") == document.get("source_context", {}).get("key"), "cross-source catalog assessment")
+            if source_catalog["status"] == "documented":
+                title = source_catalog.get("title") or {}
+                require(title.get("value") == document.get("editorial_title"), "source catalog title mismatch")
+                require(all(title.get("source_ref", {}).get(k) == v for k, v in source_catalog["key"].items()), "cross-source catalog title")
         require(isinstance(document.get("software"), list), f"{path.name}: software must be an array")
         for position, software in enumerate(document["software"]):
             validate_software(software, f"{path.name}.software[{position}]")

@@ -84,7 +84,7 @@ def main() -> None:
         icon = next((asset for asset in joined_assets if asset.get("kind") == "icon"), None)
         if icon is None:
             icon = next((asset for asset in joined_assets if asset.get("kind") == "screenshot"), None)
-        index.append({"entry": entry_id, "editorial_title": entry.get("editorial_title"), "curation_status": entry.get("curation_status"), "software_name": software.get("software_name"), "version": software.get("version"), "identification_status": software.get("status"), "content_kind": software.get("content_kind"), "distribution_kind": software.get("distribution_kind"), "icon": icon})
+        index.append({"entry": entry_id, "editorial_title": entry.get("editorial_title"), "curation_status": entry.get("curation_status"), "source_catalog_status": (entry.get("source_catalog") or {}).get("status"), "software_name": software.get("software_name"), "version": software.get("version"), "identification_status": software.get("status"), "content_kind": software.get("content_kind"), "distribution_kind": software.get("distribution_kind"), "icon": icon})
 
     # The index is also disposable presentation data. It intentionally contains only
     # enough information to browse into an entry; detailed evidence stays per entry.

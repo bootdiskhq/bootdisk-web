@@ -11,7 +11,7 @@ function normalized(value) {
 function filterEntries(entries, query, status, medium = "all") {
   const needle = normalized(query.trim());
   return entries.filter(entry => {
-    const effectiveStatus = entry.identification_status === "interpreted" ? "interpreted" : entry.curation_status;
+    const effectiveStatus = entry.curation_status === "pending" && entry.source_catalog_status === "documented" ? "source_documented" : entry.identification_status === "interpreted" ? "interpreted" : entry.curation_status;
     const matchesStatus = status === "all" || effectiveStatus === status;
     const haystack = [entry.entry, entry.editorial_title, entry.software_name, entry.version, entry.medium, entry.source_entry].map(normalized).join(" ");
     return matchesStatus && (medium === "all" || entry.medium_id === medium) && haystack.includes(needle);
@@ -79,7 +79,7 @@ function card(entry) {
   }
   if (entry.curation_status === "pending") {
     const status = document.createElement("small");
-    status.textContent = "Venter på identifisering";
+    status.textContent = entry.source_catalog_status === "documented" ? "Oppgitt på CD-en" : "Venter på identifisering";
     copy.append(status);
   }
   link.append(icon, copy);
