@@ -8,6 +8,10 @@ function normalized(value) {
   return String(value ?? "").toLocaleLowerCase("no");
 }
 
+function archiveStatusParameter(value) {
+  return ["identified", "interpreted", "pending", "source_documented"].includes(value) ? value : "all";
+}
+
 function filterEntries(entries, query, status, medium = "all") {
   const needle = normalized(query.trim());
   return entries.filter(entry => {
@@ -153,7 +157,7 @@ async function render() {
     notice.hidden = false;
   }
   search.value = parameters.get("q") ?? "";
-  status.value = ["identified", "interpreted", "pending"].includes(parameters.get("status")) ? parameters.get("status") : "all";
+  status.value = archiveStatusParameter(parameters.get("status"));
   sort.value = parameters.get("sort") === "name" ? "name" : "source";
 
   function update() {
