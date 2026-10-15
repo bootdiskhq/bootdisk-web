@@ -193,6 +193,18 @@ Testene ligger i `tests/test_public_updates.py` (generator, register, releasebyg
 HTTP-verifikator og sidelogikk i Node) og `tests/test_public_updates_browser.py` (Chromium
 mot pakkede releaser). Alle bruker testdataene i `tests/synthetic_updates.py`.
 
+Kjøringer av hele pakken (`python -m unittest discover -s tests`):
+
+| Kjøring | Funnet | Bestått | Feilet | Hoppet over |
+|---|---:|---:|---:|---:|
+| Main `0a4ef07` før endringen, Chromium og Node | 268 | 267 | 0 | 1 |
+| Denne grenen, Chromium og Node 22 | 315 | 314 | 0 | 1 |
+| Denne grenen uten Playwright, som i CI | 315 | 214 | 0 | 101 |
+
+Den ene hoppede testen i begge Chromium-kjøringene krever en `bootdisk-catalog`-checkout
+(`BOOTDISK_CATALOG_ROOT`), som ikke finnes i dette miljøet. Av de 47 nye testene kjører 35
+uten nettleser og 12 i Chromium. En hoppet nettlesertest er ikke en bestått nettlesertest.
+
 | # | Scenario | Forventet | Test | Resultat |
 |---|---|---|---|---|
 | 1 | Ny offentlig post | Én «Ny kildepost», lenke til eksisterende detaljside | `test_new_entry_is_added_and_others_are_never_new`, `test_rows_link_to_the_existing_detail_pages` | Bestått |
