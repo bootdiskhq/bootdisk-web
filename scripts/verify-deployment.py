@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
 from collection_registry import collection_urls
+from public_updates import FEED_NAME, UpdatesError, fingerprint, validate_register, visible_projection
 
 PRODUCTION = "https://bootdisk.no/"
 ROOT_CANONICAL = '<link id="canonical-url" rel="canonical" href="https://bootdisk.no/">'
@@ -22,7 +23,9 @@ NOT_PUBLIC = ("curate.html", "curate.js", "curate-adapter.js", "curate-live-adap
               "tests/fixtures/curator-fixtures-v1.json", "scripts/build-release.py",
               "automation.html", "automation.css", "automation.js", "automation-core.js", "automation-adapter.js",
               "automation-sample.js", "tests/fixtures/automation-queue-v1.json", "docs/automation-queue-v1.md",
-              "counter/besok.php", "counter/schema.sql", "scripts/visit-counter-db.py")
+              "counter/besok.php", "counter/schema.sql", "scripts/visit-counter-db.py",
+              "scripts/public_updates.py", "tests/synthetic_updates.py")
+UPDATES_CANONICAL = '<link rel="canonical" href="https://bootdisk.no/updates.html">'
 
 
 def fetch(base_url: str, path: str, expected_status: int = 200) -> bytes:
@@ -38,6 +41,14 @@ def fetch(base_url: str, path: str, expected_status: int = 200) -> bytes:
     if status != expected_status:
         raise RuntimeError(f"Expected HTTP {expected_status} from {url}, got {status}")
     return body
+
+
+def fetch_status(url: str) -> int:
+    try:
+        with urlopen(Request(url, headers={"User-Agent": "bootdisk-deploy-verifier/0.1"}), timeout=20) as response:
+            return response.status
+    except HTTPError as error:
+        return error.code
 
 
 def asset_paths(document: dict) -> set[str]:
@@ -57,6 +68,7 @@ def main() -> None:
     parser.add_argument("base_url", help="Deployed root, for example https://bootdisk.no/")
     parser.add_argument("--expected-entries", type=int, default=39)
     parser.add_argument("--workers", type=int, default=12)
+    parser.add_argument("--require-updates", action="store_true", help="Fail when no public update history is deployed")
     args = parser.parse_args()
 
     archive = fetch(args.base_url, "archive.html").decode("utf-8")
@@ -67,6 +79,14 @@ def main() -> None:
         if ROOT_CANONICAL not in front or "window.location.replace" in front:
             raise RuntimeError(f"Front page at /{path} lacks the root canonical URL or redirects")
     fetch(args.base_url, "index.html?entry=K37")
+    updates_page = fetch(args.base_url, "updates.html").decode("utf-8")
+    if UPDATES_CANONICAL not in updates_page or 'src="updates.js' not in updates_page:
+        raise RuntimeError("updates.html lacks its canonical URL or script")
+    # Older packages have no history; the site works without it. Any other failure is an error.
+    feed_missing = fetch_status(urljoin(args.base_url.rstrip("/") + "/", f"data/{FEED_NAME}")) == 404
+    if feed_missing and args.require_updates:
+        raise RuntimeError(f"data/{FEED_NAME} is missing, and --require-updates was given")
+    register = None if feed_missing else json.loads(fetch(args.base_url, f"data/{FEED_NAME}"))
     for path in NOT_PUBLIC:
         fetch(args.base_url, path, expected_status=404)
     robots = fetch(args.base_url, "robots.txt").decode("utf-8")
@@ -88,6 +108,8 @@ def main() -> None:
     sitemap_urls = set(sitemap_locations)
     detail_urls = {f"{PRODUCTION}index.html?entry={entry['entry']}" for entry in entries}
     expected_urls = {PRODUCTION, f"{PRODUCTION}archive.html", *collection_pages, *detail_urls}
+    if register is not None:
+        expected_urls.add(f"{PRODUCTION}updates.html")
     if len(sitemap_locations) != len(sitemap_urls) or sitemap_urls != expected_urls:
         raise RuntimeError("Sitemap URLs do not match the front page, archive, collections and archive index")
     if {url for url in sitemap_urls if "index.html?entry=" in url} != detail_urls:
@@ -103,6 +125,12 @@ def main() -> None:
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         documents = list(executor.map(fetch_entry, entries))
     assets = set().union(*(asset_paths(document) for _, document in documents))
+    if register is not None:
+        projection = {entry_id: {"visible": visible_projection(document)} for entry_id, document in documents}
+        try:
+            validate_register(register, index, fingerprint(projection))
+        except UpdatesError as error:
+            raise RuntimeError(f"Deployed update history is invalid: {error}") from None
 
     def verify_asset(path: str) -> str:
         body = fetch(args.base_url, path)
@@ -119,6 +147,7 @@ def main() -> None:
     print(f"deployment entries: {len(entries)}")
     print(f"deployment assets: {len(assets)}")
     print(f"deployment collections: {len(collection_pages)}")
+    print(f"deployment update events: {len(register['events'])}" if register is not None else "deployment update history: none")
     print("deployment verification: passed")
 
 

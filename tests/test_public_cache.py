@@ -20,6 +20,13 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
  }
  const ctx=vm.createContext({console});
  vm.runInContext(fs.readFileSync('collection-core.js','utf8'),ctx);
+ // The update overview's two loaders (updates-core.js) revalidate too.
+ const uctx=vm.createContext({URLSearchParams,console,Intl,Date});
+ vm.runInContext(fs.readFileSync('updates-core.js','utf8'),uctx);
+ const seen=[];
+ const ufetch=async(url,options)=>{seen.push([url,options?.cache]);return{ok:true,status:200,json:async()=>url.endsWith('index.json')?{entries:[]}:{schema:'bootdisk-public-updates-v1',releases:[],events:[]}};};
+ await uctx.loadUpdates(ufetch);await uctx.loadUpdateIndex(ufetch);
+ assert.deepStrictEqual(seen,[['data/public-updates.json','no-cache'],['data/index.json','no-cache']]);
  const fetcher=async(url,options)=>({ok:true,json:async()=>({status:options?.cache==='no-cache'?'identified':'pending'})});
  const result=await ctx.loadJson('data/index.json',fetcher);
  assert.equal(result.status,'identified');

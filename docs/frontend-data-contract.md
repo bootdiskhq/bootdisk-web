@@ -150,3 +150,14 @@ numerically; the issue number is not a month. Labels without that pattern follow
 natural order. Adding a disc or a second publication is a data and registry change;
 the pages do not change. The 1.0 single-medium index remains supported as one medium
 whose content is the whole archive.
+
+## Public update history — `bootdisk-public-updates-v1`
+
+A release may ship `data/public-updates.json` beside the index: an explicitly maintained
+register of which entries were added or visibly changed, with the release id and explicit
+UTC publication time of each change. It is supplied to `build-release.py --updates`, which
+refuses an invalid register or one whose newest state does not describe the packaged data.
+Without it the release is built as before and the rest of the site is unaffected. The
+compared fields, change codes, baseline rules and idempotency are specified in
+[the update overview](public-updates.md). `frontend_contract.py` accepts the file beside a
+projection and validates it with `--updates`.

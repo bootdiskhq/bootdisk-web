@@ -8,6 +8,7 @@ Bootdisk Web publiserer statiske sider som virker uten serveromskrivinger:
 | `/collection.html?collection=<nøkkel>` | Én samling: introduksjon og alle CD-ene, for eksempel `komputer-for-alle` | Seg selv, satt av sidescriptet |
 | `/archive.html` | Alle kildeposter på tvers av samlinger | `https://bootdisk.no/archive.html` |
 | `/archive.html?medium=<medie-ID>` | Innholdet på én CD, for eksempel `kcd-13-2000` | `https://bootdisk.no/archive.html` |
+| `/updates.html` | Sist lagt til og oppdatert: nye og endrede kildeposter. Filter `type` (`added`/`updated`) og søk `q` står i adressen | `https://bootdisk.no/updates.html` |
 | `/index.html?entry=<ID>` | Permanent detaljlenke til én kildepost | Seg selv, satt av sidescriptet |
 | `/data/`, `/store/`, `/collections.json` | Genererte grensesnitt for presentasjonslaget, ikke inngangsadresser | – |
 
@@ -29,7 +30,8 @@ nettleserens tilbakeknapp valgt CD og søk, og lenker kan kopieres og åpnes i n
 ## Oppdagelse og deling
 
 Releasebygget genererer `robots.txt` og `sitemap.xml` fra den validerte indeksen og
-samlingsregisteret. Sitemap inneholder forsiden, arkivoversikten, hver samling som har
+samlingsregisteret. Sitemap inneholder forsiden, arkivoversikten, `updates.html` når releasen har
+oppdateringshistorikk (`data/public-updates.json`), hver samling som har
 minst én CD, og nøyaktig én detaljlenke per kildepost. Nye kildeposter og samlinger følger
 automatisk med uten håndredigering. CD-filtrene står ikke i sitemap; de er visninger av
 arkivet.

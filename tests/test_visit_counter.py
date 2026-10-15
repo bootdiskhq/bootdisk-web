@@ -590,7 +590,7 @@ class CounterReleaseTests(unittest.TestCase):
         self.assertIn("BLOKKERT", config)
 
     def test_public_pages_show_the_counter_and_private_or_error_pages_do_not(self):
-        for name in ("index.html", "archive.html", "collection.html"):
+        for name in ("index.html", "archive.html", "collection.html", "updates.html"):
             page = (self.release / name).read_text(encoding="utf-8")
             footer = page.split("<footer>", 1)[1].split("</footer>", 1)[0]
             self.assertIn('<p id="visit-counter" class="visit-counter" hidden></p>', footer, name)

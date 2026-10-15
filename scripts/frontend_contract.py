@@ -10,6 +10,10 @@ from pathlib import Path, PurePosixPath
 ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 CURATION_STATUSES = {"identified", "pending"}
+# A published package keeps its update history beside the projection
+# (bootdisk-public-updates-v1, validated by public_updates.py). The name cannot be an
+# entry file: entry ids need "--" before any hyphen.
+UPDATES_FEED = "public-updates.json"
 
 
 def require(condition: bool, message: str) -> None:
@@ -149,7 +153,7 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
             require(summary["icon"] in document["assets"], f"{path.name}: index icon missing from detail")
 
     expected_files = {"index.json", *(f"{entry_id.lower()}.json" for entry_id in entry_ids)}
-    actual_files = {path.name for path in root.glob("*.json")}
+    actual_files = {path.name for path in root.glob("*.json")} - {UPDATES_FEED}
     require(actual_files == expected_files, f"Unexpected generated JSON files: {sorted(actual_files - expected_files)}")
     return index
 
@@ -158,9 +162,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("frontend_data", type=Path)
     parser.add_argument("--expected-entries", type=int)
+    parser.add_argument("--updates", type=Path, help="Also validate this public update register against the data")
     args = parser.parse_args()
     index = validate_frontend_data(args.frontend_data, args.expected_entries)
     print(f"frontend contract: {len(index['entries'])} entries valid")
+    if args.updates:
+        from public_updates import fingerprint, load_projection, load_register, validate_register
+        register = validate_register(load_register(args.updates), index, fingerprint(load_projection(args.frontend_data)))
+        print(f"public updates: {len(register['events'])} events in {len(register['releases'])} releases valid")
 
 
 if __name__ == "__main__":
