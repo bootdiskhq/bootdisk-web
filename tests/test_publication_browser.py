@@ -198,10 +198,13 @@ class PublicationBrowserTests(unittest.TestCase):
             self.assertEqual(page.locator("main img[src=x]").count(), 0)
 
     def test_front_and_collection_pages_read_only_the_index_and_registry(self):
-        for path in ("/", "/collection.html?collection=komputer-for-alle"):
+        # The front page also asks for the compact update feed (404 in this package, which
+        # has no history); never a document per entry.
+        for path, expected in (("/", ["collections.json", "data/index.json", "data/public-updates.json"]),
+                               ("/collection.html?collection=komputer-for-alle", ["collections.json", "data/index.json"])):
             with self.subTest(path), self.page(path) as page:
                 data = sorted({url.split("/", 3)[3] for method, url in page.requests if "/data/" in url or url.endswith(".json")})
-                self.assertEqual(data, ["collections.json", "data/index.json"])
+                self.assertEqual(data, expected)
                 self.assertEqual({method for method, _ in page.requests}, {"GET"})
 
     def test_states_are_honest(self):

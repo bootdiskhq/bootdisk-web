@@ -80,6 +80,15 @@ kontrollmatrise og akseptanse, og [kildene](docs/publication-content-sources.md)
 publikasjonsteksten. En pakket forhåndsvisning med syntetiske data bygges med
 `python tests/synthetic_collection.py NY_MAPPE`.
 
+## Sist lagt til og oppdatert
+
+Forsiden viser de åtte nyeste nye eller endrede kildepostene, og `updates.html` hele
+oversikten med filter og søk. Historikken er et eksplisitt register
+(`bootdisk-public-updates-v2`) som registreres ved publisering med
+`scripts/public_updates.py record` og sendes inn med `build-release.py --updates`.
+Se [oversikten](docs/public-updates.md) for kontrakt, regler, kontrollmatrise og den ekte
+akseptansen.
+
 ## Besøksteller (ikke aktivert)
 
 Bunnteksten på forsiden, samlingen, arkivet og detaljsidene har plass til en retro

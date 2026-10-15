@@ -46,6 +46,17 @@ def deterministic_zip(source: Path, target: Path) -> None:
             archive.writestr(info, path.read_bytes(), compresslevel=9)
 
 
+def updates_report(path: Path) -> dict | None:
+    """Release ids and counts of the packaged update history; null when none was supplied."""
+    if not path.is_file():
+        return None
+    register = json.loads(path.read_text(encoding="utf-8"))
+    return {"sha256": sha256(path), "baseline_release_id": register["baseline"]["release_id"],
+            "releases": [{key: release[key] for key in ("release_id", "published_at", "added", "updated")}
+                         for release in register["releases"]],
+            "events": len(register["events"])}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("publish_root", type=Path)
@@ -56,6 +67,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--expected-entries", type=int, default=39)
     parser.add_argument("--collections", type=Path, default=ROOT / "collections.json")
+    parser.add_argument("--updates", type=Path, help="Public update register recorded for this data (bootdisk-public-updates-v2)")
     args = parser.parse_args()
     if args.catalog_root and not args.ingest_manifest:
         parser.error("--ingest-manifest is required with --catalog-root")
@@ -79,6 +91,7 @@ def main() -> None:
             sys.executable, str(BUILD_RELEASE), str(data), str(args.publish_root.expanduser()),
             "--output", str(release), "--expected-entries", str(args.expected_entries),
             "--collections", str(args.collections.expanduser().resolve()),
+            *(["--updates", str(args.updates.expanduser().resolve())] if args.updates else []),
         ], check=True)
         frontend_data_sha256 = sha256_tree(data)
 
@@ -102,6 +115,7 @@ def main() -> None:
             isinstance((d.get("source_context", {}).get("description") or {}).get("value"), str)
             and bool(d["source_context"]["description"]["value"].strip())
             for d in documents if d.get("medium_id") == m["id"])} for m in index.get("media", [])],
+        "updates": updates_report(release / "data" / "public-updates.json"),
         "store_files": sum(1 for path in (release / "store").rglob("*") if path.is_file()),
         "zip": {"name": archive.name, "sha256": sha256(archive), "size": archive.stat().st_size},
         "inputs": {

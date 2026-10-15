@@ -11,12 +11,14 @@ from pathlib import Path, PurePosixPath
 
 from collection_registry import collection_urls
 from frontend_contract import validate_frontend_data
+from public_updates import FEED_NAME, fingerprint, load_projection, load_register, validate_register
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_FILES = ("index.html", "archive.html", "collection.html", "404.html", "styles.css", "accessibility.css", "archive-controls.css",
                 "entry-controls.css", "publication.css", "app.js", "archive.js", "landing.js", "collection.js", "collection-core.js",
                 "visit-counter.css", "visit-counter-config.js", "visit-counter-core.js", "visit-counter-adapter.js",
-                "visit-counter.js", "VERSION")
+                "visit-counter.js", "updates.html", "updates.css", "updates-core.js", "updates.js", "landing-updates.js",
+                "VERSION")
 DEFAULT_COLLECTIONS = ROOT / "collections.json"
 DEFAULT_BASE_URL = "https://bootdisk.no/"
 
@@ -42,9 +44,11 @@ def referenced_assets(document: dict) -> set[PurePosixPath]:
     return paths
 
 
-def discovery_files(stage: Path, entry_ids: list[str], base_url: str, collection_pages: list[str] = ()) -> None:
+def discovery_files(stage: Path, entry_ids: list[str], base_url: str, collection_pages: list[str] = (), updates: bool = False) -> None:
     base_url = base_url.rstrip("/") + "/"
-    urls = [base_url, f"{base_url}archive.html", *collection_pages, *(f"{base_url}index.html?entry={entry_id}" for entry_id in entry_ids)]
+    # The update overview is a public page only when a validated history is packaged with it.
+    pages = [f"{base_url}updates.html"] if updates else []
+    urls = [base_url, f"{base_url}archive.html", *pages, *collection_pages, *(f"{base_url}index.html?entry={entry_id}" for entry_id in entry_ids)]
     sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     sitemap += "".join(f"  <url><loc>{escape(url)}</loc></url>\n" for url in urls)
     sitemap += "</urlset>\n"
@@ -101,8 +105,14 @@ def load_registry(path: Path) -> dict:
         raise ValueError(f"Collection registry {path} is not valid JSON: {error}") from None
 
 
+def checked_updates(path: Path, frontend_data: Path, index: dict) -> dict:
+    """An explicitly supplied update register must be valid and describe exactly this data."""
+    register = load_register(path)
+    return validate_register(register, index, fingerprint(load_projection(frontend_data)))
+
+
 def package(frontend_data: Path, publish_root: Path, output: Path, expected_entries: int, base_url: str = DEFAULT_BASE_URL,
-            collections: Path = DEFAULT_COLLECTIONS) -> None:
+            collections: Path = DEFAULT_COLLECTIONS, updates: Path | None = None) -> None:
     frontend_data = frontend_data.resolve()
     publish_root = publish_root.resolve()
     output = output.resolve()
@@ -127,6 +137,7 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
 
     validate_image_coverage(index, documents)
     registry = load_registry(collections)
+    register = checked_updates(updates.resolve(), frontend_data, index) if updates else None
     collection_pages = collection_urls(registry, index, base_url.rstrip("/") + "/")
 
     missing = [str(path) for path in sorted(assets) if not (publish_root / Path(*path.parts)).is_file()]
@@ -140,8 +151,11 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
         for name in STATIC_FILES:
             shutil.copy2(ROOT / name, stage / name)
         shutil.copy2(collections, stage / "collections.json")
-        discovery_files(stage, entry_ids, base_url, collection_pages)
+        discovery_files(stage, entry_ids, base_url, collection_pages, updates=register is not None)
         shutil.copy2(frontend_data / "index.json", stage / "data" / "index.json")
+        if register is not None:
+            # Copied byte for byte: the build reads history, it never writes or stamps it.
+            shutil.copy2(updates, stage / "data" / FEED_NAME)
         for source, _ in documents:
             shutil.copy2(source, stage / "data" / source.name)
         for path in assets:
@@ -155,6 +169,10 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
     print(f"release entries: {len(entries)}")
     print(f"release assets: {len(assets)}")
     print(f"release collections: {len(collection_pages)}")
+    if register is not None:
+        print(f"release update events: {len(register['events'])} in {len(register['releases'])} releases")
+    else:
+        print("release update history: none supplied; updates.html will say that no history is published")
     print(f"release directory: {output}")
 
 
@@ -166,8 +184,9 @@ def main() -> None:
     parser.add_argument("--expected-entries", type=int, default=39)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--collections", type=Path, default=DEFAULT_COLLECTIONS, help="Collection registry (default: collections.json)")
+    parser.add_argument("--updates", type=Path, help="Public update register (bootdisk-public-updates-v2) recorded for this data")
     args = parser.parse_args()
-    package(args.frontend_data, args.publish_root, args.output, args.expected_entries, args.base_url, args.collections)
+    package(args.frontend_data, args.publish_root, args.output, args.expected_entries, args.base_url, args.collections, args.updates)
 
 
 if __name__ == "__main__":
