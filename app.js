@@ -1,6 +1,7 @@
 // Workshop route keys encode source labels; they are not names printed on the CD.
 function sourceLabel(entry) {
   const id = entry.source_entry ?? entry.entry;
+  if (/^(?:[a-z0-9-]+--)?Feature(?:[0-9a-f]{2})+$/i.test(id)) return "Programomtale på CD-en";
   return /^(?:[a-z0-9-]+--)?Tool(?:[0-9a-f]{2})+$/i.test(id) ? "Verktøymenyen" : id;
 }
 
@@ -198,7 +199,9 @@ async function render() {
   renderSourceDocuments(entry, description);
   const notes = [];
   if (entry.curation_status === "pending") notes.push("Navnet er hentet fra CD-menyen. Programidentitet, versjon og utgave er ikke bekreftet.");
-  if (entry.source_context?.issues?.value?.length) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
+  const sourceIssues = entry.source_context?.issues?.value ?? [];
+  if (sourceIssues.includes("shared_warning_control_not_runtime_tested")) notes.push("Programfilen finnes på CD-en. Den gamle installasjonsmenyen har overlappende knapper; klikkoppførselen er ikke testet. Bildet er original menyillustrasjon fra CD-en.");
+  if (sourceIssues.some(issue => issue !== "shared_warning_control_not_runtime_tested")) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
   const note = document.querySelector("#source-note");
   note.textContent = notes.join(" ");
   note.hidden = !notes.length;

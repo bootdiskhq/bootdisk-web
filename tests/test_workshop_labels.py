@@ -20,6 +20,10 @@ for(const file of ['app.js']) {
  }
  assert.equal(context.sourceLabel({entry:'kcd-1-2001--K1',source_entry:'K1'}),'K1');
  assert.equal(context.sourceLabel({entry:'ToolPro'}),'ToolPro');
+ for (const id of ['Feature4564757461696e6d656e74', 'kcd-1-2000--Feature4d756c74696d65646965']) {
+   assert.equal(context.sourceLabel({entry:id}), 'Programomtale på CD-en');
+ }
+ assert.equal(context.sourceLabel({entry:'FeaturePro'}), 'FeaturePro');
 }
 """
         subprocess.run([shutil.which('node'),'-e',script],cwd=ROOT,check=True)
