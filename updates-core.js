@@ -1,10 +1,10 @@
 /* "Sist lagt til og oppdatert": what was published on Bootdisk, and when. The feed
- * (data/public-updates.json, contract bootdisk-public-updates-v1) supplies dates and
+ * (data/public-updates.json, contract bootdisk-public-updates-v2) supplies dates and
  * change codes; names, CD, icon and link come from the current archive index. An event
  * for an entry that is no longer in the index is kept in the history but never shown,
  * so the page cannot link to a missing entry. Rendering helpers take a document so the
  * rules can be tested outside a browser. Every name here starts with "update". */
-const UPDATES_SCHEMA = "bootdisk-public-updates-v1";
+const UPDATES_SCHEMA = "bootdisk-public-updates-v2";
 const UPDATES_FEED_URL = "data/public-updates.json";
 const UPDATES_PAGE_SIZE = 25;
 const UPDATES_LANDING_COUNT = 8;
@@ -22,7 +22,7 @@ const UPDATE_CODES = [
   "icon_added", "icon_changed", "icon_removed",
   "screenshot_added", "screenshot_changed", "screenshot_removed",
   "source_document_added", "source_document_changed", "source_document_removed",
-  "source_issues_added", "source_issues_removed",
+  "source_issues_added", "source_issues_changed", "source_issues_removed",
 ];
 const UPDATE_PHRASES = {
   identification_confirmed: "Identifiseringen er bekreftet",
@@ -54,6 +54,7 @@ const UPDATE_PHRASES = {
   source_document_changed: "Vedlagt originaltekst endret",
   source_document_removed: "Vedlagt originaltekst fjernet",
   source_issues_added: "Kildeavvik merket",
+  source_issues_changed: "Merknaden om kildeavvik er endret",
   source_issues_removed: "Kildeavvik ikke lenger merket",
 };
 // Same labels as the detail page (app.js).

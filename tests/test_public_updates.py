@@ -1,4 +1,4 @@
-"""Public update history (bootdisk-public-updates-v1) without a browser.
+"""Public update history (bootdisk-public-updates-v2) without a browser.
 
 The generator, the register rules, the release builder and the HTTP verifier run on the
 labelled test history in tests/synthetic_updates.py (PRØVEDATA). The page logic in
@@ -94,7 +94,7 @@ class HistoryTests(unittest.TestCase):
             "icon_added": {"icon": "a" * 64},
             "screenshot_added": {"screenshot": "b" * 64},
             "source_document_added": {"source_documents": [{"sha256": "c" * 64, "text": None, "path": "X.RTF"}]},
-            "source_issues_added": {"source_issues": True},
+            "source_issues_added": {"source_notes": ["unresolved_file_references"]},
             "content_kind_added": {"content_kind": "game"},
             "distribution_kind_added": {"distribution_kind": "demo"},
         }
@@ -105,6 +105,54 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(withdrawn, ["identification_withdrawn", "name_removed"])
         confirmed = pu.change_codes({**base, "status": "interpreted"}, {**base, "status": "identified"})
         self.assertEqual(confirmed, ["identification_confirmed"])
+
+    def test_source_issue_events_follow_the_notes_the_detail_page_shows(self):
+        def projected(*issues):
+            context = {"key": {"entry": "K1", "manifest": "m"}}
+            if issues is not None:
+                context["issues"] = {"value": list(issues)}
+            return pu.visible_projection({"curation_status": "pending", "software": [], "assets": [], "source_context": context})
+
+        def codes(before, after):
+            return pu.change_codes(projected(*before), projected(*after))
+
+        special, general, other = "shared_warning_control_not_runtime_tested", "missing_launch_file", "menu_target_conflict"
+        self.assertEqual(projected(special)["source_notes"], ["untested_shared_control"])
+        self.assertEqual(projected(general, other)["source_notes"], ["unresolved_file_references"])
+        cases = {
+            "special note -> general note": ((special,), (general,), ["source_issues_changed"]),
+            "special -> special + general": ((special,), (special, general), ["source_issues_changed"]),
+            "special + general -> special": ((special, general), (special,), ["source_issues_changed"]),
+            "two general codes, same note": ((general,), (other,), []),
+            "one general code -> two": ((general,), (general, other), []),
+            "raw code order only": ((other, special), (special, other), []),
+            "no note -> note": ((), (special,), ["source_issues_added"]),
+            "note -> no note": ((general, special), (), ["source_issues_removed"]),
+        }
+        for name, (before, after, expected) in cases.items():
+            with self.subTest(name):
+                self.assertEqual(codes(before, after), expected)
+
+    def test_changed_source_note_is_one_update_event_in_the_register(self):
+        def entry(issues):
+            return {"medium_id": "kcd-1-2001", "source_entry": "K1",
+                    "visible": pu.visible_projection({"curation_status": "pending", "software": [], "assets": [],
+                                                      "source_context": {"key": {"entry": "K1", "manifest": "m"},
+                                                                         "issues": {"value": issues}}})}
+        special = ["shared_warning_control_not_runtime_tested"]
+        before = {"kcd-1-2001--K1": entry(special)}
+        for name, issues in (("special -> general", ["missing_launch_file"]),
+                             ("special -> special + general", special + ["missing_launch_file"])):
+            with self.subTest(name):
+                after = {"kcd-1-2001--K1": entry(issues)}
+                self.assertNotEqual(pu.fingerprint(before), pu.fingerprint(after))
+                self.assertEqual(pu.diff(before, after), [{"entry": "kcd-1-2001--K1", "medium_id": "kcd-1-2001", "source_entry": "K1",
+                                                           "type": "updated", "changes": ["source_issues_changed"]}])
+                register = pu.record_release(pu.init_register(before, "test-base"), before, after, "test-next", "2026-10-01T10:00:00Z")
+                pu.validate_register(register)
+                self.assertEqual([event["changes"] for event in register["events"]], [["source_issues_changed"]])
+        same = {"kcd-1-2001--K1": entry(["missing_launch_file", "menu_target_conflict"])}
+        self.assertEqual(pu.diff({"kcd-1-2001--K1": entry(["missing_launch_file"])}, same), [])
 
     def test_storage_path_and_derivatives_are_not_content(self):
         asset = {"kind": "icon", "original": {"sha256": "a" * 64, "public_path": "store/a"}, "derivatives": [{"kind": "thumbnail", "sha256": "d" * 64, "public_path": "store/d"}]}
@@ -393,6 +441,9 @@ assert.equal(explain(event('K37', ['version_changed']), summaries['K37']), 'Vers
 assert.equal(explain(event('x', ['source_document_added']), summaries['kcd-8-2001--K2']), 'Vedlagt originaltekst lagt til.');
 assert.equal(explain(event('x', ['description_changed', 'screenshot_changed']), summaries['kcd-1-2001--K1']), 'Omtale endret. Skjermbilde byttet.');
 assert.equal(explain(event('x', [], 'added'), summaries['kcd-9-2000--K7']), 'Ny kildepost i arkivet.');
+assert.equal(explain(event('x', ['source_issues_changed']), summaries['kcd-9-2000--K7']), 'Merknaden om kildeavvik er endret.');
+assert.equal(explain(event('x', ['source_issues_added']), summaries['kcd-9-2000--K7']), 'Kildeavvik merket.');
+assert.equal(explain(event('x', ['source_issues_removed']), summaries['kcd-9-2000--K7']), 'Kildeavvik ikke lenger merket.');
 // Every code has a phrase.
 for (const code of core('UPDATE_CODES')) if (code !== 'identified') assert.ok(core('UPDATE_PHRASES')[code], code);
 """, index=self.index)
@@ -440,12 +491,15 @@ assert.equal(problem(DATA.feed), null);
 const bad = JSON.parse(JSON.stringify(DATA.feed)); bad.events[0].changes = ['faster'];
 assert.match(problem(bad), /endringskode/);
 assert.match(problem({schema: 'x'}), /skjema/);
+const changed = JSON.parse(JSON.stringify(DATA.feed)); const updated = changed.events.find(e => e.type === 'updated'); updated.changes = ['source_issues_changed'];
+assert.equal(problem(changed), null);
+assert.match(problem({...DATA.feed, schema: 'bootdisk-public-updates-v1'}), /skjema/);
 const load = core('loadUpdates');
 (async () => {
   const calls = [];
   const fetcher = status => async (url, options) => { calls.push(options); return {status, ok: status === 200, json: async () => DATA.feed}; };
   assert.equal(await load(fetcher(404)), null);
-  assert.equal((await load(fetcher(200))).schema, 'bootdisk-public-updates-v1');
+  assert.equal((await load(fetcher(200))).schema, 'bootdisk-public-updates-v2');
   await assert.rejects(load(fetcher(500)), /HTTP 500/);
   await assert.rejects(load(async () => ({status: 200, ok: true, json: async () => { throw new SyntaxError('x'); }})), /ikke gyldig JSON/);
   assert.ok(calls.every(options => options.cache === 'no-cache'));

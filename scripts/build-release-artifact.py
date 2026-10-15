@@ -67,7 +67,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--expected-entries", type=int, default=39)
     parser.add_argument("--collections", type=Path, default=ROOT / "collections.json")
-    parser.add_argument("--updates", type=Path, help="Public update register recorded for this data (bootdisk-public-updates-v1)")
+    parser.add_argument("--updates", type=Path, help="Public update register recorded for this data (bootdisk-public-updates-v2)")
     args = parser.parse_args()
     if args.catalog_root and not args.ingest_manifest:
         parser.error("--ingest-manifest is required with --catalog-root")

@@ -14,8 +14,9 @@ Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
 
 - «Sist lagt til og oppdatert»: seksjon på forsiden og ny side `updates.html` med nye og
   endrede kildeposter, filter, søk og «Vis flere». Historikken er kontrakten
-  `bootdisk-public-updates-v1` (`scripts/public_updates.py`) og følger bare med en release
-  når den sendes inn med `--updates`. Ekte rc11 → rc12-akseptanse er ikke kjørt.
+  `bootdisk-public-updates-v2` (`scripts/public_updates.py`) og følger bare med en release
+  når den sendes inn med `--updates`. Kildeavvik sammenlignes som de merknadene
+  detaljsiden viser; et bytte mellom dem gir `source_issues_changed`.
 - Bootdisk-forside på rotadressen i stedet for omdirigering til arkivet. Komputer for
   alle presenteres som første samling, med antall CD-er og kildeposter hentet fra data
   og en lenke til alle kildeposter.

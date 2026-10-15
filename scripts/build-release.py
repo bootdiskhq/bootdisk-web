@@ -184,7 +184,7 @@ def main() -> None:
     parser.add_argument("--expected-entries", type=int, default=39)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--collections", type=Path, default=DEFAULT_COLLECTIONS, help="Collection registry (default: collections.json)")
-    parser.add_argument("--updates", type=Path, help="Public update register (bootdisk-public-updates-v1) recorded for this data")
+    parser.add_argument("--updates", type=Path, help="Public update register (bootdisk-public-updates-v2) recorded for this data")
     args = parser.parse_args()
     package(args.frontend_data, args.publish_root, args.output, args.expected_entries, args.base_url, args.collections, args.updates)
 

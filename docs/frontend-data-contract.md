@@ -151,7 +151,7 @@ natural order. Adding a disc or a second publication is a data and registry chan
 the pages do not change. The 1.0 single-medium index remains supported as one medium
 whose content is the whole archive.
 
-## Public update history — `bootdisk-public-updates-v1`
+## Public update history — `bootdisk-public-updates-v2`
 
 A release may ship `data/public-updates.json` beside the index: an explicitly maintained
 register of which entries were added or visibly changed, with the release id and explicit

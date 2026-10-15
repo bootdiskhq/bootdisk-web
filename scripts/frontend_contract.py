@@ -11,7 +11,7 @@ ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 CURATION_STATUSES = {"identified", "pending"}
 # A published package keeps its update history beside the projection
-# (bootdisk-public-updates-v1, validated by public_updates.py). The name cannot be an
+# (bootdisk-public-updates-v2, validated by public_updates.py). The name cannot be an
 # entry file: entry ids need "--" before any hyphen.
 UPDATES_FEED = "public-updates.json"
 

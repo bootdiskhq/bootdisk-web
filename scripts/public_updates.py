@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Public update history: which source entries were added or visibly changed, and when.
 
-Contract `bootdisk-public-updates-v1` (docs/public-updates.md). The register is a
+Contract `bootdisk-public-updates-v2` (docs/public-updates.md). The register is a
 small, explicitly maintained JSON document. It is never derived from the clock, file
 times, CD years or index order:
 
@@ -29,10 +29,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA = "bootdisk-public-updates-v1"
+SCHEMA = "bootdisk-public-updates-v2"
 # The definition of "visible" is versioned with the register: a projection with other
 # fields gives other fingerprints and needs a new contract version, not a silent reset.
-PROJECTION = "visible-v1"
+PROJECTION = "visible-v2"
 FEED_NAME = "public-updates.json"
 
 ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}")
@@ -44,6 +44,11 @@ EVENT_TYPES = ("added", "updated")
 # Display vocabularies, mirrored from app.js. A value the page shows as "Ukjent" is unknown.
 CONTENT_KINDS = {"application", "game", "course", "image_collection", "font_collection", "reference"}
 DISTRIBUTION_KINDS = {"full", "demo", "trial", "update"}
+
+# Source-issue codes are not shown as such: app.js turns them into at most two notes.
+# The projection holds the notes a reader sees, so two codes with the same note are equal.
+SHARED_CONTROL_ISSUE = "shared_warning_control_not_runtime_tested"
+SOURCE_NOTES = ("untested_shared_control", "unresolved_file_references")
 
 # Controlled change codes, in the order they are stored and explained.
 CHANGE_CODES = (
@@ -57,7 +62,7 @@ CHANGE_CODES = (
     "icon_added", "icon_changed", "icon_removed",
     "screenshot_added", "screenshot_changed", "screenshot_removed",
     "source_document_added", "source_document_changed", "source_document_removed",
-    "source_issues_added", "source_issues_removed",
+    "source_issues_added", "source_issues_changed", "source_issues_removed",
 )
 CODE_ORDER = {code: position for position, code in enumerate(CHANGE_CODES)}
 
@@ -126,6 +131,12 @@ def visible_projection(document: dict) -> dict:
     documents.sort(key=lambda item: json.dumps(item, sort_keys=True, ensure_ascii=False))
     assets = document.get("assets") or []
     issues = (context.get("issues") or {}).get("value") or []
+    # app.js: one note when the shared-control code is present, one when any other code is.
+    notes = []
+    if SHARED_CONTROL_ISSUE in issues:
+        notes.append("untested_shared_control")
+    if any(issue != SHARED_CONTROL_ISSUE for issue in issues):
+        notes.append("unresolved_file_references")
     return {
         "status": status,
         "software_name": _known(software.get("software_name")),
@@ -138,7 +149,7 @@ def visible_projection(document: dict) -> dict:
         "icon": _first_asset_hash(assets, "icon"),
         "screenshot": _first_asset_hash(assets, "screenshot"),
         "source_documents": documents,
-        "source_issues": bool(issues),
+        "source_notes": notes,
     }
 
 
@@ -207,8 +218,7 @@ def change_codes(before: dict, after: dict) -> list[str]:
     for field in ("icon", "screenshot"):
         codes += _transition(field, before[field], after[field])
     codes += _transition("source_document", before["source_documents"] or None, after["source_documents"] or None)
-    if before["source_issues"] != after["source_issues"]:
-        codes.append("source_issues_added" if after["source_issues"] else "source_issues_removed")
+    codes += _transition("source_issues", before["source_notes"] or None, after["source_notes"] or None)
     return sorted(codes, key=CODE_ORDER.__getitem__)
 
 

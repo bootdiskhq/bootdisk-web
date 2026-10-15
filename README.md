@@ -84,10 +84,10 @@ publikasjonsteksten. En pakket forhåndsvisning med syntetiske data bygges med
 
 Forsiden viser de åtte nyeste nye eller endrede kildepostene, og `updates.html` hele
 oversikten med filter og søk. Historikken er et eksplisitt register
-(`bootdisk-public-updates-v1`) som registreres ved publisering med
+(`bootdisk-public-updates-v2`) som registreres ved publisering med
 `scripts/public_updates.py record` og sendes inn med `build-release.py --updates`.
 Se [oversikten](docs/public-updates.md) for kontrakt, regler, kontrollmatrise og den ekte
-akseptansen som gjenstår.
+akseptansen.
 
 ## Besøksteller (ikke aktivert)
 
