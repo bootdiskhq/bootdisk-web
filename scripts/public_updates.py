@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Public update history: which source entries were added or visibly changed, and when.
 
-Contract `bootdisk-public-updates-v2` (docs/public-updates.md). The register is a
+Contract `bootdisk-public-updates-v3` (docs/public-updates.md). The register is a
 small, explicitly maintained JSON document. It is never derived from the clock, file
 times, CD years or index order:
 
@@ -29,10 +29,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA = "bootdisk-public-updates-v2"
+SCHEMA = "bootdisk-public-updates-v3"
 # The definition of "visible" is versioned with the register: a projection with other
 # fields gives other fingerprints and needs a new contract version, not a silent reset.
-PROJECTION = "visible-v2"
+PROJECTION = "visible-v3"
 FEED_NAME = "public-updates.json"
 
 ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}")
@@ -52,7 +52,7 @@ SOURCE_NOTES = ("untested_shared_control", "unresolved_file_references")
 
 # Controlled change codes, in the order they are stored and explained.
 CHANGE_CODES = (
-    "identified", "identification_confirmed", "interpreted", "identification_withdrawn",
+    "identified", "identification_confirmed", "interpreted", "identification_withdrawn", "source_documented", "source_documentation_withdrawn",
     "name_added", "name_changed", "name_removed",
     "version_added", "version_changed", "version_removed",
     "content_kind_added", "content_kind_changed", "content_kind_removed",
@@ -107,6 +107,8 @@ def visible_projection(document: dict) -> dict:
     """
     software = (document.get("software") or [None])[0] or {}
     status = "interpreted" if software.get("status") == "interpreted" else document.get("curation_status")
+    if status == "pending" and (document.get("source_catalog") or {}).get("status") == "documented":
+        status = "source_documented"
     context = document.get("source_context") or {}
     source_description = (context.get("description") or {}).get("value") if context.get("description") else None
     descriptions = software.get("descriptions") or []
@@ -204,8 +206,14 @@ def change_codes(before: dict, after: dict) -> list[str]:
     if old_status != new_status:
         if new_status == "identified":
             codes.append("identification_confirmed" if old_status == "interpreted" else "identified")
+        elif new_status == "source_documented":
+            if old_status in ("identified", "interpreted"):
+                codes.append("identification_withdrawn")
+            codes.append("source_documented")
         elif new_status == "interpreted":
             codes.append("interpreted")
+        elif old_status == "source_documented":
+            codes.append("source_documentation_withdrawn")
         else:
             codes.append("identification_withdrawn")
     codes += _transition("name", before["software_name"], after["software_name"])

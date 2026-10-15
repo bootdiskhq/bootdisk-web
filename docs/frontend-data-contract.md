@@ -161,3 +161,7 @@ Without it the release is built as before and the rest of the site is unaffected
 compared fields, change codes, baseline rules and idempotency are specified in
 [the update overview](public-updates.md). `frontend_contract.py` accepts the file beside a
 projection and validates it with `--updates`.
+
+## Kildekatalogstatus
+
+Se [source-catalog-status.md](source-catalog-status.md) for `source_catalog`, indeksfeltet `source_catalog_status` og oppdateringshistorikk v3.

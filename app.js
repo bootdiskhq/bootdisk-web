@@ -109,7 +109,8 @@ function assetFor(assets, kind) {
   return assets.find(asset => asset.kind === kind);
 }
 
-function statusLabel(status, identificationStatus) {
+function statusLabel(status, identificationStatus, sourceStatus) {
+  if (status === "pending" && sourceStatus === "documented") return "Oppgitt på CD-en";
   if (identificationStatus === "interpreted") return "Foreløpig identifisering";
   return { identified: "Identifisert", pending: "Venter på identifisering" }[status] ?? "Ukjent";
 }
@@ -198,7 +199,7 @@ async function render() {
   document.querySelector("#description-label").hidden = !entry.source_context?.description;
   renderSourceDocuments(entry, description);
   const notes = [];
-  if (entry.curation_status === "pending") notes.push("Navnet er hentet fra CD-menyen. Programidentitet, versjon og utgave er ikke bekreftet.");
+  if (entry.curation_status === "pending" && entry.source_catalog?.status !== "documented") notes.push("Navnet er hentet fra CD-menyen. Programidentitet, versjon og utgave er ikke bekreftet.");
   const sourceIssues = entry.source_context?.issues?.value ?? [];
   if (sourceIssues.includes("shared_warning_control_not_runtime_tested")) notes.push("Programfilen finnes på CD-en. Den gamle installasjonsmenyen har overlappende knapper; klikkoppførselen er ikke testet. Bildet er original menyillustrasjon fra CD-en.");
   if (sourceIssues.some(issue => issue !== "shared_warning_control_not_runtime_tested")) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
@@ -209,7 +210,7 @@ async function render() {
   document.querySelector("#fact-version").textContent = version;
   document.querySelector("#fact-entry").textContent = sourceEntry;
   document.querySelector("#fact-medium").textContent = entry.medium ?? "—";
-  document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status, software?.status);
+  document.querySelector("#fact-status").textContent = statusLabel(entry.curation_status, software?.status, entry.source_catalog?.status);
   setMetadata(name, knownVersion, entry, description);
   renderBreadcrumbs(breadcrumbTrail(entry, name, await registryRequest));
   document.querySelector("#fact-kind").textContent = ({application: "Program", game: "Spill", course: "Kurs / veiledning", image_collection: "Bildesamling", font_collection: "Skriftpakke", reference: "Oppslagsverk"})[software?.content_kind] ?? "Ukjent";

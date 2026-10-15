@@ -1,10 +1,10 @@
 /* "Sist lagt til og oppdatert": what was published on Bootdisk, and when. The feed
- * (data/public-updates.json, contract bootdisk-public-updates-v2) supplies dates and
+ * (data/public-updates.json, contract bootdisk-public-updates-v3) supplies dates and
  * change codes; names, CD, icon and link come from the current archive index. An event
  * for an entry that is no longer in the index is kept in the history but never shown,
  * so the page cannot link to a missing entry. Rendering helpers take a document so the
  * rules can be tested outside a browser. Every name here starts with "update". */
-const UPDATES_SCHEMA = "bootdisk-public-updates-v2";
+const UPDATES_SCHEMA = "bootdisk-public-updates-v3";
 const UPDATES_FEED_URL = "data/public-updates.json";
 const UPDATES_PAGE_SIZE = 25;
 const UPDATES_LANDING_COUNT = 8;
@@ -12,7 +12,7 @@ const UPDATE_ENTRY_ID = /^(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,6
 const UPDATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const UPDATE_TYPES = ["added", "updated"];
 const UPDATE_CODES = [
-  "identified", "identification_confirmed", "interpreted", "identification_withdrawn",
+  "identified", "identification_confirmed", "interpreted", "identification_withdrawn", "source_documented", "source_documentation_withdrawn",
   "name_added", "name_changed", "name_removed",
   "version_added", "version_changed", "version_removed",
   "content_kind_added", "content_kind_changed", "content_kind_removed",
@@ -25,6 +25,8 @@ const UPDATE_CODES = [
   "source_issues_added", "source_issues_changed", "source_issues_removed",
 ];
 const UPDATE_PHRASES = {
+  source_documented: "Navnet er dokumentert i CD-kilden",
+  source_documentation_withdrawn: "Kildedokumentasjonen må undersøkes på nytt",
   identification_confirmed: "Identifiseringen er bekreftet",
   interpreted: "Foreløpig identifisert",
   identification_withdrawn: "Identifiseringen er trukket tilbake",
