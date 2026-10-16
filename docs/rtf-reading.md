@@ -1,13 +1,54 @@
-# Lesbar RTF-omtale på detaljsiden
+# Lesbar RTF-tekst på detaljsiden
 
-Status: utkast, 25. september 2026. Bygger på Birks `feat/rtf-documents` (PR #46),
-head `021fc35`. Ingen merge, publisering eller versjonsøkning. Arbeidsordre:
-«Lesbar RTF-omtale i Bootdisk» (Stian, 25.09.2026).
+Status: levert som PR mot `main`, 16. oktober 2026. Ikke merget, ikke publisert, ingen
+versjonsøkning (`VERSION` er fortsatt `1.2.0-rc19`). Arbeidsordre: «Konsekvent RTF-lesing
+direkte i Bootdisk» (Birk, på Stians oppdrag, 16.10.2026). Base: `main` `00eb217`
+(Web PR #68, rc19, 730 poster på elleve CD-er).
 
-Omfang: `renderSourceDocuments` og feilvisningen i `app.js`, stilreglene for
-`#source-documents` i `styles.css`, og testene. `index.html` er uendret fra Birks head
-(`#source-documents` var allerede riktig plassert). Byggeskript, releasefiler,
-genererte data, kontrakt og kuratering er ikke rørt.
+Erstatter utkastet fra 25.09.2026 (PR #46 / `feat/rtf-reading`). Den viktigste endringen
+er at **tekst som er lik menyomtalen også kan utvides**; tidligere ble boksen skjult da.
+
+Omfang: `renderSourceDocuments` i `app.js` (samme løsning, ingen ny RTF-viser), én
+CSS-regel i `styles.css` (brytning av lange filnavn i åpne-knappen), cacheversjonen for
+`app.js` i `index.html` (`?v=rtf-expand1`), testene og testdataene. Menyomtale,
+identifikasjon, kontrakt, genererte kildedata, historikk, kuratering, teller og
+serveroppsett er ikke rørt.
+
+## Oppførsel
+
+Menyomtalen står som før. For hvert kildebundet RTF-dokument kommer én blokk, og under den
+alltid en egen nedlastingslinje: **Last ned originalfil** `WinAmp/No.rtf · RTF · 613 byte`.
+
+| Tilfelle | Visning |
+| --- | --- |
+| Lesbar tekst, ulik menyomtalen | Lukket `<details>`: «Les tekstfilen fra CD-en (RTF)». |
+| Lesbar tekst, lik menyomtalen (bare whitespace skiller) | Merknad «Teksten i filen er den samme som menyomtalen over.» og samme lukkede boks. |
+| `text` er `null`, `""` eller bare whitespace | Ingen boks. «Teksten i filen kan foreløpig ikke vises her, men originalfilen kan lastes ned.» |
+| Flere dokumenter | Én blokk per fil. Knappen sier hvilken fil: «Les tekstfilen fra CD-en (RTF): Spill/No.rtf». Boksene åpnes hver for seg. |
+| Ingen dokumenter / bare dokumenter som ikke hører til posten | Ingen seksjon (`#source-documents` er `hidden`). |
+
+- Boksen er native `details`/`summary`: lukket som standard, åpnes og lukkes med klikk,
+  Enter og mellomrom, uten skript, navigasjon, nettverksforespørsel eller nedlasting.
+  Skjermlesere får åpnet/lukket-tilstanden fra elementet selv; trekanten roterer.
+- Teksten settes med `textContent` og vises med `white-space: pre-wrap`: avsnitt,
+  linjeskift og norske tegn står som Ingest dekodet dem. Ingen omskriving, ingen
+  formatering, ingen RTF- eller HTML-tolkning i nettleseren. Det er tekstvisning, ikke
+  Word-layout.
+- Nedlastingslenken ligger utenfor `details` og er synlig også når boksen er lukket.
+  Filnavn, filtype og størrelse beholdes.
+- Merknaden ved manglende tekst sier at teksten ikke kan vises *her*; den påstår ikke at
+  originalfilen mangler tekst.
+
+## Regler som er beholdt
+
+- Dokumentet vises bare når `key` er identisk med postens `source_context.key`.
+- Lenke bare når `original.public_path` er nøyaktig
+  `store/documents/sha256/<to første tegn>/<sha256>.rtf`, `original.sha256` er lik
+  dokumentets `sha256` og `media_type` er `application/rtf`. Ellers står det
+  «… · originalfilen er ikke tilgjengelig», uten lenke.
+- Har dokumentet verken lesbar tekst eller trygg adresse, vises det ikke.
+- Feilvisningen skjuler `#source-documents`. Hver detaljside bygger seksjonen på nytt;
+  navigasjon til neste post viser aldri forrige posts tekst.
 
 ## Prøv selv
 
@@ -18,144 +59,132 @@ python3 -m http.server 8814 --bind 127.0.0.1 --directory /tmp/rtf-testside
 
 | Adresse | Tilfelle |
 | --- | --- |
-| `index.html?entry=K37` | Ekte: WinAmp, kort menyomtale og lengre RTF |
-| `index.html?entry=kcd-1-2001--K1` | Ekte: Asterix, menyomtalen er RTF-teksten |
+| `index.html?entry=K37` | Ekte utviklingseksempel: WinAmp, kort menyomtale og lengre RTF |
+| `index.html?entry=kcd-1-2001--K1` | Ekte: Asterix, RTF-teksten er identisk med menyomtalen |
 | `index.html?entry=kcd-8-2001--K5` | Ekte: Freesaver MP3, `text: null` |
-| `index.html?entry=K901` | TESTDATA: lang tekst, norske tegn, HTML-lignende tekst, langt filnavn |
-| `index.html?entry=K902` | TESTDATA: samme tekst med ulik whitespace |
-| `index.html?entry=K903` | TESTDATA: `text: null` |
-| `index.html?entry=K904`, `K905` | TESTDATA: ingen dokumenter / tom liste |
-| `index.html?entry=K906` | TESTDATA: seks utrygge eller ugyldige nedlastingsadresser |
-| `index.html?entry=K907`, `K908` | TESTDATA: dokument fra annen kildepost / utrygg adresse uten tekst |
+| `K901` | TESTDATA: lang tekst, norske tegn, HTML-lignende tekst, langt filnavn |
+| `K902` | TESTDATA: samme tekst med ulik whitespace |
+| `K903`, `K909`, `K910` | TESTDATA: `text` er `null`, `""`, bare whitespace |
+| `K904`, `K905` | TESTDATA: ingen dokumenter / tom liste |
+| `K906` | TESTDATA: seks utrygge eller ugyldige nedlastingsadresser |
+| `K907`, `K908` | TESTDATA: dokument fra annen kildepost / utrygg adresse uten tekst |
+| `K911` | TESTDATA: to lesbare tekstfiler på samme post |
 
-Testsiden er merket TESTDATA og ligger bare under `tests/`. Den kommer ikke med i en
-release: `build-release.py` kopierer bare sin egen liste over statiske filer, og en test
-sjekker det.
+Testsiden er merket TESTDATA, ligger bare under `tests/` og kommer ikke med i en release
+(testen `test_test_data_never_reaches_the_release_allowlist`).
+
+## Er eksemplene fortsatt representative?
+
+`bootdisk.no` er ikke nåbar fra skymiljøet der dette ble laget (proxyen avviser
+tilkoblingen). Offentlige data ble derfor lest indirekte via et nettleserverktøy som
+oppsummerer sider, 16.10.2026:
+
+| Post | Offentlig rc19 | Fixture |
+| --- | --- | --- |
+| `kcd-1-2001--K1` (Asterix) | `Asterix/No.rtf`, sha256 `04bcfed6…`, 7037 byte, tekst lik menyomtalen | Samme nøkkel, hash og størrelse; testen bekrefter lik tekst |
+| `kcd-8-2001--K5` (Freesaver) | `Freesaver/No.rtf`, sha256 `3efe0a16…`, 4405 byte, `text: null`, `unsupported RTF font charset` | Samme |
+| `kcd-12-2001--K1` (3D Dragon Castle) | `Dragon/No.rtf`, sha256 `5f3d8362…`, 2072 byte, lesbar norsk avsnittstekst ulik menyomtalen | Ikke i testdataene; teksten kunne ikke hentes ordrett herfra |
+
+Sammenligningen er gjort mot verktøyets gjengivelse, ikke mot byte i responsen. **Birk må
+gjøre reell akseptanse** på `https://bootdisk.no/index.html?entry=kcd-12-2001--K1` og
+K37 etter publisering, eller lokalt mot en rc19-forhåndsvisning med denne grenen.
+
+### Reell `text: null`: oppfølging for Ingest/Catalog
+
+`kcd-8-2001--K5`, `Freesaver/No.rtf` (sha256
+`3efe0a16c9313b45cb66177787002df81f39c8e170a39c29c204d7601f060a45`, 4405 byte):
+Ingest-metoden `rtf-ansi-text-terminal-nul-1` gir `text: null` med
+`unsupported RTF font charset`. Frontend viser forklaring og originalnedlasting; den
+løser ikke dekodingen og finner ikke på tekst. Ellers er ikke hele rc19 gjennomgått for
+`text: null` herfra (dataene er ikke tilgjengelige i skymiljøet). En full liste bør tas
+fra Publish-pakken.
 
 ## Før og etter
 
-**Før (`021fc35`):** RTF-teksten lå i en åpne/lukk-boks uten egen stil, med «Kilde:
-WinAmp/No.rtf» som egen linje og «Last ned originalfil (RTF, 1 kB)» inne i boksen. Når
-teksten var den samme som menyomtalen, fikk leseren en boks som het «Original omtale som
-RTF» og som bare inneholdt en lenke. Ved `text: null` måtte leseren åpne en boks for å
-få vite at teksten ikke kunne vises. Lange filnavn ble ikke brutt: siden ble 1142 px bred
-på en 320 px skjerm ([14](rtf-reading/14-for-testdata-lang-320px.png)). En feil på siden
-etter at dokumentene var tegnet (for eksempel en post som mangler i indeksen) lot
-RTF-boksen stå synlig ved siden av feilmeldingen.
+Skjermbilder i [`docs/rtf-reading/`](rtf-reading/), tatt i Chromium 1194 mot testsiden.
+`for-*` er `main` `00eb217`, `etter-*` er denne grenen. Samme nummer er samme tilfelle:
 
-**Etter:** Menyomtalen står som før. Under den kommer én av tre visninger, og alltid en
-nedlastingslinje med kildefil, filtype og størrelse:
-
-| Tilfelle | Visning |
-| --- | --- |
-| Annen tekst i RTF | Lukket `<details>`: «Les originaltekst fra CD-en (RTF)». Teksten vises med avsnitt og tegn uendret. |
-| Samme tekst (bare whitespace skiller) | Ingen boks. «Samme tekst finnes i originalfilen fra CD-en.» |
-| `text: null` | Ingen boks. «Originalteksten fra CD-en kan ikke vises her, men originalfilen kan lastes ned.» `warning` vises ikke. |
-
-Nedlastingslinjen: **Last ned originalfil** `WinAmp/No.rtf · RTF · 613 byte`.
-Størrelsen skrives med norsk desimalkomma (`6,9 kB`), ikke rundet opp til hele kB.
-Er adressen ikke Publish sin egen butikkadresse, blir det ingen lenke, bare
-«… · originalfilen er ikke tilgjengelig».
-
-Skjermbilder i [`docs/rtf-reading/`](rtf-reading/):
-01–02 K37 lukket og åpen, 03 Asterix (samme tekst), 04 Freesaver (`text: null`),
-05–06 lang TESTDATA ved 320 og 375 px, 07 tastaturfokus, 08 utrygge adresser,
-11–14 de samme tilfellene på Birks head.
-
-## Regler i visningen
-
-- Dokumentet vises bare når `key` er identisk med postens `source_context.key`.
-- Lenke bare når `original.public_path` er nøyaktig
-  `store/documents/sha256/<to første tegn>/<sha256>.rtf`, `original.sha256` er lik
-  dokumentets `sha256` og `media_type` er `application/rtf`. Dette er strengere enn
-  Birks første sjekk (som ikke så på `media_type` og dokumentets `sha256`), men
-  samme regel som `frontend_contract.py` allerede håndhever ved bygging.
-- Har dokumentet verken lesbar tekst eller trygg adresse, vises det ikke.
-- Teksten settes med `textContent` og vises med `white-space: pre-wrap`. Ingen RTF eller
-  HTML tolkes i nettleseren.
-- Feilvisningen skjuler `#source-documents`.
-
-## Kontrollmatrise
-
-Kjørt 25.09.2026 i Chromium 1194 (Playwright 1.63) mot testsiden over HTTP. «Ekte» betyr
-de tre eksemplene fra arbeidsordren; RTF-filene er de originale bytene.
-
-| # | Krav | Test | Resultat |
+| Nr. | Tilfelle | Før | Etter |
 | --- | --- | --- | --- |
-| 1 | Kort menyomtale + lengre RTF, åpne og lukke | `test_short_menu_description_and_longer_real_rtf_can_be_opened_and_closed` (ekte K37) | Bestått |
-| 2 | Samme tekst med ulik whitespace vises ikke to ganger, nedlasting finnes | `test_text_that_only_differs_in_whitespace_is_not_shown_twice` (K902 + ekte Asterix) | Bestått |
-| 3 | `text: null`: forståelig merknad, fungerende nedlasting | `test_text_null_explains_briefly_and_still_offers_the_original` (K903 + ekte Freesaver) | Bestått |
-| 4 | Ingen dokumenter: ingen tom boks | `test_entries_without_documents_get_no_section` (K904, K905, K907, K908) | Bestått |
-| 5 | Lang tekst, avsnitt, norske tegn, lange filnavn, HTML-lignende tekst | `test_long_multiparagraph_html_like_text_is_rendered_literally_and_wraps` (1280, 375, 320 px) | Bestått |
-| 6 | Tastatur, synlig fokus, tab-rekkefølge | `test_keyboard_opens_and_closes_with_visible_focus_in_reading_order` | Bestått |
-| 7 | Ingen sideveis rulling ved 320/375 px, ingen overlapp | `test_narrow_screens_do_not_scroll_sideways_or_overlap_navigation` | Bestått for RTF-visningen; se funn 1 |
-| 8 | Ugyldig ekstern/traverserende adresse gir ingen aktiv lenke | `test_unsafe_download_addresses_never_become_links` (K906: ekstern, `..`, `javascript:`, `//`, feil hash, feil type) | Bestått |
-| 9 | Originalfilen lastes faktisk ned | Nedlasting i Chromium, SHA-256 og størrelse sammenlignet med originalen (K37, Asterix, Freesaver, K902, K903) | Bestått |
-| 10 | Arkiv-, samlings- og detaljnavigasjon | `test_detail_navigation_breadcrumbs_and_arrow_keys_still_work`, `test_existing_error_view_hides_source_documents`, og hele `test_publication_browser` | Bestått |
+| 01 | K37 lukket | «Les originaltekst …» | «Les tekstfilen …», lenke synlig under |
+| 02 | K37 åpen | Tekst | Tekst, uendret innhold |
+| 03 | Asterix (identisk) lukket | Bare «Samme tekst finnes i originalfilen», ingen boks | Merknad + lukket boks |
+| 04 | Freesaver `text: null` | Merknad + lenke | Ny merknad + lenke |
+| 05 | To filer (K911), begge åpne | To like knappetekster | Filnavn i hver knapp |
+| 06 | Blank tekst (K910) | Merknad | Ny merknad |
+| 07 | Lang TESTDATA 320 px åpen | Ingen sideveis rulling | Ingen sideveis rulling |
+| 08 | Lang TESTDATA 375 px lukket | | |
+| 09 | K37 320 px åpen | | |
 
-Datatester som også kjører i CI: de ekte eksemplene er byte-identiske med leveransen
-(SHA-256 låst), RTF-filene har riktig hash og størrelse, gyldige testdata består Birks
-`validate_frontend_data`, og K906–K908 avvises av den (visningens egen sjekk er et
-ekstra lag), ingen testfil er i releaselisten, og `renderSourceDocuments` bruker ingen
-HTML-sink.
+## Tester
 
-### Testresultater
+Nye eller endrede i `tests/test_rtf_reading.py` (16 tester: 5 datatester som også kjører i
+CI, 11 nettlesertester):
 
-Hele `python -m unittest discover -s tests` på `feat/rtf-reading`:
+| Krav i arbeidsordren | Test |
+| --- | --- |
+| 1, 4: lukket boks, åpne/lukke uten navigasjon, forespørsel eller nedlasting; separat lenke med riktig mål | `test_short_menu_description_and_longer_real_rtf_can_be_opened_and_closed` |
+| 3: identisk tekst er utvidbar, lukket som standard | `test_text_identical_to_the_menu_description_can_still_be_expanded` (K902 + ekte Asterix) |
+| 5: `null`, `""`, blank | `test_null_empty_and_blank_text_explain_briefly_and_still_offer_the_original` (K903, K909, K910, ekte Freesaver) |
+| 6: ingen dokumenter, feil kildebinding | `test_entries_without_documents_get_no_section` (K904, K905, K907, K908) |
+| 6: flere dokumenter | `test_several_documents_have_their_own_file_identity_and_box` (K911) |
+| 2, 8: avsnitt, norske tegn, HTML-lignende tekst bokstavelig, lange filnavn | `test_long_multiparagraph_html_like_text_is_rendered_literally_and_wraps` (1280, 375, 320 px) |
+| 1, 8: Enter og mellomrom, synlig fokus, tab-rekkefølge | `test_keyboard_opens_and_closes_with_visible_focus_in_reading_order` |
+| 8: 320/375 px uten sideveis rulling, også identisk tekst og to filer | `test_narrow_screens_do_not_scroll_sideways_or_overlap_navigation` |
+| 7: ugyldige adresser blir aldri lenker | `test_unsafe_download_addresses_never_become_links` (K906, uendret) |
+| Originalfilen lastes faktisk ned (SHA-256 og størrelse) | `assert_download` i testene over |
+| Navigasjon uten gammel tekst | `test_detail_navigation_breadcrumbs_and_arrow_keys_still_work` |
+| Ingen HTML-sink i `renderSourceDocuments` | `test_source_text_is_never_parsed_as_markup` (uendret) |
+
+Ingen sikkerhetstest er svekket. `test_unsafe_download_addresses_never_become_links`,
+`test_source_text_is_never_parsed_as_markup` og kontraktstesten for K906–K908 er
+uendret.
+
+**Den nye identisk-tekst-testen feiler på gammel head.** Med `app.js`, `index.html` og
+`styles.css` fra `00eb217` og de nye testene:
+
+```
+FAIL: test_text_identical_to_the_menu_description_can_still_be_expanded [K902]
+AssertionError: 0 != 1
+FAIL: test_text_identical_to_the_menu_description_can_still_be_expanded [kcd-1-2001--K1]
+AssertionError: 0 != 1
+```
+
+(0 `details`-elementer der testen krever 1.) Hele `tests.test_rtf_reading` på gammel head:
+16 kjørt, 8 feil, 1 error (navigasjonstesten finner ingen boks hos Asterix).
+
+### Fiks i testsiden
+
+Testsiden kopierte ikke filene `index.html` laster etter RTF-arbeidet i september
+(`updates*`, `visit-counter*`). Chromium lot de 404-forespørslene henge ved neste
+navigasjon, så `test_detail_navigation_breadcrumbs_and_arrow_keys_still_work` feilet med
+tidsavbrudd allerede på `main` i dette miljøet (Playwright 1.63, Chromium 1194). Filene er
+lagt til i `SITE_FILES`. Telleren er av (`endpoint: null`) og gjør ingen forespørsel.
+
+### Resultater
+
+`python -m unittest discover -s tests` på grenen:
 
 | Miljø | Kjørt | Bestått | Hoppet over | Feilet |
 | --- | --- | --- | --- | --- |
-| Lokalt med Chromium | 222 | 221 | 1 | 0 |
-| Som CI (uten Playwright) | 222 | 145 | 77 | 0 |
+| `main` `00eb217`, Python 3.13, Playwright 1.63, Chromium 1194 | 327 | 325 | 1 | 1 (navigasjonstesten over) |
+| Grenen, Python 3.13, Playwright 1.63, Chromium 1194 | 328 | 327 | 1 | 0 |
+| Grenen som CI (Python 3.12, uten Playwright) | 328 | 226 | 102 | 0 |
 
-Den ene som hoppes over lokalt, sammenligner Catalogs allowlist og trenger en
-Catalog-checkout. Nye tester i `tests/test_rtf_reading.py`: 15 (5 datatester som også
-kjører i CI, 10 nettlesertester). Birks head `021fc35` hadde 207 tester.
+Den ene som hoppes over med Chromium, sammenligner Catalogs allowlist og trenger en
+Catalog-checkout (`BOOTDISK_CATALOG_ROOT`).
 
-### Fanger testene reelle feil?
+## Avvik og åpne punkter
 
-18 bevisste feil ble lagt inn én om gangen i `app.js` og `styles.css`, og
-`tests.test_rtf_reading` ble kjørt for hver. Alle 18 ble fanget. To ble ikke fanget i
-første runde (manglende `media_type`-sjekk og en tom seksjon som ikke var `hidden`);
-testene ble utvidet før resultatet over.
-
-| Feil | Fanget |
-| --- | --- |
-| `innerHTML` i stedet for `textContent` | ja |
-| Ingen whitespace-normalisering | ja |
-| Ingen `media_type`-sjekk | ja |
-| Ingen adressesjekk | ja |
-| Bare mønstersjekk, ikke hash | ja |
-| Feilvisning skjuler ikke dokumentene | ja |
-| Ingen nøkkelsjekk | ja |
-| Uten `download` | ja |
-| Dokument uten tekst og trygg adresse vises | ja |
-| `text: null` skjuler hele dokumentet | ja |
-| Annen tekst i åpne-knappen | ja |
-| Tom seksjon vises | ja |
-| Størrelse rundet opp til hele kB | ja |
-| Uten kildefil, type og størrelse | ja |
-| Uten `pre-wrap` og brytning av teksten | ja |
-| Langt filnavn brytes ikke | ja |
-| Fokusmarkering fjernet | ja |
-| `hidden` overstyrt av CSS | ja |
-
-## Funn og manglende opplysninger
-
-1. **Lange titler flyter ut på smal skjerm (fantes før, ikke rettet her).** `h1` på
-   detaljsiden brytes ikke inne i ord. Ved 320 px blir siden 455 px bred med
-   «Digitalkameraskolen» og 392 px med «MechCommander 2», begge titler fra samlingen.
-   Det ligger utenfor dette oppdraget. Forslag: `overflow-wrap: anywhere` (eller
-   `hyphens: auto`) på `#software-name`. Testdataene bruker derfor korte titler.
-2. **Språk mangler i dataene.** `source_documents` har ikke noe språkfelt. Teksten arver
-   sidens `lang="no"`, så en skjermleser leser en engelsk RTF med norsk uttale. Visningen
-   gjetter ikke; et felt som `language` fra Ingest ville løst det.
-3. **MIME-type hos Domeneshop er ikke kontrollert.** Lokalt serverer Python `.rtf` som
-   `application/rtf`, og testen krever det. Hva vertens server sender, er ikke kjent;
-   `download`-attributtet gjør at nettleseren lagrer filen uansett.
-4. **Flere dokumenter per post.** Kontrakten tillater en liste, men
-   `attach-source-documents.py` setter alltid ett dokument. Visningen tåler flere
-   (K906 har seks), men alle får samme knappetekst; kildefilen står under hver av dem.
-   Blir flere dokumenter vanlig, bør knappen nevne filnavnet.
-5. **Stians pilot er ikke åpnet.** `http://127.0.0.1:8810/index.html?entry=K37` er ikke
-   nåbar herfra. Den ekte K37 er kontrollert med eksempelfilen fra arbeidsordren.
+1. **Ingen reell akseptanse mot bootdisk.no herfra.** Se over; Birk må kontrollere
+   `kcd-12-2001--K1` og K37 i nettleser.
+2. **`styles.css` har ingen cacheversjon.** Konvensjonen versjonerer bare enkelte skript.
+   `app.js` er versjonert (`rtf-expand1`). Den eneste CSS-endringen (brytning av lange
+   filnavn i knappen) gjelder bare poster med flere dokumenter; en gammel hurtigbufret
+   `styles.css` gir ellers samme visning.
+3. **Språk mangler i dataene.** `source_documents` har ikke noe språkfelt; teksten arver
+   `lang="no"`.
+4. **MIME-type hos Domeneshop er ikke kontrollert.** `download`-attributtet gjør at
+   nettleseren lagrer filen uansett.
+5. Frontend-endringen løser ikke manglende RTF-koblinger eller uleselige varianter; det er
+   Ingest/Catalog-arbeid.

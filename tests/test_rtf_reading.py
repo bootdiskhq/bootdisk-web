@@ -36,7 +36,9 @@ DELIVERED = {
     "kcd-1-2001--k1.json": "33e3ba3fba65404c2e6a0e9df73deb4dc9ca9547b7c58257bf7f71bbfa876252",
     "kcd-8-2001--k5.json": "b382f340a3c928760b8b46fb5f44893df18e5db5056e01c602176ae5d0ccba43",
 }
-SUMMARY = "Les originaltekst fra CD-en (RTF)"
+SUMMARY = "Les tekstfilen fra CD-en (RTF)"
+SAME_NOTE = "Teksten i filen er den samme som menyomtalen over."
+NOT_SHOWN_NOTE = "Teksten i filen kan foreløpig ikke vises her, men originalfilen kan lastes ned."
 
 
 def real(name):
@@ -77,7 +79,7 @@ class RtfFixtureDataTests(unittest.TestCase):
         by_id = {d["entry"]: d for d in entries}
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
-            validate_frontend_data(contract_tree(work / "valid", [by_id[i] for i in ("K901", "K902", "K903", "K904", "K905")]))
+            validate_frontend_data(contract_tree(work / "valid", [by_id[i] for i in ("K901", "K902", "K903", "K904", "K905", "K909", "K910", "K911")]))
             for name in DELIVERED:
                 validate_frontend_data(contract_tree(work / name, [real(name)]))
             # The page's own guard is defence in depth: the build already refuses these.
@@ -126,12 +128,14 @@ class RtfReadingBrowserTests(unittest.TestCase):
     def page(self, entry, width=1280, height=900, routes=(), **context_options):
         context = self.browser.new_context(viewport={"width": width, "height": height}, accept_downloads=True, **context_options)
         page = context.new_page()
-        failures, requests = [], []
+        failures, requests, downloads = [], [], []
         page.on("pageerror", lambda error: failures.append(str(error)))
         page.on("request", lambda request: requests.append(request.url))
+        page.on("download", lambda download: downloads.append(download.url))
         for pattern, handler in routes:
             page.route(pattern, handler)
         page.requests = requests
+        page.downloads = downloads
         page.goto(f"{self.base}/index.html?entry={entry}", wait_until="networkidle")
         page.wait_for_function("document.querySelector('main').getAttribute('aria-busy') === 'false'")
         try:
@@ -159,6 +163,26 @@ class RtfReadingBrowserTests(unittest.TestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(response.headers["content-type"], "application/rtf")
 
+    def assert_toggles_in_place(self, page, details, open_action, close_action):
+        """Opening and closing the box never navigates, fetches or downloads anything."""
+        url, seen = page.url, len(page.requests)
+        self.assertFalse(details.evaluate("node => node.open"))
+        open_action()
+        self.assertTrue(details.evaluate("node => node.open"))
+        close_action()
+        self.assertFalse(details.evaluate("node => node.open"))
+        page.wait_for_timeout(200)
+        self.assertEqual(page.url, url)
+        self.assertEqual(page.requests[seen:], [])
+        self.assertEqual(page.downloads, [])
+
+    def assert_original_outside_box(self, page, doc):
+        """The download is its own visible link next to the closed box, aimed at the stored original."""
+        link = self.documents(page).get_by_role("link", name="Last ned originalfil")
+        self.assertTrue(link.is_visible())
+        self.assertEqual(link.get_attribute("href"), doc["original"]["public_path"])
+        self.assertFalse(link.evaluate("node => Boolean(node.closest('details'))"))
+
     # Row 1 ---------------------------------------------------------------------------
     def test_short_menu_description_and_longer_real_rtf_can_be_opened_and_closed(self):
         doc = real("k37.json")["source_documents"][0]
@@ -170,6 +194,8 @@ class RtfReadingBrowserTests(unittest.TestCase):
             self.assertEqual(summary.text_content(), SUMMARY)
             text = page.locator(".rtf-source-text")
             self.assertFalse(text.is_visible())
+            self.assert_original_outside_box(page, doc)
+            self.assert_toggles_in_place(page, page.locator("#source-documents details"), summary.click, summary.click)
             summary.click()
             self.assertTrue(text.is_visible())
             self.assertEqual(text.text_content(), doc["text"])
@@ -182,29 +208,42 @@ class RtfReadingBrowserTests(unittest.TestCase):
             self.assert_download(page, doc)
 
     # Row 2 ---------------------------------------------------------------------------
-    def test_text_that_only_differs_in_whitespace_is_not_shown_twice(self):
+    def test_text_identical_to_the_menu_description_can_still_be_expanded(self):
+        """Work order 2026-10-16 replaces the old rule that hid the box for identical text."""
         cases = (("K902", self.synthetic["K902"]["source_documents"][0], "samme omtale"),
                  ("kcd-1-2001--K1", real("kcd-1-2001--k1.json")["source_documents"][0], "I dette spillet skal du hjelpe Asterix"))
         for entry, doc, phrase in cases:
             with self.subTest(entry), self.page(entry) as page:
-                self.assertEqual(page.locator("#source-documents details").count(), 0)
-                self.assertEqual(page.locator(".rtf-source-text").count(), 0)
+                details = page.locator("#source-documents details")
+                self.assertEqual(details.count(), 1)
+                self.assertFalse(details.evaluate("node => node.open"))
+                self.assertEqual(page.text_content("#source-documents summary"), SUMMARY)
+                self.assertEqual(page.text_content(".source-document-note"), SAME_NOTE)
+                # Closed by default: the text is on the page once, as the menu description.
                 self.assertEqual(page.inner_text("main").count(phrase), 1)
-                self.assertEqual(page.text_content(".source-document-note"), "Samme tekst finnes i originalfilen fra CD-en.")
+                self.assertFalse(page.is_visible(".rtf-source-text"))
+                self.assert_original_outside_box(page, doc)
+                page.click("#source-documents summary")
+                self.assertTrue(page.is_visible(".rtf-source-text"))
+                self.assertEqual(page.text_content(".rtf-source-text"), doc["text"])
+                page.click("#source-documents summary")
                 self.assert_download(page, doc)
         with self.page("kcd-1-2001--K1") as page:
             self.assertEqual(page.text_content(".source-document-meta"), "Asterix/No.rtf · RTF · 6,9 kB")
 
     # Row 3 ---------------------------------------------------------------------------
-    def test_text_null_explains_briefly_and_still_offers_the_original(self):
+    def test_null_empty_and_blank_text_explain_briefly_and_still_offer_the_original(self):
         cases = (("K903", self.synthetic["K903"]["source_documents"][0]),
+                 ("K909", self.synthetic["K909"]["source_documents"][0]),
+                 ("K910", self.synthetic["K910"]["source_documents"][0]),
                  ("kcd-8-2001--K5", real("kcd-8-2001--k5.json")["source_documents"][0]))
         for entry, doc in cases:
             with self.subTest(entry), self.page(entry) as page:
                 self.assertTrue(page.is_visible("#source-documents"))
                 self.assertEqual(page.locator("#source-documents details").count(), 0)
-                self.assertEqual(page.text_content(".source-document-note"),
-                                 "Originalteksten fra CD-en kan ikke vises her, men originalfilen kan lastes ned.")
+                self.assertEqual(page.locator(".rtf-source-text").count(), 0)
+                self.assertEqual(page.text_content(".source-document-note"), NOT_SHOWN_NOTE)
+                self.assert_original_outside_box(page, doc)
                 self.assertNotIn("charset", page.inner_text("main"))
                 self.assertNotIn("unsupported", page.inner_text("main"))
                 self.assert_download(page, doc)
@@ -221,6 +260,28 @@ class RtfReadingBrowserTests(unittest.TestCase):
                 self.assertEqual(page.eval_on_selector("#source-documents", "node => node.childElementCount"), 0)
                 self.assertTrue(page.is_visible("#software-description"))
                 self.assertNotIn("TESTDATA fra en annen kildepost", page.inner_text("body"))
+
+    def test_several_documents_have_their_own_file_identity_and_box(self):
+        docs = self.synthetic["K911"]["source_documents"]
+        with self.page("K911") as page:
+            blocks = page.locator("#source-documents .source-document")
+            self.assertEqual(blocks.count(), 2)
+            for position, doc in enumerate(docs):
+                block = blocks.nth(position)
+                self.assertEqual(block.locator("summary").text_content(), f"{SUMMARY}: {doc['path']}")
+                self.assertTrue(block.locator(".source-document-meta").text_content().startswith(doc["path"] + " · RTF"))
+                self.assertEqual(block.get_by_role("link", name="Last ned originalfil").get_attribute("href"), doc["original"]["public_path"])
+            first, second = (blocks.nth(n).locator("details") for n in (0, 1))
+            first.locator("summary").click()
+            self.assertTrue(first.evaluate("node => node.open"))
+            self.assertFalse(second.evaluate("node => node.open"))
+            self.assertEqual(blocks.nth(0).locator(".rtf-source-text").text_content(), docs[0]["text"])
+            second.locator("summary").click()
+            first.locator("summary").click()
+            self.assertFalse(first.evaluate("node => node.open"))
+            self.assertTrue(second.evaluate("node => node.open"))
+            self.assertEqual(blocks.nth(1).locator(".rtf-source-text").text_content(), docs[1]["text"])
+            self.assertEqual(page.downloads, [])
 
     # Row 5 ---------------------------------------------------------------------------
     def test_long_multiparagraph_html_like_text_is_rendered_literally_and_wraps(self):
@@ -258,6 +319,7 @@ class RtfReadingBrowserTests(unittest.TestCase):
             outline = page.eval_on_selector("#source-documents summary", "node => getComputedStyle(node).outlineStyle")
             self.assertNotEqual(outline, "none")
             details = page.locator("#source-documents details")
+            summary = page.locator("#source-documents summary")
             page.keyboard.press("Enter")
             self.assertTrue(details.evaluate("node => node.open"))
             self.assertTrue(page.is_visible(".rtf-source-text"))
@@ -265,14 +327,16 @@ class RtfReadingBrowserTests(unittest.TestCase):
             self.assertFalse(details.evaluate("node => node.open"))
             self.assertFalse(page.is_visible(".rtf-source-text"))
             self.assertEqual(page.evaluate("location.search"), "?entry=K37")
+            self.assert_toggles_in_place(page, details, lambda: page.keyboard.press("Space"), lambda: page.keyboard.press("Enter"))
+            self.assertTrue(summary.evaluate("node => document.activeElement === node"))
 
     # Row 7 ---------------------------------------------------------------------------
     def test_narrow_screens_do_not_scroll_sideways_or_overlap_navigation(self):
         for width in (320, 375):
-            for entry in ("K37", "K901", "K906", "kcd-8-2001--K5"):
+            for entry in ("K37", "K901", "K906", "K911", "kcd-1-2001--K1", "kcd-8-2001--K5"):
                 with self.subTest(width=width, entry=entry), self.page(entry, width=width, height=740) as page:
-                    if page.locator("#source-documents summary").count():
-                        page.click("#source-documents summary")
+                    for summary in page.locator("#source-documents summary").all():
+                        summary.click()
                     self.assertLessEqual(page.evaluate("document.documentElement.scrollWidth"), width)
                     boxes = page.evaluate("""() => {
                         const box = node => node && !node.hidden ? node.getBoundingClientRect().toJSON() : null;
@@ -311,10 +375,17 @@ class RtfReadingBrowserTests(unittest.TestCase):
             page.wait_for_function("document.querySelector('main').getAttribute('aria-busy') === 'false'")
             self.assertTrue(page.url.endswith("entry=kcd-1-2001--K1"))
             self.assertEqual(page.text_content("h1:visible"), "Asterix")
+            # The new entry starts closed with its own text; nothing from WinAmp is left behind.
+            self.assertFalse(page.locator("#source-documents details").evaluate("node => node.open"))
+            self.assertEqual(page.locator(".rtf-source-text").count(), 1)
+            self.assertEqual(page.text_content(".rtf-source-text"), real("kcd-1-2001--k1.json")["source_documents"][0]["text"])
+            self.assertNotIn("WinAmp", page.text_content("#source-documents"))
             page.keyboard.press("ArrowRight")
             page.wait_for_url("**entry=kcd-8-2001--K5")
             page.wait_for_function("document.querySelector('main').getAttribute('aria-busy') === 'false'")
             self.assertEqual(page.text_content("h1:visible"), "Freesaver MP3")
+            self.assertEqual(page.locator(".rtf-source-text").count(), 0)
+            self.assertNotIn("Asterix", page.text_content("#source-documents"))
             page.go_back()
             page.wait_for_function("document.querySelector('main').getAttribute('aria-busy') === 'false'")
             self.assertEqual(page.text_content("h1:visible"), "Asterix")

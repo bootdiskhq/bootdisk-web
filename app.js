@@ -7,7 +7,8 @@ function sourceLabel(entry) {
 
 /* Original RTF descriptions from the CD, as extracted by Ingest (bootdisk-source-documents-1).
  * The text is a source observation next to the menu description, never a replacement for it.
- * It is set as text, never parsed as HTML or RTF; `warning` is technical and not shown. */
+ * It is set as text, never parsed as HTML or RTF; `warning` is technical and not shown.
+ * Every readable document gets its own closed box, also when the text equals the menu description. */
 const RTF_PATH = /^store\/documents\/sha256\/([a-f0-9]{2})\/([a-f0-9]{64})\.rtf$/;
 
 function sameSourceKey(a, b) {
@@ -38,33 +39,38 @@ function renderSourceDocuments(entry, description) {
   const container = document.querySelector("#source-documents");
   if (!container) return;
   container.replaceChildren();
-  // Whitespace-only differences are the same text: it must not be shown twice.
+  // Whitespace-only differences are the same text; it is still readable, but labelled as such.
   const normalize = value => (value ?? "").replace(/\s+/g, " ").trim();
-  for (const doc of entry.source_documents ?? []) {
-    if (!sameSourceKey(doc.key, entry.source_context?.key)) continue;
+  const documents = (entry.source_documents ?? []).filter(doc => {
+    if (!sameSourceKey(doc.key, entry.source_context?.key)) return false;
+    return Boolean(publishedRtfPath(doc)) || (typeof doc.text === "string" && normalize(doc.text) !== "");
+  });
+  for (const doc of documents) {
     const href = publishedRtfPath(doc);
     const readable = typeof doc.text === "string" && normalize(doc.text) !== "";
-    if (!href && !readable) continue;
     const block = document.createElement("div");
     block.className = "source-document";
-    if (readable && normalize(doc.text) !== normalize(description)) {
+    if (readable) {
+      if (normalize(doc.text) === normalize(description)) {
+        const note = document.createElement("p");
+        note.className = "source-document-note";
+        note.textContent = "Teksten i filen er den samme som menyomtalen over.";
+        block.append(note);
+      }
+      // Native details/summary: closed by default, opened with click, Enter or Space, no script.
       const details = document.createElement("details");
       const summary = document.createElement("summary");
-      summary.textContent = "Les originaltekst fra CD-en (RTF)";
+      summary.textContent = documents.length > 1 ? `Les tekstfilen fra CD-en (RTF): ${doc.path || sourceFileName(doc)}` : "Les tekstfilen fra CD-en (RTF)";
       const text = document.createElement("div");
       text.className = "rtf-source-text";
       text.textContent = doc.text;
       details.append(summary, text);
       block.append(details);
-    } else if (readable) {
-      const note = document.createElement("p");
-      note.className = "source-document-note";
-      note.textContent = "Samme tekst finnes i originalfilen fra CD-en.";
-      block.append(note);
     } else {
+      // Null, empty or blank text: the file may well hold text; it just cannot be shown yet.
       const note = document.createElement("p");
       note.className = "source-document-note";
-      note.textContent = "Originalteksten fra CD-en kan ikke vises her, men originalfilen kan lastes ned.";
+      note.textContent = "Teksten i filen kan foreløpig ikke vises her, men originalfilen kan lastes ned.";
       block.append(note);
     }
     const file = document.createElement("p");
