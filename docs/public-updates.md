@@ -1,3 +1,5 @@
+> Kildeundersøkelser bruker nå v4 / visible-v4. Se [source-investigation-notes.md](source-investigation-notes.md). Eldre kontrakter nedenfor er historisk dokumentasjon.
+
 > Ny kildekatalogstatus bruker v3 / visible-v3. Se [source-catalog-status.md](source-catalog-status.md). Beskrivelsen av v2 nedenfor dokumenterer forrige publiserte kontrakt.
 
 # Sist lagt til og oppdatert

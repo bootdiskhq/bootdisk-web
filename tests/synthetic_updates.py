@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Labelled test data for the public update overview (bootdisk-public-updates-v3).
+"""Labelled test data for the public update overview (bootdisk-public-updates-v4).
 
 PRØVEDATA. Three invented releases of the synthetic seven-disc archive from
 tests/synthetic_collection.py, recorded with scripts/public_updates.py:
