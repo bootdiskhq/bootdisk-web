@@ -174,6 +174,14 @@ function renderBreadcrumbs(trail) {
   }));
 }
 
+function sourceInvestigationExplanation(entry) {
+  const catalog = entry.source_catalog;
+  const key = entry.source_context?.key;
+  if (!key || catalog?.key?.manifest !== key.manifest || catalog?.key?.entry !== key.entry) return null;
+  const text = catalog?.file_association?.explanation?.explanation;
+  return typeof text === "string" && text.trim() ? text : null;
+}
+
 async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
@@ -202,7 +210,9 @@ async function render() {
   if (entry.curation_status === "pending" && entry.source_catalog?.status !== "documented") notes.push("Navnet er hentet fra CD-menyen. Programidentitet, versjon og utgave er ikke bekreftet.");
   const sourceIssues = entry.source_context?.issues?.value ?? [];
   if (sourceIssues.includes("shared_warning_control_not_runtime_tested")) notes.push("Programfilen finnes på CD-en. Den gamle installasjonsmenyen har overlappende knapper; klikkoppførselen er ikke testet. Bildet er original menyillustrasjon fra CD-en.");
-  if (sourceIssues.some(issue => issue !== "shared_warning_control_not_runtime_tested")) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
+  const investigation = sourceInvestigationExplanation(entry);
+  if (investigation) notes.push(investigation);
+  if (!investigation && sourceIssues.some(issue => issue !== "shared_warning_control_not_runtime_tested")) notes.push("CD-menyen har motstridende eller manglende filhenvisninger. Innholdstilknytningen må undersøkes nærmere.");
   const note = document.querySelector("#source-note");
   note.textContent = notes.join(" ");
   note.hidden = !notes.length;

@@ -1,10 +1,10 @@
 /* "Sist lagt til og oppdatert": what was published on Bootdisk, and when. The feed
- * (data/public-updates.json, contract bootdisk-public-updates-v3) supplies dates and
+ * (data/public-updates.json, contract bootdisk-public-updates-v4) supplies dates and
  * change codes; names, CD, icon and link come from the current archive index. An event
  * for an entry that is no longer in the index is kept in the history but never shown,
  * so the page cannot link to a missing entry. Rendering helpers take a document so the
  * rules can be tested outside a browser. Every name here starts with "update". */
-const UPDATES_SCHEMA = "bootdisk-public-updates-v3";
+const UPDATES_SCHEMA = "bootdisk-public-updates-v4";
 const UPDATES_FEED_URL = "data/public-updates.json";
 const UPDATES_PAGE_SIZE = 25;
 const UPDATES_LANDING_COUNT = 8;

@@ -1,4 +1,4 @@
-"""Public update history (bootdisk-public-updates-v3) without a browser.
+"""Public update history (bootdisk-public-updates-v4) without a browser.
 
 The generator, the register rules, the release builder and the HTTP verifier run on the
 labelled test history in tests/synthetic_updates.py (PRØVEDATA). The page logic in
@@ -499,7 +499,7 @@ const load = core('loadUpdates');
   const calls = [];
   const fetcher = status => async (url, options) => { calls.push(options); return {status, ok: status === 200, json: async () => DATA.feed}; };
   assert.equal(await load(fetcher(404)), null);
-  assert.equal((await load(fetcher(200))).schema, 'bootdisk-public-updates-v3');
+  assert.equal((await load(fetcher(200))).schema, 'bootdisk-public-updates-v4');
   await assert.rejects(load(fetcher(500)), /HTTP 500/);
   await assert.rejects(load(async () => ({status: 200, ok: true, json: async () => { throw new SyntaxError('x'); }})), /ikke gyldig JSON/);
   assert.ok(calls.every(options => options.cache === 'no-cache'));

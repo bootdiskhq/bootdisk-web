@@ -11,7 +11,7 @@ ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 CURATION_STATUSES = {"identified", "pending"}
 # A published package keeps its update history beside the projection
-# (bootdisk-public-updates-v3, validated by public_updates.py). The name cannot be an
+# (bootdisk-public-updates-v4, validated by public_updates.py). The name cannot be an
 # entry file: entry ids need "--" before any hyphen.
 UPDATES_FEED = "public-updates.json"
 
@@ -146,9 +146,17 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
         require(summary.get("source_catalog_status") == (source_catalog or {}).get("status"),
                 f"{path.name}: source catalog summary mismatch")
         if source_catalog is not None:
-            require(source_catalog.get("rule") == "source-catalog-readiness-1", "unknown source catalog rule")
+            require(source_catalog.get("rule") in ("source-catalog-readiness-1", "source-catalog-readiness-2", "source-catalog-readiness-3"), "unknown source catalog rule")
             require(source_catalog.get("status") in ("documented", "needs_inspection"), "invalid source catalog status")
             require(source_catalog.get("key") == document.get("source_context", {}).get("key"), "cross-source catalog assessment")
+            association = source_catalog.get("file_association") or {}
+            explanation = association.get("explanation")
+            if explanation is not None:
+                require(isinstance(explanation, dict) and isinstance(explanation.get("explanation"), str)
+                        and bool(explanation["explanation"].strip()), "invalid source explanation")
+                if explanation.get("pattern") == "documented_source_defect":
+                    require(all(explanation.get(k) == v for k, v in source_catalog["key"].items()),
+                            "cross-source completed investigation")
             if source_catalog["status"] == "documented":
                 title = source_catalog.get("title") or {}
                 require(title.get("value") == document.get("editorial_title"), "source catalog title mismatch")

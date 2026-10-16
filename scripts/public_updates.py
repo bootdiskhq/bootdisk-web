@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Public update history: which source entries were added or visibly changed, and when.
 
-Contract `bootdisk-public-updates-v3` (docs/public-updates.md). The register is a
+Contract `bootdisk-public-updates-v4` (docs/public-updates.md). The register is a
 small, explicitly maintained JSON document. It is never derived from the clock, file
 times, CD years or index order:
 
@@ -29,10 +29,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA = "bootdisk-public-updates-v3"
+SCHEMA = "bootdisk-public-updates-v4"
 # The definition of "visible" is versioned with the register: a projection with other
 # fields gives other fingerprints and needs a new contract version, not a silent reset.
-PROJECTION = "visible-v3"
+PROJECTION = "visible-v4"
 FEED_NAME = "public-updates.json"
 
 ENTRY_ID = re.compile(r"(?:[a-z0-9]+(?:-[a-z0-9]+)*--)?[A-Za-z][A-Za-z0-9]{0,63}")
@@ -137,7 +137,13 @@ def visible_projection(document: dict) -> dict:
     notes = []
     if SHARED_CONTROL_ISSUE in issues:
         notes.append("untested_shared_control")
-    if any(issue != SHARED_CONTROL_ISSUE for issue in issues):
+    catalog = document.get("source_catalog") or {}
+    explanation = ((catalog.get("file_association") or {}).get("explanation") or {}).get("explanation")
+    explained = (isinstance(key, dict) and catalog.get("key") == key
+                 and isinstance(explanation, str) and bool(explanation.strip()))
+    if explained:
+        notes.append("investigation:" + explanation)
+    if not explained and any(issue != SHARED_CONTROL_ISSUE for issue in issues):
         notes.append("unresolved_file_references")
     return {
         "status": status,

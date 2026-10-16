@@ -24,7 +24,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
  const uctx=vm.createContext({URLSearchParams,console,Intl,Date});
  vm.runInContext(fs.readFileSync('updates-core.js','utf8'),uctx);
  const seen=[];
- const ufetch=async(url,options)=>{seen.push([url,options?.cache]);return{ok:true,status:200,json:async()=>url.endsWith('index.json')?{entries:[]}:{schema:'bootdisk-public-updates-v3',releases:[],events:[]}};};
+ const ufetch=async(url,options)=>{seen.push([url,options?.cache]);return{ok:true,status:200,json:async()=>url.endsWith('index.json')?{entries:[]}:{schema:'bootdisk-public-updates-v4',releases:[],events:[]}};};
  await uctx.loadUpdates(ufetch);await uctx.loadUpdateIndex(ufetch);
  assert.deepStrictEqual(seen,[['data/public-updates.json','no-cache'],['data/index.json','no-cache']]);
  const fetcher=async(url,options)=>({ok:true,json:async()=>({status:options?.cache==='no-cache'?'identified':'pending'})});
