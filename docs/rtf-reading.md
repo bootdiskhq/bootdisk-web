@@ -1,9 +1,11 @@
 # Lesbar RTF-tekst på detaljsiden
 
 Status: levert som PR mot `main`, 16. oktober 2026. Ikke merget, ikke publisert, ingen
-versjonsøkning (`VERSION` er fortsatt `1.2.0-rc19`). Arbeidsordre: «Konsekvent RTF-lesing
-direkte i Bootdisk» (Birk, på Stians oppdrag, 16.10.2026). Base: `main` `00eb217`
-(Web PR #68, rc19, 730 poster på elleve CD-er).
+versjonsøkning (`VERSION` er urørt). Arbeidsordre: «Konsekvent RTF-lesing direkte i
+Bootdisk» (Birk, på Stians oppdrag, 16.10.2026). Arbeidet startet fra `main` `00eb217`
+(Web PR #68, rc19, 730 poster på elleve CD-er). Underveis ble rc20 merget (PR #69,
+`2e2d470`); grenen er rebaset på den. rc20 endrer bare `VERSION` og
+`docs/1.2.0-rc20-validation.md`, så testene og skjermbildene fra `00eb217` gjelder uendret.
 
 Erstatter utkastet fra 25.09.2026 (PR #46 / `feat/rtf-reading`). Den viktigste endringen
 er at **tekst som er lik menyomtalen også kan utvides**; tidligere ble boksen skjult da.
