@@ -6,7 +6,7 @@
 .source-document+.source-document{margin-top:1rem}
 .source-document details{border-left:3px solid var(--line)}
 .source-document details[open]{border-left-color:var(--cyan)}
-.source-document summary{display:flex;align-items:center;gap:.6em;min-height:44px;padding:.35rem .9rem;color:var(--cyan);font-weight:600;cursor:pointer;list-style:none}
+.source-document summary{display:flex;align-items:center;gap:.6em;min-height:44px;padding:.35rem .9rem;color:var(--cyan);font-weight:600;cursor:pointer;list-style:none;overflow-wrap:anywhere}
 .source-document summary::-webkit-details-marker{display:none}
 .source-document summary::before{content:"";flex:none;width:0;height:0;border-block:.35em solid transparent;border-left:.55em solid currentColor;transition:transform .12s}
 .source-document details[open] summary::before{transform:rotate(90deg)}

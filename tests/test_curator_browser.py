@@ -99,7 +99,7 @@ class CuratorBrowserTests(unittest.TestCase):
             self.assertEqual(page.input_value("#claim-version"), "1.10g", "the key went into the field")
             self.assertEqual(page.text_content("#entry-id"), "K23", "typing did not approve the entry")
 
-            page.keyboard.press("Control+a")
+            page.keyboard.press("ControlOrMeta+a")
             page.keyboard.type("1.10")
             page.locator("#entry-heading").click()
             page.keyboard.press("g")
@@ -163,7 +163,7 @@ class CuratorBrowserTests(unittest.TestCase):
             page.wait_for_function("document.querySelector('#entry-id').textContent === 'K23'")
 
             page.click("#claim-version")
-            page.keyboard.press("Control+a")
+            page.keyboard.press("ControlOrMeta+a")
             page.keyboard.type("2.05")
             # Let autosave land while the field still has focus.
             page.wait_for_selector("#save-state[data-status='saved']")

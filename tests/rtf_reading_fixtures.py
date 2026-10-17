@@ -23,7 +23,10 @@ REAL = ROOT / "tests/fixtures/rtf-reading/real"
 REAL_ENTRIES = ("k37.json", "kcd-1-2001--k1.json", "kcd-8-2001--k5.json")
 SITE_FILES = ("index.html", "archive.html", "collection.html", "styles.css", "accessibility.css", "archive-controls.css",
               "entry-controls.css", "publication.css", "app.js", "archive.js", "landing.js", "collection.js",
-              "collection-core.js", "collections.json")
+              "collection-core.js", "collections.json",
+              # index.html also loads these; a missing file can stall the next page's load event.
+              "updates.css", "visit-counter.css", "updates-core.js", "landing-updates.js", "visit-counter-config.js",
+              "visit-counter-core.js", "visit-counter-adapter.js", "visit-counter.js")
 PUBLICATION = "TESTDATA"
 MEDIUM = "TESTDATA-CD"
 MANIFEST = "sha256:" + "7e" * 32
@@ -124,6 +127,15 @@ def synthetic_cases() -> tuple[list[dict], dict[str, bytes]]:
     # Unsafe address and no text: nothing useful to offer, so nothing is shown.
     empty, _ = published(key("K908"), "Utrygg/tom.rtf", None, rtf_bytes("tom"), original_public_path="https://example.invalid/tom.rtf")
     add("K908", "TESTDATA Utrygg adresse uten tekst", "TESTDATA: menyomtale.", [(empty, None)])
+    # Empty and blank text: no empty reading box, only the explanation and the original.
+    add("K909", "TESTDATA Tom tekst", "TESTDATA: menyomtale.",
+        [published(key("K909"), "Tom/No.rtf", "", rtf_bytes("TESTDATA tom"))])
+    add("K910", "TESTDATA Blank tekst", "TESTDATA: menyomtale.",
+        [published(key("K910"), "Blank/No.rtf", " \n\t\r\n  \n", rtf_bytes("TESTDATA blank"))])
+    # Two readable documents on one entry: each needs its own file identity and box.
+    add("K911", "TESTDATA To tekstfiler", "TESTDATA: menyomtale.",
+        [published(key("K911"), "Spill/No.rtf", "TESTDATA første fil.\n\nAndre avsnitt i første fil.", rtf_bytes("TESTDATA første")),
+         published(key("K911"), "Spill/Installasjon.rtf", "TESTDATA andre fil.\nLinje to i andre fil.", rtf_bytes("TESTDATA andre"))])
     return entries, store
 
 
