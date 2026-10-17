@@ -12,7 +12,7 @@ er at **tekst som er lik menyomtalen også kan utvides**; tidligere ble boksen s
 
 Omfang: `renderSourceDocuments` i `app.js` (samme løsning, ingen ny RTF-viser), én
 CSS-regel i `styles.css` (brytning av lange filnavn i åpne-knappen), cacheversjonen for
-`app.js` i `index.html` (`?v=rtf-expand1`), testene og testdataene. Menyomtale,
+`app.js` og `styles.css` i `index.html` (begge `?v=rtf-expand1`), testene og testdataene. Menyomtale,
 identifikasjon, kontrakt, genererte kildedata, historikk, kuratering, teller og
 serveroppsett er ikke rørt.
 
@@ -163,6 +163,18 @@ navigasjon, så `test_detail_navigation_breadcrumbs_and_arrow_keys_still_work` f
 tidsavbrudd allerede på `main` i dette miljøet (Playwright 1.63, Chromium 1194). Filene er
 lagt til i `SITE_FILES`. Telleren er av (`endpoint: null`) og gjør ingen forespørsel.
 
+### Fiks i kuratortesten (macOS)
+
+Etter Birks gjennomgang 17.10.2026: `test_typing_is_never_interrupted_by_a_redraw` i
+`tests/test_curator_browser.py` brukte `Control+a` for å markere feltet. På macOS flytter
+det markøren i stedet, så testen feilet deterministisk (`2.051.10` mot `2.05`), også på
+rc20. Begge `Control+a` i filen (linje 102 og 166) er nå `ControlOrMeta+a`, som Playwright
+gjør om til Cmd på Mac og Ctrl ellers. Testen skriver fortsatt med ekte tastatur og har
+alle fokus- og autosave-sjekkene. Ingen andre tastatursnarveier i testene velger tekst.
+`test_overview_browser.py` har to Ctrl-klikk (`modifiers=["Control"]`) som tester
+lenker åpnet i ny fane; de er ikke endret fordi de ikke feiler på Mac. Mac-kjøringen er
+ikke gjort her (skymiljøet er Linux); Birk tar den.
+
 ### Resultater
 
 `python -m unittest discover -s tests` på grenen:
@@ -173,6 +185,8 @@ lagt til i `SITE_FILES`. Telleren er av (`endpoint: null`) og gjør ingen foresp
 | Grenen, Python 3.13, Playwright 1.63, Chromium 1194 | 328 | 327 | 1 | 0 |
 | Grenen som CI (Python 3.12, uten Playwright) | 328 | 226 | 102 | 0 |
 
+Tallene gjelder også etter rettingene 17.10.2026 (ny kjøring, samme resultat).
+
 Den ene som hoppes over med Chromium, sammenligner Catalogs allowlist og trenger en
 Catalog-checkout (`BOOTDISK_CATALOG_ROOT`).
 
@@ -180,10 +194,10 @@ Catalog-checkout (`BOOTDISK_CATALOG_ROOT`).
 
 1. **Ingen reell akseptanse mot bootdisk.no herfra.** Se over; Birk må kontrollere
    `kcd-12-2001--K1` og K37 i nettleser.
-2. **`styles.css` har ingen cacheversjon.** Konvensjonen versjonerer bare enkelte skript.
-   `app.js` er versjonert (`rtf-expand1`). Den eneste CSS-endringen (brytning av lange
-   filnavn i knappen) gjelder bare poster med flere dokumenter; en gammel hurtigbufret
-   `styles.css` gir ellers samme visning.
+2. **Cacheversjon for `styles.css` gjelder bare `index.html`.** Lenken der er nå
+   `styles.css?v=rtf-expand1`, slik at tilbakevendende brukere henter ny CSS på
+   detaljsiden. De andre sidene lenker fortsatt til `styles.css` uten versjon; de bruker
+   ikke RTF-visningen.
 3. **Språk mangler i dataene.** `source_documents` har ikke noe språkfelt; teksten arver
    `lang="no"`.
 4. **MIME-type hos Domeneshop er ikke kontrollert.** `download`-attributtet gjør at
