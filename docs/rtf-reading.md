@@ -1,7 +1,7 @@
 # Lesbar RTF-tekst på detaljsiden
 
-Status: levert som PR mot `main`, 16. oktober 2026. Ikke merget, ikke publisert, ingen
-versjonsøkning (`VERSION` er urørt). Arbeidsordre: «Konsekvent RTF-lesing direkte i
+Status: PR 70 merget etter Birks gjennomgang 17. oktober 2026; inngår i rc21.
+Mac-retesten av kuratering og RTF på bef6e9d bestod: 24/24, ingen hoppet over. Arbeidsordre: «Konsekvent RTF-lesing direkte i
 Bootdisk» (Birk, på Stians oppdrag, 16.10.2026). Arbeidet startet fra `main` `00eb217`
 (Web PR #68, rc19, 730 poster på elleve CD-er). Underveis ble rc20 merget (PR #69,
 `2e2d470`); grenen er rebaset på den. rc20 endrer bare `VERSION` og
