@@ -146,7 +146,7 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
         require(summary.get("source_catalog_status") == (source_catalog or {}).get("status"),
                 f"{path.name}: source catalog summary mismatch")
         if source_catalog is not None:
-            require(source_catalog.get("rule") in ("source-catalog-readiness-1", "source-catalog-readiness-2", "source-catalog-readiness-3"), "unknown source catalog rule")
+            require(source_catalog.get("rule") in ("source-catalog-readiness-1", "source-catalog-readiness-2", "source-catalog-readiness-3", "source-catalog-readiness-4"), "unknown source catalog rule")
             require(source_catalog.get("status") in ("documented", "needs_inspection"), "invalid source catalog status")
             require(source_catalog.get("key") == document.get("source_context", {}).get("key"), "cross-source catalog assessment")
             association = source_catalog.get("file_association") or {}
