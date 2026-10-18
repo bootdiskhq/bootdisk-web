@@ -1,12 +1,12 @@
 [hidden] { display: none !important; }
 
-/* Sample-data warning: the yellow tooltip note, always above the work. */
+/* Sample-data warning: a dashed amber note, always above the work. */
 .fixture-banner {
-  margin: 10px 18px 0;
+  margin: 10px 0 0;
   padding: 10px 14px 10px 50px;
   position: relative;
   background: var(--tooltip);
-  box-shadow: 0 0 0 1px var(--dark);
+  border: 2px dashed var(--warn);
   color: var(--text);
   font-size: .9rem;
 }
@@ -27,7 +27,7 @@
   text-transform: uppercase;
 }
 
-.fixture-banner-ephemeral { box-shadow: 0 0 0 2px var(--error); }
+.fixture-banner-ephemeral { border: 2px solid var(--error); }
 .fixture-banner .ephemeral-warning { color: var(--error); font-weight: 700; }
 
 .fixture-banner span {
@@ -82,11 +82,11 @@ textarea {
 
 textarea { resize: vertical; }
 
-.queue-count { color: var(--title); font: 700 .82rem var(--font-mono); margin: 0 0 4px; }
+.queue-count { color: var(--accent); font: 700 .82rem var(--font-mono); margin: 0 0 4px; }
 .queue-summary { color: var(--text-muted); font-size: .8rem; margin: 0 0 10px; }
 .queue-empty { color: var(--text-muted); font-size: .85rem; }
 
-/* The queue is a list box: a white field with the navy selection bar. */
+/* The queue is a list box: a sunken field with the cyan selection bar. */
 .queue-list {
   list-style: none;
   margin: 0;
@@ -129,7 +129,7 @@ textarea { resize: vertical; }
 
 .queue-item .queue-title { font-weight: 700; }
 .queue-item .queue-meta { color: var(--text-muted); font-size: .78rem; }
-.queue-item .queue-entry { color: var(--title); font: 700 .75rem var(--font-mono); }
+.queue-item .queue-entry { color: var(--accent); font: 700 .75rem var(--font-mono); }
 
 .entry-head { margin-bottom: 8px; }
 .entry-head h2 { font-size: clamp(1.5rem, 4vw, 2rem); margin: .1em 0; }
@@ -146,7 +146,7 @@ textarea { resize: vertical; }
 }
 .save-state:empty { display: none; }
 .save-state[data-status="dirty"] { color: var(--warn); }
-.save-state[data-status="saving"] { color: var(--title); }
+.save-state[data-status="saving"] { color: var(--accent); }
 .save-state[data-status="saved"] { color: var(--ok); }
 .save-state[data-status="error"] { color: var(--error); font-weight: 700; }
 
@@ -289,7 +289,7 @@ kbd {
 .source-members, .evidence-list, .shortcut-list, .history-list { list-style: none; margin: 0 10px 10px; padding: 0; display: grid; gap: 4px; }
 .history-list { list-style: decimal inside; font-size: .88rem; }
 .source-members li, .evidence-list li { padding: 7px 9px; background: var(--field); box-shadow: var(--thin-sunken); font-size: .84rem; overflow-wrap: anywhere; }
-.source-members .member-path { color: var(--title); font-family: var(--font-mono); }
+.source-members .member-path { color: var(--accent); font-family: var(--font-mono); }
 .source-members .member-meta, .evidence-list .evidence-meta { color: var(--text-muted); font-size: .78rem; display: block; margin-top: 3px; }
 .evidence-list .evidence-observation { display: block; margin-top: 5px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--font-mono); }
 .evidence-list .evidence-id { color: var(--warn); font: .75rem var(--font-mono); }
@@ -326,10 +326,6 @@ kbd {
   .conflict-columns { grid-template-columns: 1fr; }
   .source-facts div { grid-template-columns: 1fr; gap: 2px; }
   .decision-actions button, .defer-actions button, .conflict-actions button { flex: 1 1 auto; }
-}
-
-@media (max-width: 720px) {
-  .fixture-banner { margin: 8px 12px 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

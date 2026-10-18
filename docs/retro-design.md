@@ -1,7 +1,9 @@
 # Retro-designet
 
-Bootdisk ser ut som et program fra 1997: et Windows 95-vindu på det blågrønne skrivebordet,
-med DOS der siden viser aktivitet og systemstatus. Alt ligger i de eksisterende stilarkene;
+Bootdisk bygger på det første utkastet fra september: mørk terminalbakgrunn, cyan
+BOOTDISK_-logo, ravgule etiketter og monospace. Oppå det ligger de harde kantene fra et
+90-tallsprogram: avfasede knapper og felt, vinduer med tittellinje, pikselikoner, en
+verktøylinje, adresselinje og statuslinje, og DOS der siden viser aktivitet og systemstatus. Alt ligger i de eksisterende stilarkene;
 ingen nye filer, skrifter eller avhengigheter.
 
 ## Hvor ting ligger
@@ -21,8 +23,8 @@ ingen nye filer, skrifter eller avhengigheter.
 
 ## Regler
 
-- **Windows for struktur, DOS for aktivitet.** Navigasjon, skjemaer, lister og dialoger er
-  Windows. Lasting, oppdateringshistorikken, tallene på forsiden og oppstartsteksten er DOS.
+- **Program for struktur, DOS for aktivitet.** Navigasjon, skjemaer, lister og dialoger er
+  avfasede programkontroller. Lasting, oppdateringshistorikken, tallene på forsiden og oppstartsteksten er DOS.
 - **Ingen pyntekontroller.** Vinduene har ingen minimer-, maksimer- eller lukkeknapper, og
   kolonneoverskrifter er flate fordi de ikke sorterer. Alt som ser ut som en knapp, er en
   knapp eller en lenke med én tydelig handling.
@@ -30,8 +32,8 @@ ingen nye filer, skrifter eller avhengigheter.
   Oppdateringer) og markerer gjeldende side med `aria-current`. Kurateringssidene har bare
   tittellinjen, så navigasjonsporten der ikke får nye lenker.
 - **Status har alltid ord.** Farge er aldri eneste signal; oppdateringsmerker står i klammer.
-- **Fokus** er Windows-fokusrammen, prikket og 2 px, hvit på marineblå og svarte flater.
+- **Fokus** er en prikket ramme på 2 px, lys på mørke flater og mørk på cyan markering.
 - **Bevegelse** er bare blinkende markør og en oppstartstekst som kommer linje for linje på
   under et halvt sekund. Begge stopper med `prefers-reduced-motion`.
-- **Mobil:** vinduet fyller skjermen, verktøylinjen blir tre like store knapper med ikon over
+- **Mobil:** verktøylinjen blir tre like store knapper med ikon over
   tekst, filtre og paneler stables, og trykkflatene er minst 40–56 px høye.

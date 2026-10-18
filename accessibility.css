@@ -5,7 +5,7 @@
   z-index: 10;
   padding: 10px 14px;
   background: var(--tooltip);
-  box-shadow: 0 0 0 1px var(--dark);
+  border: 2px dashed var(--warn);
   color: var(--text);
   font-weight: 700;
   transform: translateY(-160%);

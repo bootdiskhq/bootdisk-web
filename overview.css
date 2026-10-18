@@ -1,5 +1,5 @@
 /* Overview screen for the curator, in the same program window as the decision screen:
- * a filter toolbar, a details list in a white field and a pager. */
+ * a filter toolbar, a details list in a sunken field and a pager. */
 .overview-title {
   font-size: clamp(1.5rem, 4vw, 2rem);
   margin: 16px 0 6px;
@@ -116,7 +116,7 @@
 }
 
 .row-source { display: block; color: var(--text-muted); font-size: .8rem; }
-.row-entry { color: var(--title); font-family: var(--font-mono); }
+.row-entry { color: var(--accent); font-family: var(--font-mono); }
 
 /* The approved value leads; a draft that differs is labelled as a draft and never shown
  * as the catalogue's approved value. */

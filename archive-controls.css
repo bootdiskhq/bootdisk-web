@@ -21,7 +21,7 @@
   min-height: 36px;
 }
 
-/* Nothing matched: an information dialog, not an empty white field. */
+/* Nothing matched: an information dialog, not an empty field. */
 .archive-empty {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);

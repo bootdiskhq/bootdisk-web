@@ -2,10 +2,10 @@
  * is always carried by words, never by colour alone. */
 .aq-banner {
   position: relative;
-  margin: 10px 18px 0;
+  margin: 10px 0 0;
   padding: 10px 14px 10px 50px;
   background: var(--tooltip);
-  box-shadow: 0 0 0 1px var(--dark);
+  border: 2px dashed var(--warn);
   color: var(--text);
   font-size: .9rem;
 }
@@ -129,7 +129,7 @@
 .aq-row-tasks { color: var(--text-muted); }
 .aq-stage-text-needs_review { color: var(--warn); font-weight: 700; }
 
-.aq-status-candidate { color: var(--title); }
+.aq-status-candidate { color: var(--accent); }
 .aq-status-retain_unknown { color: var(--text-muted); }
 .aq-status-inspect { color: var(--text); }
 .aq-status-conflict { color: var(--warn); font-weight: 700; }
@@ -145,7 +145,7 @@
   margin: 10px 0;
   padding: 8px 12px;
   background: var(--tooltip);
-  box-shadow: 0 0 0 1px var(--dark);
+  border: 2px dashed var(--warn);
   color: var(--text);
   font-size: .88rem;
 }
@@ -184,7 +184,6 @@
 .aq-technical dd { margin: 0; overflow-wrap: anywhere; }
 
 @media (max-width: 720px) {
-  .aq-banner { margin: 8px 12px 0; }
   .aq-control-wide { grid-column: auto; }
   .aq-facts { grid-template-columns: 1fr; gap: 2px; }
   .aq-facts dd { margin-bottom: 8px; }

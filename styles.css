@@ -1,50 +1,53 @@
-/* Bootdisk 1997: a Windows 95 program window on the teal desktop, with DOS for activity and
- * system status. Every page loads this file first; it holds the palette, the bevels, the
+/* Bootdisk 1997: the first draft's dark terminal look as a 90s program, with DOS for activity
+ * and system status. Every page loads this file first; it holds the palette, the bevels, the
  * pixel icons and the shared components. Page files only lay out their own content.
  *
  * Bevels are crisp inset box-shadows (never blurred). Status always has words, never only
  * a colour. Nothing that looks clickable is decoration. */
 :root {
-  /* Palette: the sixteen-colour world plus the classic grey face. */
-  --desktop: #008080;
-  --face: #c0c0c0;
-  --face-light: #dfdfdf;
-  --hilite: #fff;
-  --shade: #808080;
-  --dark: #0a0a0a;
-  --title: #000080;
-  --title-text: #fff;
-  --field: #fff;
-  --text: #000;
-  --text-muted: #3b3b3b;
-  --select: #000080;
-  --select-text: #fff;
-  --hover: #e8e8ff;
-  --link: #000080;
-  --link-hover: #0000ff;
-  --ok: #006400;
-  --warn: #7a4a00;
-  --error: #a00000;
-  --tooltip: #ffffe1;
+  /* Palette: the first Bootdisk draft — a dark terminal with cyan, amber and green — given
+   * the hard edges and bevels of a 90s program. */
+  --desktop: #081015;
+  --face: #11181d;
+  --face-light: #16222a;
+  --hilite: #50616a;
+  --shade: #334149;
+  --dark: #000;
+  --title: #1b272d;
+  --title-text: #dbe4e8;
+  --field: #091116;
+  --text: #e8edf0;
+  --text-muted: #93a1a8;
+  --accent: #62e6ff;
+  --select: #62e6ff;
+  --select-text: #081015;
+  --hover: #122028;
+  --link: #62e6ff;
+  --link-hover: #a6f2ff;
+  --ok: #73f2a7;
+  --warn: #ffca62;
+  --error: #ff9c8a;
+  --tooltip: #1d1608;
   --term-bg: #000;
-  --term-text: #c0c0c0;
+  --term-text: #b7c1c6;
   --term-bright: #fff;
-  --term-green: #4cff6a;
-  --term-amber: #ffb000;
-  --term-select: #0000a8;
+  --term-green: #73f2a7;
+  --term-amber: #ffca62;
+  --term-select: #0f2a33;
 
   /* Older names still used by the curator screens, mapped onto the palette. */
   --ink: var(--text);
   --muted: var(--text-muted);
   --panel: var(--face);
   --line: var(--shade);
-  --cyan: var(--link);
+  --cyan: var(--accent);
   --amber: var(--warn);
   --green: var(--ok);
   --bg: var(--desktop);
 
-  --font-ui: Tahoma, Verdana, "Segoe UI", "DejaVu Sans", Geneva, sans-serif;
-  --font-mono: "Lucida Console", Consolas, "DejaVu Sans Mono", "Liberation Mono", "Courier New", monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", "Lucida Console", monospace;
+  --font-ui: var(--font-mono);
+  --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --raised: inset -1px -1px var(--dark), inset 1px 1px var(--face-light), inset -2px -2px var(--shade), inset 2px 2px var(--hilite);
   --pressed: inset -1px -1px var(--hilite), inset 1px 1px var(--dark), inset -2px -2px var(--face-light), inset 2px 2px var(--shade);
@@ -63,7 +66,7 @@
   --icon-error: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2z' fill='%23800000'/%3E%3Cpath d='M5 2h6v1h1v1h1v2h1v4h-1v2h-1v1h-1v1H5v-1H4v-1H3v-2H2V6h1V4h1V3h1z' fill='%23e00000'/%3E%3Cpath d='M5 4h1v1h1v1h2V5h1V4h1v1h-1v1H9v1H8v2h1v1h1v1h1v1h-1v-1H9v-1H7v1H6v1H5v-1h1v-1h1V9h1V7H7V6H6V5H5z' fill='%23fff'/%3E%3C/svg%3E");
   --icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2z' fill='%23000080'/%3E%3Cpath d='M5 2h6v1h1v1h1v2h1v4h-1v2h-1v1h-1v1H5v-1H4v-1H3v-2H2V6h1V4h1V3h1z' fill='%23fff'/%3E%3Cpath d='M7 4h2v2H7zM6 7h3v4h1v1H6v-1h1V8H6z' fill='%23000080'/%3E%3C/svg%3E");
   --icon-hourglass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M3 1h10v2h-1v3h-1v1h-1v2h1v1h1v3h1v2H3v-2h1v-3h1V9h1V7H5V6H4V3H3z' fill='%23000'/%3E%3Cpath d='M5 3h6v3h-1v1H9v2h1v1h1v3H5v-3h1V9h1V7H6V6H5z' fill='%23fff'/%3E%3Cpath d='M6 4h4v1H9v1H7V5H6zm1 7h2v1h1v1H6v-1h1z' fill='%23808000'/%3E%3C/svg%3E");
-  --icon-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M4 6h7v1h-1v1H9v1H8v1H7V9H6V8H5V7H4z' fill='%23000'/%3E%3C/svg%3E");
+  --icon-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M4 6h7v1h-1v1H9v1H8v1H7V9H6V8H5V7H4z' fill='%23e8edf0'/%3E%3C/svg%3E");
 }
 
 *,
@@ -73,17 +76,17 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  padding: 24px 16px 40px;
-  background: var(--desktop);
+  padding: 0 0 24px;
+  background: radial-gradient(circle at 50% -10%, #17303a 0, #0b171d 35%, var(--desktop) 70%) no-repeat var(--desktop);
   color: var(--text);
-  font: 15px/1.5 var(--font-ui);
+  font: 15px/1.55 var(--font-mono);
 }
 
 img {
@@ -99,7 +102,7 @@ a:hover {
   color: var(--link-hover);
 }
 
-/* The Windows focus rectangle, made thick enough to see on today's screens. */
+/* A dotted focus rectangle, as in old programs, thick enough for today's screens. */
 :focus-visible {
   outline: 2px dotted var(--text);
   outline-offset: 2px;
@@ -117,14 +120,11 @@ pre {
   color: var(--select-text);
 }
 
-/* ---- The program window ------------------------------------------------------------- */
+/* ---- Page frame: brand line, toolbar, content, status line ------------------------- */
 
 .app-window {
-  width: min(100%, 1080px);
+  width: min(100% - 32px, 1040px);
   margin: 0 auto;
-  padding: 3px;
-  background: var(--face);
-  box-shadow: var(--raised);
 }
 
 .site-header {
@@ -134,42 +134,34 @@ pre {
 .title-bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 12px;
-  min-height: 30px;
-  padding: 3px 6px 3px 4px;
-  background: var(--title);
-  color: var(--title-text);
+  align-items: baseline;
+  gap: 4px 18px;
+  padding: 30px 0 14px;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: var(--title-text);
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: .08em;
+  gap: 10px;
+  color: var(--accent);
+  font: 900 1.55rem/1.2 var(--font-mono);
+  letter-spacing: .12em;
   text-decoration: none;
+  text-shadow: 0 0 18px #62e6ff55;
 }
 
 .brand::before {
   content: "";
   flex: none;
-  width: 20px;
-  height: 20px;
-  background: var(--icon-floppy) center / 20px 20px no-repeat;
+  align-self: center;
+  width: 24px;
+  height: 24px;
+  background: var(--icon-floppy) center / 24px 24px no-repeat;
   image-rendering: pixelated;
 }
 
 .brand:hover {
-  color: var(--title-text);
-  text-decoration: underline;
-}
-
-.title-bar :focus-visible,
-.brand:focus-visible {
-  outline-color: var(--title-text);
+  color: var(--accent);
 }
 
 .cursor {
@@ -177,33 +169,32 @@ pre {
 }
 
 .tagline {
-  color: #e6e6ff;
-  font-size: .85rem;
+  color: var(--text-muted);
+  font-size: .8rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
-.tagline::before {
-  content: "– ";
-}
-
-/* Toolbar: the site's real navigation, as big flat buttons with pixel icons. */
+/* Toolbar: the site's real navigation, flat buttons with pixel icons on the header line. */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
-  margin: 3px 0 0;
-  padding: 3px 4px;
-  box-shadow: var(--etched);
+  gap: 4px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--shade);
 }
 
 .tool {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   min-height: 40px;
   padding: 6px 12px 6px 9px;
-  color: var(--text);
-  font-size: .9rem;
+  color: var(--text-muted);
+  font-size: .85rem;
+  letter-spacing: .04em;
   text-decoration: none;
+  text-transform: uppercase;
 }
 
 .tool:hover {
@@ -217,8 +208,9 @@ pre {
 }
 
 .tool[aria-current="page"] {
-  background: var(--face-light);
-  box-shadow: var(--thin-sunken);
+  background: var(--field);
+  box-shadow: var(--sunken);
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -238,6 +230,7 @@ pre {
 html.entry-view .tool-home {
   background: none;
   box-shadow: none;
+  color: var(--text-muted);
   font-weight: 400;
 }
 
@@ -247,7 +240,7 @@ html.entry-view .tool-home:hover {
 
 main {
   display: block;
-  padding: 4px 18px 20px;
+  padding: 0 0 20px;
 }
 
 /* ---- Typography --------------------------------------------------------------------- */
@@ -256,19 +249,20 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 h1 {
-  margin: .15em 0 .3em;
-  font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+  margin: .1em 0 .2em;
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: .98;
+  letter-spacing: -.04em;
 }
 
 h2 {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
 h3 {
@@ -276,41 +270,42 @@ h3 {
 }
 
 .hero {
-  padding: 18px 0 8px;
+  padding: 36px 0 12px;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--title);
-  font: 700 .8rem/1.4 var(--font-mono);
-  letter-spacing: .04em;
+  color: var(--warn);
+  font: .78rem/1.4 var(--font-mono);
+  letter-spacing: .1em;
   text-transform: uppercase;
 }
 
 .lede {
-  max-width: 70ch;
-  margin: .4em 0 1em;
-  color: var(--text);
-  font-size: 1.05rem;
-  line-height: 1.6;
+  max-width: 68ch;
+  margin: .5em 0 1em;
+  color: var(--text-muted);
+  font: 1.12rem/1.6 var(--font-display);
 }
 
 .version {
   margin: 0;
-  color: var(--text-muted);
-  font: .95rem var(--font-mono);
+  color: var(--accent);
+  font: 1.05rem var(--font-mono);
 }
 
 .provenance {
   margin-top: 16px;
   color: var(--text-muted);
-  font-size: .82rem;
+  font-size: .78rem;
 }
 
 .section-label {
-  margin: 0 0 8px;
-  font-size: 1rem;
-  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font: .78rem var(--font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
 }
 
 /* ---- Shared components -------------------------------------------------------------- */
@@ -318,10 +313,10 @@ h3 {
 /* A window inside the program window (an MDI child). */
 .window,
 .win {
-  margin: 16px 0;
-  padding: 3px;
+  margin: 20px 0;
+  border: 1px solid var(--hilite);
   background: var(--face);
-  box-shadow: var(--raised);
+  box-shadow: 0 0 0 1px var(--dark);
 }
 
 .window-bar,
@@ -329,12 +324,14 @@ h3 {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 26px;
-  padding: 3px 6px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--hilite);
   background: var(--title);
   color: var(--title-text);
-  font-weight: 700;
-  font-size: .88rem;
+  font-size: .76rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
 }
 
 .window-bar::before,
@@ -349,10 +346,10 @@ h3 {
 
 .window-body,
 .win-body {
-  padding: 14px;
+  padding: 20px;
 }
 
-/* A sunken white field: lists, documents, text to read. */
+/* A sunken field: lists, documents, text to read. */
 .sunken {
   background: var(--field);
   box-shadow: var(--sunken);
@@ -401,21 +398,28 @@ button:focus-visible,
 }
 
 button:disabled {
-  color: var(--shade);
-  text-shadow: 1px 1px var(--hilite);
+  color: var(--hilite);
   cursor: default;
 }
 
 /* The default button of a dialog has an extra black frame. */
 .primary-link,
 button.primary {
-  box-shadow: 0 0 0 1px var(--dark), var(--raised);
+  background: var(--term-select);
+  box-shadow: 0 0 0 1px var(--accent), var(--raised);
+  color: var(--accent);
   font-weight: 700;
+}
+
+.primary-link:hover,
+button.primary:hover {
+  color: var(--accent);
+  background: #133845;
 }
 
 .primary-link:active,
 button.primary:active:not(:disabled) {
-  box-shadow: 0 0 0 1px var(--dark), var(--pressed);
+  box-shadow: 0 0 0 1px var(--accent), var(--pressed);
 }
 
 /* Fields */
@@ -441,7 +445,7 @@ input[type="search"]::-webkit-search-decoration {
   -webkit-appearance: none;
 }
 
-/* The drop-down button sits inside the field, as on Windows. */
+/* The drop-down button sits inside the field, as in old programs. */
 select {
   padding-right: 30px;
   cursor: pointer;
@@ -466,7 +470,7 @@ textarea::placeholder {
 
 input[type="radio"],
 input[type="checkbox"] {
-  accent-color: var(--title);
+  accent-color: var(--accent);
 }
 
 input[type="file"]::file-selector-button {
@@ -635,26 +639,13 @@ input[type="file"]::file-selector-button {
   font-weight: 700;
 }
 
-/* The project note: an information box with the Windows "i". */
+/* The project note, as in the first draft: a cyan rule beside quiet text. */
 .about {
-  position: relative;
-  max-width: 78ch;
-  margin: 24px 0 8px;
-  padding: 12px 14px 12px 58px;
-  background: var(--field);
-  box-shadow: var(--sunken);
-  color: var(--text);
-}
-
-.about::before {
-  content: "";
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  width: 32px;
-  height: 32px;
-  background: var(--icon-info) center / 32px 32px no-repeat;
-  image-rendering: pixelated;
+  max-width: 76ch;
+  margin: 40px 0 16px;
+  padding: 2px 0 2px 18px;
+  border-left: 3px solid var(--accent);
+  color: var(--term-text);
 }
 
 .about p {
@@ -666,7 +657,7 @@ input[type="file"]::file-selector-button {
 }
 
 .about strong {
-  color: var(--title);
+  color: var(--accent);
   font-family: var(--font-mono);
 }
 
@@ -676,7 +667,7 @@ input[type="file"]::file-selector-button {
   padding-bottom: 4px;
 }
 
-/* Filter toolbar: labelled fields on the grey face, separated by an etched line. */
+/* Filter toolbar: labelled fields in an etched frame. */
 .archive-tools {
   display: flex;
   flex-wrap: wrap;
@@ -706,7 +697,7 @@ input[type="file"]::file-selector-button {
   white-space: nowrap;
 }
 
-/* Explorer icon view in a white list field. Selection is the Windows navy bar. */
+/* Explorer icon view in a sunken list field. Selection is a cyan bar. */
 .archive-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -772,7 +763,7 @@ input[type="file"]::file-selector-button {
 }
 
 .archive-card-copy span {
-  color: var(--title);
+  color: var(--accent);
   font: .78rem var(--font-mono);
 }
 
@@ -838,9 +829,13 @@ footer {
   flex-wrap: wrap;
   align-items: stretch;
   gap: 2px;
-  margin-top: 2px;
-  color: var(--text);
-  font: .78rem/1.3 var(--font-mono);
+  margin-top: 24px;
+  padding-top: 10px;
+  border-top: 1px solid var(--shade);
+  color: var(--text-muted);
+  font: .72rem/1.3 var(--font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 footer > * {
@@ -861,29 +856,15 @@ footer > :first-child {
   }
 }
 
-/* ---- Narrow screens: the window fills the screen and panels stack. ------------------ */
+/* ---- Narrow screens: panels stack and the toolbar becomes three big buttons. ------- */
 
 @media (max-width: 720px) {
-  body {
-    padding: 0;
-  }
-
-  .app-window {
-    min-height: 100vh;
-  }
-
-  main {
-    padding: 4px 12px 16px;
+  .title-bar {
+    padding-top: 20px;
   }
 
   .tagline {
     flex-basis: 100%;
-    padding-left: 26px;
-    font-size: .8rem;
-  }
-
-  .tagline::before {
-    content: none;
   }
 
   /* Three equal buttons with the icon over the label; each is a full-size touch target. */
@@ -895,16 +876,20 @@ footer > :first-child {
   .tool {
     flex-direction: column;
     justify-content: center;
-    gap: 2px;
-    min-height: 56px;
+    gap: 3px;
+    min-height: 58px;
     padding: 5px 4px;
-    font-size: .8rem;
+    font-size: .72rem;
     line-height: 1.15;
     text-align: center;
   }
 
   .tool:active {
     padding: 6px 3px 4px 5px;
+  }
+
+  .hero {
+    padding-top: 24px;
   }
 
   .window-body {
@@ -929,14 +914,6 @@ footer > :first-child {
 
   .archive-count {
     align-self: flex-start;
-  }
-
-  .about {
-    padding-left: 52px;
-  }
-
-  .about::before {
-    left: 10px;
   }
 
   footer {
