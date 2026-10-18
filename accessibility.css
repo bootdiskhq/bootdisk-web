@@ -4,8 +4,9 @@
   left: 8px;
   z-index: 10;
   padding: 10px 14px;
-  background: var(--cyan);
-  color: var(--bg);
+  background: var(--tooltip);
+  box-shadow: 0 0 0 1px var(--dark);
+  color: var(--text);
   font-weight: 700;
   transform: translateY(-160%);
 }
@@ -14,15 +15,10 @@
   transform: translateY(0);
 }
 
-.system-message {
-  margin: 24px 0;
-  padding: 12px 14px;
-  border: 1px solid var(--amber);
-  color: var(--amber);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .cursor {
+  .cursor,
+  .block-cursor,
+  .boot-line {
     animation: none;
   }
 

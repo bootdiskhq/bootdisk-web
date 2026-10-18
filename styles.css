@@ -1,20 +1,964 @@
-:root{--ink:#e8edf0;--muted:#93a1a8;--panel:#11181d;--line:#334149;--cyan:#62e6ff;--amber:#ffca62;--green:#73f2a7;--bg:#081015}*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;background:radial-gradient(circle at 50% -10%,#17303a 0,#0b171d 35%,var(--bg) 70%);color:var(--ink);font:16px/1.55 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;min-height:100vh}.site-header,main,footer{width:min(100% - 32px,1040px);margin-inline:auto}.site-header{display:flex;align-items:baseline;gap:18px;padding:30px 0 18px;border-bottom:1px solid var(--line)}.brand{color:var(--cyan);font-weight:900;font-size:1.55rem;letter-spacing:.12em;text-decoration:none;text-shadow:0 0 18px #62e6ff55}.cursor{animation:blink 1s steps(1) infinite}.tagline{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}.hero{padding:64px 0 36px}.eyebrow{color:var(--amber);font-size:.78rem;letter-spacing:.1em}.title-row{display:flex;align-items:center;gap:18px}.software-icon{width:48px;height:48px;image-rendering:auto;filter:drop-shadow(0 4px 8px #0008)}h1{font-family:system-ui,sans-serif;font-size:clamp(2.6rem,8vw,5.7rem);line-height:.92;letter-spacing:-.055em;margin:.1em 0}.version{color:var(--cyan);margin:0;font-size:1.05rem}.lede{color:var(--muted);max-width:680px;font-family:system-ui,sans-serif;font-size:1.15rem}.window{border:1px solid #50616a;background:var(--panel);box-shadow:0 22px 60px #0008,0 0 0 1px #000}.window-bar{min-height:38px;padding:8px 11px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#26353d,#1b272d);border-bottom:1px solid #50616a;color:#dbe4e8;font-size:.76rem;letter-spacing:.1em}.window-buttons{display:flex;gap:7px}.window-buttons i{display:block;width:12px;height:12px;border:1px solid #71818a;background:#10181c}.window-body{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(230px,.7fr);gap:30px;padding:28px}.screenshot-frame{margin:0}.screenshot-frame img{display:block;width:100%;min-height:260px;object-fit:contain;background:#05090b;border:1px solid var(--line)}.screenshot-frame figcaption{color:var(--muted);font-size:.72rem;margin-top:9px}.facts h2{font-family:system-ui,sans-serif;margin:0 0 18px;font-size:1.25rem}.facts dl{margin:0}.facts dl div{display:grid;grid-template-columns:92px 1fr;padding:9px 0;border-bottom:1px dotted #334149}.facts dt{color:var(--muted)}.facts dd{margin:0}.status{color:var(--green)}.provenance{color:var(--muted);font-size:.72rem;margin-top:24px}.about{margin:48px 0 70px;padding-left:18px;border-left:3px solid var(--cyan);max-width:760px;color:#b7c1c6}.about strong{color:var(--cyan)}.archive-hero{padding-bottom:28px}.archive-tools{display:flex;align-items:center;gap:16px;padding:18px 0 26px;border-top:1px solid var(--line)}.archive-tools label{position:absolute;left:-9999px}.archive-tools input{flex:1;min-width:0;padding:12px 14px;border:1px solid #50616a;background:#091116;color:var(--ink);font:inherit;outline:none}.archive-tools input:focus{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan)}.archive-count{color:var(--muted);font-size:.75rem;white-space:nowrap}.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:10px}.archive-card{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;min-height:82px;padding:13px;border:1px solid var(--line);background:#0d161b;color:var(--ink);text-decoration:none;transition:transform .12s,border-color .12s,background .12s}.archive-card:hover,.archive-card:focus-visible{transform:translateY(-2px);border-color:var(--cyan);background:#122028;outline:none}.archive-card-icon{display:grid;place-items:center;width:48px;height:48px;border:1px solid #26363e;background:#070c0f;color:#61727b;font-size:1.4rem}.archive-card-icon img{width:32px;height:32px;object-fit:contain}.archive-card-copy{display:flex;flex-direction:column;min-width:0}.archive-card-copy strong{font-family:system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.archive-card-copy span{color:var(--cyan);font-size:.72rem}.archive-card-copy small{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}footer{display:flex;justify-content:space-between;padding:22px 0 34px;border-top:1px solid var(--line);color:#61727b;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}@keyframes blink{50%{opacity:0}}@media(max-width:720px){.site-header{display:block}.tagline{display:block;margin-top:5px}.hero{padding-top:44px}.window-body{grid-template-columns:1fr;padding:18px}.software-icon{width:38px;height:38px}.archive-tools{align-items:stretch;flex-direction:column}.archive-count{align-self:flex-end}footer{gap:16px;flex-direction:column}}
+/* Bootdisk 1997: a Windows 95 program window on the teal desktop, with DOS for activity and
+ * system status. Every page loads this file first; it holds the palette, the bevels, the
+ * pixel icons and the shared components. Page files only lay out their own content.
+ *
+ * Bevels are crisp inset box-shadows (never blurred). Status always has words, never only
+ * a colour. Nothing that looks clickable is decoration. */
+:root {
+  /* Palette: the sixteen-colour world plus the classic grey face. */
+  --desktop: #008080;
+  --face: #c0c0c0;
+  --face-light: #dfdfdf;
+  --hilite: #fff;
+  --shade: #808080;
+  --dark: #0a0a0a;
+  --title: #000080;
+  --title-text: #fff;
+  --field: #fff;
+  --text: #000;
+  --text-muted: #3b3b3b;
+  --select: #000080;
+  --select-text: #fff;
+  --hover: #e8e8ff;
+  --link: #000080;
+  --link-hover: #0000ff;
+  --ok: #006400;
+  --warn: #7a4a00;
+  --error: #a00000;
+  --tooltip: #ffffe1;
+  --term-bg: #000;
+  --term-text: #c0c0c0;
+  --term-bright: #fff;
+  --term-green: #4cff6a;
+  --term-amber: #ffb000;
+  --term-select: #0000a8;
 
-/* Original RTF text from the CD: a quiet source note under the menu description. */
-#source-documents{max-width:680px;margin:1.25rem 0 0;font-family:system-ui,sans-serif}
-#source-documents[hidden]{display:none}
-.source-document+.source-document{margin-top:1rem}
-.source-document details{border-left:3px solid var(--line)}
-.source-document details[open]{border-left-color:var(--cyan)}
-.source-document summary{display:flex;align-items:center;gap:.6em;min-height:44px;padding:.35rem .9rem;color:var(--cyan);font-weight:600;cursor:pointer;list-style:none;overflow-wrap:anywhere}
-.source-document summary::-webkit-details-marker{display:none}
-.source-document summary::before{content:"";flex:none;width:0;height:0;border-block:.35em solid transparent;border-left:.55em solid currentColor;transition:transform .12s}
-.source-document details[open] summary::before{transform:rotate(90deg)}
-.source-document summary:hover{text-decoration:underline;text-underline-offset:3px}
-.source-document summary:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-.rtf-source-text{margin:0;padding:.25rem .9rem 1rem;color:var(--ink);font-size:1rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;hyphens:manual}
-.source-document-note{margin:0 0 .35rem;color:var(--muted);font-size:.95rem}
-.source-document-file{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .8rem;margin:.5rem 0 0;font-size:.85rem;color:var(--muted)}
-.source-document-file a{color:var(--cyan);font-weight:600;padding-block:.35rem}
-.source-document-meta{min-width:0;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:.78rem}
-@media(prefers-reduced-motion:reduce){.source-document summary::before{transition:none}}
+  /* Older names still used by the curator screens, mapped onto the palette. */
+  --ink: var(--text);
+  --muted: var(--text-muted);
+  --panel: var(--face);
+  --line: var(--shade);
+  --cyan: var(--link);
+  --amber: var(--warn);
+  --green: var(--ok);
+  --bg: var(--desktop);
+
+  --font-ui: Tahoma, Verdana, "Segoe UI", "DejaVu Sans", Geneva, sans-serif;
+  --font-mono: "Lucida Console", Consolas, "DejaVu Sans Mono", "Liberation Mono", "Courier New", monospace;
+
+  --raised: inset -1px -1px var(--dark), inset 1px 1px var(--face-light), inset -2px -2px var(--shade), inset 2px 2px var(--hilite);
+  --pressed: inset -1px -1px var(--hilite), inset 1px 1px var(--dark), inset -2px -2px var(--face-light), inset 2px 2px var(--shade);
+  --sunken: inset -1px -1px var(--hilite), inset 1px 1px var(--shade), inset -2px -2px var(--face-light), inset 2px 2px var(--dark);
+  --thin-sunken: inset -1px -1px var(--hilite), inset 1px 1px var(--shade);
+  --thin-raised: inset -1px -1px var(--shade), inset 1px 1px var(--hilite);
+  --etched: inset 1px 1px var(--shade), 1px 1px var(--hilite);
+
+  /* 16 x 16 pixel icons. */
+  --icon-floppy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M1 1h13l1 1v13H1z' fill='%23000'/%3E%3Cpath d='M2 2h12v12H2z' fill='%23000080'/%3E%3Cpath d='M4 2h8v5H4z' fill='%23c0c0c0'/%3E%3Cpath d='M9 3h2v3H9z' fill='%23000080'/%3E%3Cpath d='M3 9h10v5H3z' fill='%23fff'/%3E%3Cpath d='M4 10h8v1H4zm0 2h6v1H4z' fill='%23808080'/%3E%3C/svg%3E");
+  --icon-computer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M1 1h14v10H1z' fill='%23000'/%3E%3Cpath d='M2 2h12v8H2z' fill='%23c0c0c0'/%3E%3Cpath d='M3 3h10v6H3z' fill='%23008080'/%3E%3Cpath d='M4 4h3v1H4z' fill='%23fff'/%3E%3Cpath d='M6 11h4v2H6z' fill='%23808080'/%3E%3Cpath d='M3 13h10v2H3z' fill='%23000'/%3E%3Cpath d='M4 13h8v1H4z' fill='%23c0c0c0'/%3E%3C/svg%3E");
+  --icon-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M1 3h6l1 1h7v11H1z' fill='%23000'/%3E%3Cpath d='M2 4h5l1 1h6v9H2z' fill='%23ffd84a'/%3E%3Cpath d='M2 6h12v1H2z' fill='%23fff'/%3E%3Cpath d='M2 13h12v1H2z' fill='%23a07800'/%3E%3C/svg%3E");
+  --icon-log: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M2 1h9l3 3v11H2z' fill='%23000'/%3E%3Cpath d='M3 2h7v3h3v9H3z' fill='%23fff'/%3E%3Cpath d='M4 6h2v1H4zm3 0h5v1H7zM4 8h2v1H4zm3 0h4v1H7zm-3 2h2v1H4zm3 0h5v1H7zm-3 2h2v1H4zm3 0h3v1H7z' fill='%23000080'/%3E%3C/svg%3E");
+  --icon-cd: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2z' fill='%23000'/%3E%3Cpath d='M5 2h6v1h1v1h1v2h1v4h-1v2h-1v1h-1v1H5v-1H4v-1H3v-2H2V6h1V4h1V3h1z' fill='%23dfdfdf'/%3E%3Cpath d='M9 3h2v1h1v2h-1V5h-1V4H9z' fill='%2300c0c0'/%3E%3Cpath d='M4 10h1v1h1v1h1v1H5v-1H4z' fill='%23ff80ff'/%3E%3Cpath d='M7 6h2v1h1v2H9v1H7V9H6V7h1z' fill='%23808080'/%3E%3Cpath d='M7 7h2v2H7z' fill='%23fff'/%3E%3C/svg%3E");
+  --icon-warning: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M7 1h2v2h1v3h1v3h1v3h1v2h1v1H1v-1h1v-2h1V9h1V6h1V3h1V1z' fill='%23000'/%3E%3Cpath d='M7 3h2v3h1v3h1v3h1v2H4v-2h1V9h1V6h1z' fill='%23ffd800'/%3E%3Cpath d='M7 5h2v5H7zm0 6h2v2H7z' fill='%23000'/%3E%3C/svg%3E");
+  --icon-error: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2z' fill='%23800000'/%3E%3Cpath d='M5 2h6v1h1v1h1v2h1v4h-1v2h-1v1h-1v1H5v-1H4v-1H3v-2H2V6h1V4h1V3h1z' fill='%23e00000'/%3E%3Cpath d='M5 4h1v1h1v1h2V5h1V4h1v1h-1v1H9v1H8v2h1v1h1v1h1v1h-1v-1H9v-1H7v1H6v1H5v-1h1v-1h1V9h1V7H7V6H6V5H5z' fill='%23fff'/%3E%3C/svg%3E");
+  --icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2z' fill='%23000080'/%3E%3Cpath d='M5 2h6v1h1v1h1v2h1v4h-1v2h-1v1h-1v1H5v-1H4v-1H3v-2H2V6h1V4h1V3h1z' fill='%23fff'/%3E%3Cpath d='M7 4h2v2H7zM6 7h3v4h1v1H6v-1h1V8H6z' fill='%23000080'/%3E%3C/svg%3E");
+  --icon-hourglass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M3 1h10v2h-1v3h-1v1h-1v2h1v1h1v3h1v2H3v-2h1v-3h1V9h1V7H5V6H4V3H3z' fill='%23000'/%3E%3Cpath d='M5 3h6v3h-1v1H9v2h1v1h1v3H5v-3h1V9h1V7H6V6H5z' fill='%23fff'/%3E%3Cpath d='M6 4h4v1H9v1H7V5H6zm1 7h2v1h1v1H6v-1h1z' fill='%23808000'/%3E%3C/svg%3E");
+  --icon-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M4 6h7v1h-1v1H9v1H8v1H7V9H6V8H5V7H4z' fill='%23000'/%3E%3C/svg%3E");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 24px 16px 40px;
+  background: var(--desktop);
+  color: var(--text);
+  font: 15px/1.5 var(--font-ui);
+}
+
+img {
+  max-width: 100%;
+}
+
+a {
+  color: var(--link);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+/* The Windows focus rectangle, made thick enough to see on today's screens. */
+:focus-visible {
+  outline: 2px dotted var(--text);
+  outline-offset: 2px;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--select);
+  color: var(--select-text);
+}
+
+/* ---- The program window ------------------------------------------------------------- */
+
+.app-window {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+  padding: 3px;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+.site-header {
+  display: block;
+}
+
+.title-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+  min-height: 30px;
+  padding: 3px 6px 3px 4px;
+  background: var(--title);
+  color: var(--title-text);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--title-text);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: .08em;
+  text-decoration: none;
+}
+
+.brand::before {
+  content: "";
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background: var(--icon-floppy) center / 20px 20px no-repeat;
+  image-rendering: pixelated;
+}
+
+.brand:hover {
+  color: var(--title-text);
+  text-decoration: underline;
+}
+
+.title-bar :focus-visible,
+.brand:focus-visible {
+  outline-color: var(--title-text);
+}
+
+.cursor {
+  animation: blink 1s steps(1) infinite;
+}
+
+.tagline {
+  color: #e6e6ff;
+  font-size: .85rem;
+}
+
+.tagline::before {
+  content: "– ";
+}
+
+/* Toolbar: the site's real navigation, as big flat buttons with pixel icons. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 3px 0 0;
+  padding: 3px 4px;
+  box-shadow: var(--etched);
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 6px 12px 6px 9px;
+  color: var(--text);
+  font-size: .9rem;
+  text-decoration: none;
+}
+
+.tool:hover {
+  color: var(--text);
+  box-shadow: var(--thin-raised);
+}
+
+.tool:active {
+  box-shadow: var(--thin-sunken);
+  padding: 7px 11px 5px 10px;
+}
+
+.tool[aria-current="page"] {
+  background: var(--face-light);
+  box-shadow: var(--thin-sunken);
+  font-weight: 700;
+}
+
+.tool-icon {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  background: center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+}
+
+.tool-home .tool-icon { background-image: var(--icon-computer); }
+.tool-archive .tool-icon { background-image: var(--icon-folder); }
+.tool-updates .tool-icon { background-image: var(--icon-log); }
+
+/* The home button only counts as the current page on the front page itself. */
+html.entry-view .tool-home {
+  background: none;
+  box-shadow: none;
+  font-weight: 400;
+}
+
+html.entry-view .tool-home:hover {
+  box-shadow: var(--thin-raised);
+}
+
+main {
+  display: block;
+  padding: 4px 18px 20px;
+}
+
+/* ---- Typography --------------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+h1 {
+  margin: .15em 0 .3em;
+  font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+}
+
+h2 {
+  font-size: 1.2rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+}
+
+.hero {
+  padding: 18px 0 8px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--title);
+  font: 700 .8rem/1.4 var(--font-mono);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.lede {
+  max-width: 70ch;
+  margin: .4em 0 1em;
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.version {
+  margin: 0;
+  color: var(--text-muted);
+  font: .95rem var(--font-mono);
+}
+
+.provenance {
+  margin-top: 16px;
+  color: var(--text-muted);
+  font-size: .82rem;
+}
+
+.section-label {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* ---- Shared components -------------------------------------------------------------- */
+
+/* A window inside the program window (an MDI child). */
+.window,
+.win {
+  margin: 16px 0;
+  padding: 3px;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+.window-bar,
+.win-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 6px;
+  background: var(--title);
+  color: var(--title-text);
+  font-weight: 700;
+  font-size: .88rem;
+}
+
+.window-bar::before,
+.win-title::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: var(--icon-cd) center / 16px 16px no-repeat;
+  image-rendering: pixelated;
+}
+
+.window-body,
+.win-body {
+  padding: 14px;
+}
+
+/* A sunken white field: lists, documents, text to read. */
+.sunken {
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+
+/* Buttons: real buttons, and links that do one clear thing styled the same way. */
+button,
+.button,
+.primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  min-width: 88px;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--text);
+  font: .95rem/1.25 var(--font-ui);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button:hover,
+.button:hover,
+.primary-link:hover {
+  color: var(--text);
+}
+
+button:active:not(:disabled),
+.button:active,
+.primary-link:active {
+  box-shadow: var(--pressed);
+  padding: 8px 15px 6px 17px;
+}
+
+button:focus-visible,
+.button:focus-visible,
+.primary-link:focus-visible {
+  outline: 1px dotted var(--text);
+  outline-offset: -5px;
+}
+
+button:disabled {
+  color: var(--shade);
+  text-shadow: 1px 1px var(--hilite);
+  cursor: default;
+}
+
+/* The default button of a dialog has an extra black frame. */
+.primary-link,
+button.primary {
+  box-shadow: 0 0 0 1px var(--dark), var(--raised);
+  font-weight: 700;
+}
+
+.primary-link:active,
+button.primary:active:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--dark), var(--pressed);
+}
+
+/* Fields */
+input[type="text"],
+input[type="search"],
+input[type="file"],
+input:not([type]),
+select,
+textarea {
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 0;
+  background: var(--field);
+  box-shadow: var(--sunken);
+  color: var(--text);
+  font: .95rem/1.3 var(--font-ui);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/* The drop-down button sits inside the field, as on Windows. */
+select {
+  padding-right: 30px;
+  cursor: pointer;
+  background-color: var(--field);
+  background-image: var(--icon-arrow-down), linear-gradient(var(--face), var(--face));
+  background-position: right 5px center, right 2px top 2px;
+  background-size: 16px 16px, 20px calc(100% - 4px);
+  background-repeat: no-repeat;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px dotted var(--text);
+  outline-offset: 2px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6a6a6a;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--title);
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 4px 12px;
+  border: 0;
+  background: var(--face);
+  box-shadow: var(--raised);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Dialog-style message: an icon and plain words. */
+.system-message,
+.msg {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--text);
+}
+
+.system-message::before,
+.msg::before {
+  content: "";
+  width: 32px;
+  height: 32px;
+  background: var(--icon-warning) center / 32px 32px no-repeat;
+  image-rendering: pixelated;
+}
+
+/* DOS: a black terminal surface. */
+.terminal {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--term-bg);
+  box-shadow: var(--sunken);
+  color: var(--term-text);
+  font: .92rem/1.55 var(--font-mono);
+}
+
+.terminal :focus-visible {
+  outline-color: var(--term-bright);
+}
+
+.prompt::before {
+  content: "C:\\BOOTDISK>";
+  color: var(--term-bright);
+}
+
+.block-cursor {
+  display: inline-block;
+  width: .6em;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: blink 1s steps(1) infinite;
+}
+
+/* ---- Detail page -------------------------------------------------------------------- */
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.software-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 6px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.window-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.screenshot-frame {
+  margin: 0;
+}
+
+.screenshot-frame img {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  padding: 4px;
+  object-fit: contain;
+  background: var(--term-bg);
+  box-shadow: var(--sunken);
+}
+
+.screenshot-frame figcaption {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: .8rem;
+}
+
+.facts {
+  grid-column: -2 / -1;
+}
+
+/* Without a menu picture the facts take the whole window. */
+.window-body:has(> .screenshot-frame[hidden]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.window-body:has(> .screenshot-frame[hidden]) .facts {
+  grid-column: auto;
+  max-width: 640px;
+}
+
+#description-label {
+  margin-top: 14px;
+}
+
+.facts h2 {
+  margin: 0 0 6px;
+  font-size: .95rem;
+}
+
+.facts dl {
+  margin: 0;
+  padding: 4px 10px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+
+.facts dl div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--shade);
+}
+
+.facts dl div:last-child {
+  border-bottom: 0;
+}
+
+.facts dt {
+  color: var(--text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: .9rem;
+}
+
+.status {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+/* The project note: an information box with the Windows "i". */
+.about {
+  position: relative;
+  max-width: 78ch;
+  margin: 24px 0 8px;
+  padding: 12px 14px 12px 58px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+  color: var(--text);
+}
+
+.about::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  width: 32px;
+  height: 32px;
+  background: var(--icon-info) center / 32px 32px no-repeat;
+  image-rendering: pixelated;
+}
+
+.about p {
+  margin: 0;
+}
+
+.about p + p {
+  margin-top: 8px;
+}
+
+.about strong {
+  color: var(--title);
+  font-family: var(--font-mono);
+}
+
+/* ---- Archive ------------------------------------------------------------------------ */
+
+.archive-hero {
+  padding-bottom: 4px;
+}
+
+/* Filter toolbar: labelled fields on the grey face, separated by an etched line. */
+.archive-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px 14px;
+  margin: 8px 0 12px;
+  padding: 12px;
+  box-shadow: var(--etched);
+}
+
+.archive-tools label {
+  display: block;
+  margin-bottom: 3px;
+  font-size: .85rem;
+}
+
+.archive-tools input {
+  width: 100%;
+  min-width: 0;
+}
+
+.archive-count {
+  align-self: center;
+  padding: 3px 8px;
+  box-shadow: var(--thin-sunken);
+  font: .82rem var(--font-mono);
+  white-space: nowrap;
+}
+
+/* Explorer icon view in a white list field. Selection is the Windows navy bar. */
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2px;
+  padding: 6px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+
+.archive-grid:empty {
+  display: none;
+}
+
+.archive-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+  padding: 6px 8px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.archive-card:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.archive-card:focus-visible {
+  outline: 2px dotted var(--select-text);
+  outline-offset: -4px;
+  background: var(--select);
+  color: var(--select-text);
+}
+
+.archive-card-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--shade);
+  font: 700 1.2rem var(--font-mono);
+}
+
+.archive-card-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.archive-card-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.archive-card-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-card-copy span {
+  color: var(--title);
+  font: .78rem var(--font-mono);
+}
+
+.archive-card-copy small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: .8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-card:focus-visible .archive-card-copy span,
+.archive-card:focus-visible .archive-card-copy small {
+  color: var(--select-text);
+}
+
+/* ---- Error dialog (404) ------------------------------------------------------------- */
+
+.error-dialog {
+  max-width: 640px;
+  margin: 28px auto 12px;
+}
+
+.error-dialog .win-title::before {
+  background-image: var(--icon-error);
+}
+
+.error-body {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.error-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--icon-error) center / 48px 48px no-repeat;
+  image-rendering: pixelated;
+}
+
+.error-body h1 {
+  font-size: 1.5rem;
+}
+
+.error-dos {
+  margin-top: 12px;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0;
+  padding: 0 14px 14px;
+}
+
+/* ---- Status bar --------------------------------------------------------------------- */
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 2px;
+  margin-top: 2px;
+  color: var(--text);
+  font: .78rem/1.3 var(--font-mono);
+}
+
+footer > * {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 8px;
+  box-shadow: var(--thin-sunken);
+}
+
+footer > :first-child {
+  flex: 1 1 auto;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---- Narrow screens: the window fills the screen and panels stack. ------------------ */
+
+@media (max-width: 720px) {
+  body {
+    padding: 0;
+  }
+
+  .app-window {
+    min-height: 100vh;
+  }
+
+  main {
+    padding: 4px 12px 16px;
+  }
+
+  .tagline {
+    flex-basis: 100%;
+    padding-left: 26px;
+    font-size: .8rem;
+  }
+
+  .tagline::before {
+    content: none;
+  }
+
+  /* Three equal buttons with the icon over the label; each is a full-size touch target. */
+  .toolbar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tool {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 5px 4px;
+    font-size: .8rem;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .tool:active {
+    padding: 6px 3px 4px 5px;
+  }
+
+  .window-body {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .facts {
+    grid-column: auto;
+  }
+
+  .software-icon {
+    width: 42px;
+    height: 42px;
+    padding: 4px;
+  }
+
+  .archive-tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .archive-count {
+    align-self: flex-start;
+  }
+
+  .about {
+    padding-left: 52px;
+  }
+
+  .about::before {
+    left: 10px;
+  }
+
+  footer {
+    flex-direction: column;
+  }
+}
+
+/* Original RTF text from the CD, opened like a file in Notepad under the menu description. */
+#source-documents { max-width: 78ch; margin: 1rem 0 0; }
+#source-documents[hidden] { display: none; }
+.source-document + .source-document { margin-top: 1rem; }
+.source-document details { background: var(--face); box-shadow: var(--raised); padding: 3px; }
+.source-document summary { display: flex; align-items: center; gap: .6em; min-height: 44px; padding: .35rem .7rem; color: var(--text); font-weight: 700; cursor: pointer; list-style: none; overflow-wrap: anywhere; }
+.source-document summary::-webkit-details-marker { display: none; }
+.source-document summary::before { content: ""; flex: none; width: 16px; height: 16px; background: var(--icon-log) center / 16px 16px no-repeat; image-rendering: pixelated; }
+.source-document summary::after { content: "Åpne" / ""; margin-left: auto; padding: 2px 10px; box-shadow: var(--raised); font-weight: 400; font-size: .85rem; }
+.source-document details[open] summary { background: var(--title); color: var(--title-text); }
+.source-document details[open] summary::after { content: "Lukk" / ""; color: var(--text); background: var(--face); }
+.source-document summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+.source-document summary:focus-visible { outline: 2px dotted var(--text); outline-offset: 2px; }
+.rtf-source-text { margin: 3px 0 0; padding: .8rem 1rem 1rem; background: var(--field); box-shadow: var(--sunken); color: var(--text); font: .95rem/1.6 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; hyphens: manual; }
+.source-document-note { margin: .4rem .5rem; color: var(--text-muted); font-size: .9rem; }
+.source-document-file { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .8rem; margin: .5rem 0 0; font-size: .85rem; color: var(--text-muted); }
+.source-document-file a { font-weight: 700; padding-block: .35rem; }
+.source-document-meta { min-width: 0; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: .8rem; }

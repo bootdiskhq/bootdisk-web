@@ -7,43 +7,42 @@
   width: 100%;
 }
 
-.archive-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .archive-filter label {
-  position: static;
-  color: var(--muted);
-  font-size: .72rem;
+  display: block;
 }
 
-.archive-tools select,
+.archive-tools select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Reset is a plain command button at the end of the filter row. */
 .archive-tools button {
-  padding: 11px 12px;
-  border: 1px solid #50616a;
-  background: #091116;
-  color: var(--ink);
-  font: inherit;
+  min-height: 36px;
 }
 
-.archive-tools select:focus,
-.archive-tools button:focus-visible {
-  border-color: var(--cyan);
-  outline: 1px solid var(--cyan);
-}
-
-.archive-tools button {
-  cursor: pointer;
-  color: var(--cyan);
-}
-
+/* Nothing matched: an information dialog, not an empty white field. */
 .archive-empty {
-  padding: 24px;
-  border: 1px dashed var(--line);
-  color: var(--muted);
-  text-align: center;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+.archive-empty::before {
+  content: "";
+  width: 32px;
+  height: 32px;
+  background: var(--icon-info) center / 32px 32px no-repeat;
+  image-rendering: pixelated;
+}
+
+.archive-empty[hidden] {
+  display: none;
 }
 
 @media (max-width: 720px) {
@@ -53,27 +52,16 @@
 
   .archive-filter {
     display: grid;
-    grid-template-columns: 90px 1fr;
+    grid-template-columns: 90px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .archive-filter label {
+    margin: 0;
   }
 
   .archive-tools button {
     width: 100%;
-  }
-}
-
-/* Five controls and the count do not fit one row at common desktop widths. */
-.archive-tools {
-  flex-wrap: wrap;
-}
-
-/* Long option labels must not widen a select past a 360 px screen. */
-.archive-tools select {
-  min-width: 0;
-  max-width: 100%;
-}
-
-@media (max-width: 720px) {
-  .archive-filter {
-    grid-template-columns: 90px minmax(0, 1fr);
   }
 }
