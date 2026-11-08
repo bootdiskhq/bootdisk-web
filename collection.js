@@ -64,10 +64,7 @@ function discCard(medium) {
   const count = document.createElement("span");
   count.className = "disc-count";
   count.textContent = countLabel(medium.count, "kildepost", "kildeposter");
-  const action = document.createElement("span");
-  action.className = "disc-action";
-  action.textContent = "Se innholdet →";
-  copy.append(label, count, action);
+  copy.append(label, count);
   link.append(cover, copy);
   item.append(link);
   return item;
@@ -80,10 +77,17 @@ function yearGroup(group) {
   heading.id = `year-${group.year ?? "ukjent"}`;
   heading.textContent = group.year === null ? "Uten årstall" : String(group.year);
   section.setAttribute("aria-labelledby", heading.id);
+  // The year's own totals, counted from the same index rows as the cards below.
+  const header = document.createElement("div");
+  header.className = "disc-year-heading";
+  const total = document.createElement("p");
+  total.className = "disc-year-count";
+  total.textContent = `${countLabel(group.media.length, "CD", "CD-er")} · ${countLabel(group.media.reduce((sum, medium) => sum + medium.count, 0), "kildepost", "kildeposter")}`;
+  header.append(heading, total);
   const list = document.createElement("ul");
   list.className = "disc-grid";
   list.append(...group.media.map(discCard));
-  section.append(heading, list);
+  section.append(header, list);
   return section;
 }
 
@@ -92,7 +96,9 @@ function renderCollectionText(collection) {
   const lede = document.querySelector("#collection-lede");
   lede.textContent = collection.lede;
   lede.hidden = false;
-  document.querySelector("#collection-jump").hidden = false;
+  const jump = document.querySelector("#collection-jump");
+  if (!collection.history.length) jump.querySelector("a").href = "#collection-note";
+  jump.hidden = false;
   const trail = document.querySelector("#collection-breadcrumbs");
   const current = document.createElement("li");
   current.textContent = collection.title;

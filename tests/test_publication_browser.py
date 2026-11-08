@@ -290,9 +290,11 @@ class PublicationBrowserTests(unittest.TestCase):
     def test_heading_order_and_reading_order(self):
         with self.page("/collection.html?collection=komputer-for-alle") as page:
             headings = page.eval_on_selector_all("main h1, main h2, main h3", "items => items.filter(h => h.offsetParent).map(h => h.tagName + ' ' + h.textContent)")
-            self.assertEqual(headings[:3], ["H1 Komputer for alle", "H2 Om bladet og CD-ene", "H2 CD-er i samlingen"])
-            self.assertEqual(headings[3:5], ["H3 2001", "H3 2000"])
-            self.assertEqual(headings[5:], ["H2 Om kildepostene", "H2 Kilder"])
+            # Retro-katalogen (docs/retro-catalog.md): the CD overview is the main content and
+            # comes straight after the introduction; the approved background text follows it.
+            self.assertEqual(headings[:2], ["H1 Komputer for alle", "H2 CD-er i samlingen"])
+            self.assertEqual(headings[2:4], ["H3 2001", "H3 2000"])
+            self.assertEqual(headings[4:], ["H2 Om bladet og CD-ene", "H2 Om kildepostene", "H2 Kilder"])
         with self.page("/") as page:
             headings = page.eval_on_selector_all("main h1, main h2, main h3", "items => items.filter(h => h.offsetParent).map(h => h.tagName + ' ' + h.textContent)")
             self.assertEqual(headings, ["H1 Bootdisk", "H2 Samlinger", "H3 Komputer for alle"])
