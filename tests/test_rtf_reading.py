@@ -306,7 +306,8 @@ class RtfReadingBrowserTests(unittest.TestCase):
     def test_keyboard_opens_and_closes_with_visible_focus_in_reading_order(self):
         with self.page("K37") as page:
             order = []
-            for _ in range(12):
+            # The catalogue header adds its menu and search before the entry (docs/retro-catalog.md).
+            for _ in range(24):
                 page.keyboard.press("Tab")
                 order.append(page.evaluate("""() => { const node = document.activeElement;
                     return node.tagName === 'SUMMARY' ? 'summary' : node.id || node.textContent.trim(); }"""))

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from urllib.error import HTTPError
@@ -102,7 +103,8 @@ def main() -> None:
     collection_pages = collection_urls(registry, index, PRODUCTION)
     for url in collection_pages:
         page = fetch(args.base_url, url.removeprefix(PRODUCTION)).decode("utf-8")
-        if 'src="collection.js"' not in page:
+        # The script may carry a cache version (collection.js?v=…); the page is the same.
+        if re.search(r'src="collection\.js(?:\?v=[A-Za-z0-9._-]+)?"', page) is None:
             raise RuntimeError(f"Collection page is not served: {url}")
     sitemap_locations = [node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
     sitemap_urls = set(sitemap_locations)

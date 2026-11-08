@@ -12,6 +12,11 @@ Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
 
 # Upubliserte endringer
 
+- Retro-katalog: de offentlige sidene har fått et lyst, kompakt katalogutseende fra rundt år 2000
+  (`catalog.css`, bare på offentlige sider), felles toppfelt med meny og søk, CD-oversikten som
+  hovedinnhold på samlingssiden, arkivet som tett tabell (tittel, CD, år, innhold, status) og
+  kildeposten i to spalter. Ingen data, URL-er eller kontrakter er endret. Se
+  [docs/retro-catalog.md](docs/retro-catalog.md).
 - «Sist lagt til og oppdatert»: seksjon på forsiden og ny side `updates.html` med nye og
   endrede kildeposter, filter, søk og «Vis flere». Historikken er kontrakten
   `bootdisk-public-updates-v2` (`scripts/public_updates.py`) og følger bare med en release
