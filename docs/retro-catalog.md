@@ -50,7 +50,7 @@ Cacheversjon: `catalog.css?v=retro-catalog1`, `archive.js?v=retro-catalog1` og
 ## Testdata
 
 Birks lokale kilde (`/Users/stian/Bootdisk/local-results/intake-next-2026-11-08/...`, 1705
-poster på 29 CD-er) ligger på Stians maskin og var ikke tilgjengelig fra skyen. Den
+poster på 29 CD-er, nå publisert som en del av rc24 med 1917 poster på 33 CD-er) ligger på Stians maskin og var ikke tilgjengelig fra skyen. Den
 offentlige siden kunne heller ikke nås derfra. **Reell akseptanse er ikke kjørt.**
 
 I stedet bygger `tests/synthetic_catalog.py` merkede PRØVEDATA i samme størrelse: 1705
@@ -63,13 +63,15 @@ Titlene begynner med «Prøvepost», og omtalene sier at de er oppdiktet.
 
 ## Kontrollmatrise
 
-Kjørt på `feat/retro-catalog` med base `f4055e2` (PR #75, 1.2.0-rc23) og Catalog-checkout
-`a4ba2c7` (bootdisk-catalog main). Chromium 153 via Playwright 1.63.
+Grenen startet fra `f4055e2` (PR #75, 1.2.0-rc23). Mens arbeidet pågikk ble rc24 slått sammen
+(`cfba070`, PR #76: sju nye CD-er, 1917 poster på 33 CD-er, bare `VERSION` og
+valideringsnotat endret i repoet). Grenen er rebaset på `cfba070`, og testene er kjørt på nytt
+der. Catalog-checkout `a4ba2c7` (bootdisk-catalog main). Chromium 153 via Playwright 1.63.
 
 | # | Krav | Resultat | Bevis |
 | --- | --- | --- | --- |
 | 1 | Forside → samling → CD → post → tilbake | Bestått på PRØVEDATA og på syntetiske sju CD-er. Ikke kjørt på reelle data. | `test_front_collection_cd_entry_and_back_keep_the_filter`, `test_publication_browser.test_front_page_collection_cd_entry_and_back` |
-| 2 | Alle CD-er og tellinger samsvarer med inngangsdata | Bestått for 29 CD-er og 1705 poster: hver CD-telling, hver årslinje, sammendraget og forsidetallene er lik tellingen i indeksen. Ikke kjørt på Birks 1705 reelle poster. | `test_scale_every_cd_and_count_comes_from_the_index` |
+| 2 | Alle CD-er og tellinger samsvarer med inngangsdata | Bestått for 29 CD-er og 1705 poster: hver CD-telling, hver årslinje, sammendraget og forsidetallene er lik tellingen i indeksen. Også kontrollert manuelt med PRØVEDATA i rc24-størrelse (33 CD-er, 1917 poster): 33 CD-er, alle tellinger like indeksen, 1917 arkivrader. Ikke kjørt på reelle data. | `test_scale_every_cd_and_count_comes_from_the_index` |
 | 3 | Søk, kombinerte filtre, sortering, nulltreff, direkte URL; samme status i arkiv og detalj | Bestått. Alle 1705 rader har riktig tittel, CD, år og status; én post av hver status har samme statustekst på detaljsiden. Toppsøket gir `archive.html?q=…`. | `test_archive_rows_show_human_titles_cd_year_content_and_the_detail_status`, `test_header_search_and_menu_lead_into_the_archive`, `test_contract`, `test_collection` |
 | 4 | Lange titler, æøå, manglende ikon/omslag, bilder, ukjent versjon | Bestått. Ingen tabellcelle flyter over ved 1280, 768, 375 og 320 px; manglende ikon gir «?» og ingen knekt bilde; ukjent versjon viser «Ikke oppgitt». CD-er har ikke omslagsbilder i datakontrakten, se avvik. | `test_long_titles_and_html_like_titles_stay_inside_their_cells_as_text`, `test_missing_images_leave_no_broken_pictures`, `test_unknown_version_reads_ikke_oppgitt` |
 | 5 | RTF: mus og tastatur, identisk, lang, ingen tekst, flere filer, nedlasting, HTML bokstavelig | Bestått, de eksisterende RTF-testene kjører uendret mot ny layout. Tastaturtesten går gjennom flere Tab-trykk, fordi toppfeltet nå står foran posten. | `test_rtf_reading` (alle), skjermbilde `etter-05-detalj-rtf-*` |
@@ -144,8 +146,8 @@ I `docs/retro-catalog/`, tatt med PRØVEDATA i 1280 × 900 og 375 × 760 px. `fo
 
 ## Dette må Birk kontrollere på reelle data
 
-1. Bygg pakken fra den lokale kilden (1705 poster, 29 CD-er) og åpne `collection.html?collection=komputer-for-alle`: 29 CD-er, riktig antall per CD og år.
+1. Bygg rc24-pakken (1917 poster, 33 CD-er) med denne grenens frontend og åpne `collection.html?collection=komputer-for-alle`: 33 CD-er, riktig antall per CD og år, også årene 2009 og 2012.
 2. Les noen reelle lange titler og originalomtaler i arkivtabellen og på detaljsiden ved 1280 og 375 px.
 3. Åpne en reell post med RTF, for eksempel K37, med mus og tastatur.
-4. Kontroller ekte ikoner og skjermbilder i arkivtabellen og på detaljsiden.
+4. Kontroller ekte ikoner og skjermbilder i arkivtabellen og på detaljsiden, og de nye 2012-postene med HTML-omtale (artikler og video) i tabell og detaljvisning.
 5. Etter opplasting: last siden på nytt og se at `catalog.css?v=retro-catalog1` lastes.
