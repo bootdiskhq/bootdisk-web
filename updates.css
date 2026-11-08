@@ -1,6 +1,7 @@
-/* "Sist lagt til og oppdatert": front-page section and updates.html. */
+/* "Sist lagt til og oppdatert": front-page section and updates.html. The history is a DOS
+ * log: a black terminal with one line group per change, newest first. */
 .landing-updates {
-  margin-top: 48px;
+  margin-top: 28px;
 }
 
 .landing-updates[hidden],
@@ -12,14 +13,13 @@
 }
 
 .updates-note {
-  margin: 0 0 14px;
-  color: var(--muted);
-  font-size: .85rem;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: .9rem;
 }
 
 .updates-hero {
-  padding-top: 40px;
-  padding-bottom: 20px;
+  padding-bottom: 4px;
 }
 
 .updates-hero .updates-note {
@@ -28,123 +28,137 @@
 
 .update-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
   margin: 0;
-  padding: 0;
+  padding: 6px;
   list-style: none;
+  background: var(--term-bg);
+  box-shadow: var(--sunken);
+  font-family: var(--font-mono);
+}
+
+.update-item + .update-item {
+  border-top: 1px dashed #3a3a3a;
 }
 
 .update-link {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  background: #0d161b;
-  color: var(--ink);
+  padding: 10px 8px;
+  color: var(--term-text);
   text-decoration: none;
-  transition: border-color .12s, background .12s;
 }
 
-.update-link:hover,
+.update-link:hover {
+  color: var(--term-text);
+  background: #1a1a1a;
+}
+
+/* The DOS selection bar, with a light focus frame. */
 .update-link:focus-visible {
-  border-color: var(--cyan);
-  background: #122028;
+  outline: 2px dotted var(--term-bright);
+  outline-offset: -3px;
+  background: var(--term-select);
 }
 
 .update-icon {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid #26363e;
-  background: #070c0f;
+  width: 40px;
+  height: 40px;
+  background: var(--face);
+  box-shadow: var(--raised);
 }
 
 .update-icon img {
   width: 32px;
   height: 32px;
   object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .update-icon.is-text {
-  color: #61727b;
-  font-family: system-ui, sans-serif;
-  font-size: 1.2rem;
+  color: var(--text);
+  font: 700 1.1rem var(--font-mono);
 }
 
 .update-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .update-title strong {
-  font-family: system-ui, sans-serif;
-  font-size: 1.02rem;
+  color: var(--term-bright);
+  font-size: 1rem;
   overflow-wrap: anywhere;
 }
 
 .update-version {
-  color: var(--cyan);
-  font-size: .78rem;
+  color: var(--term-green);
+  font-size: .85rem;
 }
 
 .update-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
-  color: var(--muted);
-  font-size: .75rem;
+  gap: 2px 12px;
+  color: var(--term-text);
+  font-size: .82rem;
 }
 
+/* Status is written out in brackets, so colour is never the only signal. */
 .update-badge {
-  padding: 1px 7px;
-  border: 1px solid var(--amber);
-  color: var(--amber);
-  letter-spacing: .04em;
+  color: var(--term-amber);
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.update-badge::before {
+  content: "[";
+}
+
+.update-badge::after {
+  content: "]";
 }
 
 .update-badge[data-type="added"] {
-  border-color: var(--green);
-  color: var(--green);
+  color: var(--term-green);
 }
 
 .update-explanation {
-  color: #c4ced3;
-  font-family: system-ui, sans-serif;
-  font-size: .92rem;
+  color: var(--term-text);
+  font-size: .9rem;
   line-height: 1.5;
 }
 
-/* Filter row: a radio group, the search field and a reset button. */
+/* Filter row: a group box of option buttons, the search field and a reset button. */
 .updates-type {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 14px;
+  gap: 0 14px;
   margin: 0;
-  padding: 0;
-  border: 0;
+  padding: 0 10px 2px;
+  border: 1px solid var(--shade);
+  box-shadow: 1px 1px var(--hilite), inset 1px 1px var(--hilite);
 }
 
 .updates-type legend {
-  float: left;
-  margin-right: 6px;
-  padding: 0;
-  color: var(--muted);
-  font-size: .72rem;
+  padding: 0 4px;
+  font-size: .85rem;
 }
 
 .updates-type label {
-  position: static;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
+  margin: 0;
   cursor: pointer;
 }
 
@@ -153,48 +167,32 @@
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: var(--cyan);
 }
 
 .updates-type input:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px dotted var(--text);
   outline-offset: 3px;
 }
 
 .updates-more-row {
-  margin: 18px 0 32px;
-}
-
-.updates-more {
-  min-height: 44px;
-  padding: 11px 18px;
-  border: 1px solid var(--cyan);
-  background: #0f2a33;
-  color: var(--cyan);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.updates-more:hover {
-  background: #133845;
-}
-
-.updates-more:focus-visible {
-  outline: 2px solid var(--cyan);
-  outline-offset: 3px;
+  margin: 14px 0 8px;
 }
 
 @media (max-width: 520px) {
   .update-link {
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: 36px minmax(0, 1fr);
     gap: 10px;
-    padding: 10px;
+    padding: 9px 4px;
   }
 
   .update-icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .update-icon img {
+    width: 28px;
+    height: 28px;
   }
 }
 

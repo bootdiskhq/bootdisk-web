@@ -1,158 +1,152 @@
-/* Overview screen for the curator. Built on the existing visual identity: same panel,
- * line and accent colours as the archive and the decision screen. */
+/* Overview screen for the curator, in the same program window as the decision screen:
+ * a filter toolbar, a details list in a sunken field and a pager. */
 .overview-title {
-  font-family: system-ui, sans-serif;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  letter-spacing: -.03em;
-  margin: 26px 0 6px;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin: 16px 0 6px;
 }
 
 .overview-lede {
-  color: var(--muted);
-  margin: 0 0 20px;
-  font-size: .9rem;
+  max-width: 80ch;
+  margin: 0 0 14px;
+  font-size: .95rem;
 }
-
-.overview-lede a { color: var(--cyan); }
 
 .overview-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  background: var(--panel);
+  gap: 12px;
+  padding: 12px;
+  box-shadow: var(--etched);
 }
 
-.overview-control { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.overview-control { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .overview-control-wide { grid-column: span 2; }
 .overview-control-action { justify-content: flex-end; }
 
 .overview-control label {
-  color: var(--muted);
-  font-size: .72rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
+  color: var(--text);
+  font-size: .85rem;
 }
 
 .overview-control input,
-.overview-control select,
-.overview-pager button,
-.overview-control button {
-  padding: 10px 12px;
-  border: 1px solid #50616a;
-  background: #091116;
-  color: var(--ink);
-  font: inherit;
+.overview-control select {
+  width: 100%;
 }
 
 .overview-control input:focus-visible,
 .overview-control select:focus-visible,
-.overview-control button:focus-visible,
-.overview-pager button:focus-visible,
 .overview-table a:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px dotted var(--text);
   outline-offset: 2px;
 }
 
-.overview-control button,
-.overview-pager button { cursor: pointer; }
-.overview-pager button[disabled] { opacity: .45; cursor: default; }
-
 .overview-count {
-  color: var(--muted);
-  font-size: .78rem;
-  margin: 14px 0 6px;
+  margin: 12px 0 6px;
+  font: .82rem var(--font-mono);
 }
 
 .overview-state {
+  position: relative;
   margin: 8px 0;
-  padding: 10px 12px;
-  border-left: 3px solid var(--line);
-  color: var(--muted);
-  font-size: .85rem;
+  padding: 10px 12px 10px 46px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  font-size: .92rem;
 }
 
-.overview-error { border-left-color: #ffb3a3; color: #ffb3a3; }
-.overview-outside { border-left-color: var(--amber); color: var(--amber); }
+.overview-state::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  background: var(--icon-info) center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+}
 
+#overview-loading::before { background-image: var(--icon-hourglass); }
+.overview-error::before { background-image: var(--icon-error); }
+.overview-outside::before { background-image: var(--icon-warning); }
+.overview-error { font-weight: 700; }
+
+/* Details view: column headings are labels, not sort buttons, so they stay flat. */
 .overview-table {
   width: 100%;
-  border-collapse: collapse;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  font-size: .86rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  padding: 2px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+  font-size: .9rem;
 }
 
 .overview-table caption {
+  padding: 0 0 6px;
+  color: var(--text-muted);
+  font-size: .82rem;
   text-align: left;
-  color: var(--muted);
-  font-size: .75rem;
-  padding: 0 0 8px;
 }
 
 .overview-table th,
 .overview-table td {
+  padding: 7px 10px;
+  border-bottom: 1px dotted var(--shade);
   text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
   vertical-align: top;
 }
 
 .overview-table thead th {
   position: sticky;
   top: 0;
-  background: #16222a;
-  color: var(--cyan);
-  font-size: .72rem;
-  text-transform: uppercase;
-  letter-spacing: .07em;
   z-index: 1;
+  background: var(--face);
+  border-bottom: 1px solid var(--dark);
+  color: var(--text);
+  font-size: .82rem;
+  font-weight: 700;
 }
 
-.overview-table tbody tr:hover { background: #0f1a20; }
-.overview-table tbody tr[aria-current="true"] { outline: 2px solid var(--amber); outline-offset: -2px; }
+.overview-table tbody tr:hover { background: var(--hover); }
+.overview-table tbody tr[aria-current="true"] { outline: 2px solid var(--select); outline-offset: -2px; background: var(--hover); }
 
 .overview-table a {
-  color: var(--ink);
-  font-family: system-ui, sans-serif;
-  font-weight: 600;
+  color: var(--link);
+  font-weight: 700;
 }
 
-.overview-table a:hover { color: var(--cyan); }
-
-.row-source { color: var(--muted); font-size: .76rem; display: block; }
-.row-entry { color: var(--amber); }
+.row-source { display: block; color: var(--text-muted); font-size: .8rem; }
+.row-entry { color: var(--accent); font-family: var(--font-mono); }
 
 /* The approved value leads; a draft that differs is labelled as a draft and never shown
  * as the catalogue's approved value. */
 .row-draft {
   display: block;
   margin-top: 3px;
-  color: var(--amber);
-  font-size: .74rem;
+  color: var(--warn);
+  font-size: .8rem;
 }
 
-.row-unaccepted { color: var(--muted); font-style: normal; }
+.row-unaccepted { color: var(--text-muted); font-style: normal; }
 .row-status { white-space: nowrap; }
-.row-open { color: var(--muted); font-size: .78rem; }
-.row-review { display: block; color: var(--amber); font-size: .74rem; }
-.row-resolved { color: var(--green); }
-.row-outside { display: block; color: var(--amber); font-size: .74rem; }
+.row-open { color: var(--text-muted); font-size: .82rem; }
+.row-review { display: block; color: var(--warn); font-size: .8rem; }
+.row-resolved { color: var(--ok); }
+.row-outside { display: block; color: var(--warn); font-size: .8rem; }
 
 .overview-pager {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 16px 0 8px;
+  padding: 12px 0 6px;
 }
 
 .overview-note {
-  color: var(--muted);
-  font-size: .76rem;
   max-width: 70ch;
-  padding-bottom: 50px;
+  padding-bottom: 10px;
+  color: var(--text-muted);
+  font-size: .82rem;
 }
 
 /* A narrow screen keeps every column: each row becomes a labelled block instead of a
@@ -165,24 +159,22 @@
   .overview-table tr,
   .overview-table td { display: block; width: 100%; }
   .overview-table tr {
-    border-bottom: 1px solid var(--line);
-    padding: 10px 0;
+    border-bottom: 1px solid var(--shade);
+    padding: 8px 0;
   }
   .overview-table td {
     border: 0;
     display: grid;
     grid-template-columns: 11ch 1fr;
     gap: 10px;
-    padding: 4px 12px;
+    padding: 3px 10px;
   }
   /* Every part of a cell stays in the value column; only the label sits beside it. */
   .overview-table td > * { grid-column: 2; }
   .overview-table td::before {
     content: attr(data-label);
-    color: var(--muted);
-    font-size: .72rem;
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    color: var(--text-muted);
+    font-size: .8rem;
   }
   .overview-pager { flex-direction: column; align-items: stretch; }
 }

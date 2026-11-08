@@ -12,6 +12,11 @@ Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
 
 # Upubliserte endringer
 
+- Retro-overhaling av alle sider i det første utkastets mørke terminalstil: avfasede
+  programkontroller, vinduer med tittellinje, pikselikoner, verktøylinje med Forside, Alle
+  kildeposter og Oppdateringer, adresselinje, statuslinje og DOS-terminal for
+  lasting og oppdateringshistorikk. Felles stilvariabler og komponenter ligger i `styles.css`;
+  se [designnotatet](docs/retro-design.md). Ingen nye filer i pakken og ingen nye avhengigheter.
 - «Sist lagt til og oppdatert»: seksjon på forsiden og ny side `updates.html` med nye og
   endrede kildeposter, filter, søk og «Vis flere». Historikken er kontrakten
   `bootdisk-public-updates-v2` (`scripts/public_updates.py`) og følger bare med en release

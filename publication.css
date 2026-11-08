@@ -4,69 +4,168 @@ html:not(.entry-view) #entry-view {
   display: none;
 }
 
-a:focus-visible {
-  outline: 2px solid var(--cyan);
-  outline-offset: 3px;
+/* Breadcrumbs as the Explorer address bar: a label and a sunken path field. */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-size: .85rem;
 }
 
-.breadcrumbs {
-  padding-top: 22px;
-  font-size: .78rem;
-  color: var(--muted);
+.breadcrumbs::before {
+  content: "Adresse" / "";
+  flex: none;
+  color: var(--text);
 }
 
 .breadcrumbs ol {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
-  gap: 4px 0;
+  align-items: center;
+  gap: 2px 0;
+  min-width: 0;
+  min-height: 32px;
   margin: 0;
-  padding: 0;
+  padding: 4px 8px 4px 30px;
   list-style: none;
+  background: var(--field) var(--icon-folder) 7px 8px / 16px 16px no-repeat;
+  box-shadow: var(--sunken);
+  font-family: var(--font-mono);
+  image-rendering: pixelated;
+}
+
+.breadcrumbs li {
+  overflow-wrap: anywhere;
 }
 
 .breadcrumbs li + li::before {
-  content: "/";
-  margin: 0 .6em;
-  color: #50616a;
-}
-
-.breadcrumbs a {
-  color: var(--cyan);
+  content: "\\";
+  margin: 0 .35em;
+  color: var(--text-muted);
 }
 
 .breadcrumbs [aria-current="page"] {
-  color: var(--ink);
+  color: var(--text);
+  font-weight: 700;
 }
 
+/* Loading, empty and error states. Loading is DOS activity; empty and error are dialogs. */
 .collection-status {
-  margin: 24px 0;
-  padding: 14px 16px;
-  border: 1px dashed var(--line);
-  color: var(--muted);
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: var(--term-bg);
+  box-shadow: var(--sunken);
+  color: var(--term-green);
+  font: .92rem/1.5 var(--font-mono);
 }
 
+.collection-status::before {
+  content: "C:\\BOOTDISK> " / "";
+  color: var(--term-bright);
+}
+
+.collection-status::after {
+  content: "";
+  display: inline-block;
+  width: .6em;
+  height: 1.05em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: blink 1s steps(1) infinite;
+}
+
+.collection-status[data-state="empty"],
 .collection-status[data-state="error"],
 .collection-status[data-state="unknown"] {
-  border: 1px solid var(--amber);
-  color: var(--amber);
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.collection-status[data-state="empty"]::before,
+.collection-status[data-state="error"]::before,
+.collection-status[data-state="unknown"]::before {
+  content: "";
+  width: 32px;
+  height: 32px;
+  background: var(--icon-info) center / 32px 32px no-repeat;
+  image-rendering: pixelated;
+}
+
+.collection-status[data-state="error"]::before,
+.collection-status[data-state="unknown"]::before {
+  background-image: var(--icon-warning);
+}
+
+.collection-status[data-state="empty"]::after,
+.collection-status[data-state="error"]::after,
+.collection-status[data-state="unknown"]::after {
+  content: none;
 }
 
 .collection-status[hidden] {
   display: none;
 }
 
-/* Front page */
-.landing-hero h1 {
-  margin-bottom: .2em;
+@media (prefers-reduced-motion: reduce) {
+  .collection-status::after {
+    animation: none;
+  }
 }
 
-.section-label {
-  margin: 0 0 14px;
-  color: var(--muted);
-  font-size: .78rem;
-  font-weight: 400;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+/* ---- Front page --------------------------------------------------------------------- */
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.landing-hero h1 {
+  font-size: clamp(2.6rem, 8vw, 5rem);
+}
+
+.boot-log {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
+}
+
+.boot-log p {
+  margin: 0;
+}
+
+.boot-log .boot-line:first-child {
+  color: var(--term-bright);
+}
+
+/* The start-up text arrives line by line, quickly, once. */
+.boot-line {
+  animation: boot-line .01s steps(1) both;
+}
+
+.boot-line:nth-child(2) { animation-delay: .15s; }
+.boot-line:nth-child(3) { animation-delay: .3s; }
+.boot-line:nth-child(4) { animation-delay: .45s; }
+
+@keyframes boot-line {
+  from { visibility: hidden; }
+  to { visibility: visible; }
+}
+
+.landing-collections {
+  margin-top: 8px;
 }
 
 .landing-list {
@@ -74,245 +173,264 @@ a:focus-visible {
   gap: 16px;
 }
 
+/* A collection is a window: the SAMLING label becomes its title bar. */
 .collection-feature {
-  padding: 28px;
-  border: 1px solid var(--line);
-  background: var(--panel);
+  padding: 3px 3px 16px;
+  background: var(--face);
+  box-shadow: var(--raised);
 }
 
-.collection-feature.is-featured {
-  border-color: #50616a;
-  box-shadow: 0 22px 60px #0008;
+.collection-feature > :not(.eyebrow) {
+  margin-left: 14px;
+  margin-right: 14px;
 }
 
 .collection-feature .eyebrow {
-  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 4px 6px;
+  background: var(--title);
+  color: var(--title-text);
+  font: 700 .85rem var(--font-ui);
+  letter-spacing: .04em;
+}
+
+.collection-feature .eyebrow::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background: var(--icon-cd) center / 16px 16px no-repeat;
+  image-rendering: pixelated;
 }
 
 .collection-feature h3 {
-  margin: .15em 0 .35em;
-  font-family: system-ui, sans-serif;
-  font-size: clamp(2rem, 6vw, 3.4rem);
-  line-height: 1;
-  letter-spacing: -.04em;
+  margin-top: 0;
+  margin-bottom: .35em;
+  font-size: clamp(1.5rem, 4vw, 2rem);
 }
 
 .collection-summary {
-  max-width: 64ch;
-  margin: 0;
+  max-width: 68ch;
+  margin-top: 0;
+  margin-bottom: 0;
   color: #c4ced3;
-  font-family: system-ui, sans-serif;
-  font-size: 1.08rem;
-  line-height: 1.65;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
+/* The numbers read like a DOS counter: green digits in black fields. */
 .collection-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 36px;
-  margin: 24px 0;
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 18px;
 }
 
 .collection-stats div {
   display: flex;
   flex-direction: column-reverse;
+  gap: 3px;
 }
 
 .collection-stats dt {
-  color: var(--muted);
-  font-size: .75rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: .82rem;
 }
 
 .collection-stats dd {
+  min-width: 5ch;
   margin: 0;
-  color: var(--cyan);
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-.primary-link {
-  display: inline-block;
-  padding: 12px 18px;
-  border: 1px solid var(--cyan);
-  background: #0f2a33;
-  color: var(--cyan);
-  font-weight: 700;
-  text-decoration: none;
+  padding: 4px 10px;
+  background: var(--term-bg);
+  box-shadow: var(--sunken);
+  color: var(--term-green);
+  font: 700 1.6rem/1.15 var(--font-mono);
+  text-align: right;
 }
 
 .primary-link::after {
   content: " →";
 }
 
-.primary-link:hover {
-  background: #133845;
-}
-
 .all-entries {
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: .85rem;
+  margin: 14px 0 0;
+  font-size: .9rem;
 }
 
-.collection-jump a,
-.all-entries a,
-.collection-exits a,
-.medium-links a,
-.entry-archive-link a {
-  color: var(--cyan);
+.all-entries span {
+  color: var(--text-muted);
 }
 
-/* Collection page */
+/* ---- Collection page ---------------------------------------------------------------- */
+
 .collection-hero {
-  padding-top: 40px;
-  padding-bottom: 20px;
+  padding-bottom: 4px;
 }
 
+.collection-jump a {
+  font-weight: 700;
+}
+
+/* The introduction reads like a document in a sunken field. */
 .collection-history {
-  max-width: 68ch;
-  margin: 0 0 40px;
+  max-width: 78ch;
+  margin: 8px 0 24px;
+  padding: 16px 20px 6px;
+  background: var(--field);
+  box-shadow: var(--sunken);
 }
 
 .collection-history h2,
 .collection-media h2,
 .collection-sources h2,
 .collection-note h2 {
-  margin: 0 0 14px;
-  font-family: system-ui, sans-serif;
-  font-size: 1.4rem;
+  margin: 0 0 10px;
+  font-size: 1.15rem;
 }
 
 .collection-history p {
-  margin: 0 0 1.1em;
+  margin: 0 0 1em;
   color: #c4ced3;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 1.05rem;
-  line-height: 1.75;
+  line-height: 1.7;
 }
 
 .collection-media {
-  padding-top: 28px;
-  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  border-top: 1px solid var(--shade);
+  box-shadow: inset 0 1px var(--hilite);
 }
 
 .media-summary {
   margin: 0 0 8px;
-  color: var(--muted);
-  font-size: .85rem;
+  color: var(--text-muted);
+  font-size: .9rem;
 }
 
 .disc-year-group h3 {
-  margin: 26px 0 12px;
-  color: var(--amber);
-  font-size: .9rem;
-  letter-spacing: .12em;
+  display: inline-block;
+  margin: 18px 0 8px;
+  padding: 2px 10px;
+  background: var(--term-bg);
+  color: var(--term-amber);
+  font: 700 .9rem var(--font-mono);
+  letter-spacing: .08em;
 }
 
 .disc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
+  gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 6px;
   list-style: none;
+  background: var(--field);
+  box-shadow: var(--sunken);
 }
 
 .disc-card {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
   height: 100%;
-  padding: 14px;
-  border: 1px solid var(--line);
-  background: #0d161b;
-  color: var(--ink);
+  padding: 8px;
+  color: var(--text);
   text-decoration: none;
-  transition: transform .12s, border-color .12s, background .12s;
 }
 
-.disc-card:hover,
+.disc-card:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
 .disc-card:focus-visible {
-  transform: translateY(-2px);
-  border-color: var(--cyan);
-  background: #122028;
+  outline: 2px dotted var(--select-text);
+  outline-offset: -4px;
+  background: var(--select);
+  color: var(--select-text);
 }
 
 /* A typographic stand-in: no cover archive exists, and a program screenshot is not a
- * picture of the disc. */
+ * picture of the disc. Drawn as a jewel-case insert with a title band. */
 .disc-cover {
   display: grid;
-  place-content: center;
+  grid-template-rows: auto 1fr auto;
   justify-items: center;
+  align-items: center;
   aspect-ratio: 1;
-  border: 1px solid #50616a;
-  background: linear-gradient(135deg, #1b2a31 0%, #111b20 55%, #0b1317 100%);
-  box-shadow: inset 0 0 0 4px #0d161b, inset 0 0 0 5px #26363e;
+  padding: 0 0 5px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--text);
   text-align: center;
   line-height: 1.1;
 }
 
 .disc-series {
-  color: var(--amber);
-  font-size: .62rem;
-  letter-spacing: .08em;
+  align-self: start;
+  width: 100%;
+  padding: 3px 2px;
+  background: var(--title);
+  color: var(--title-text);
+  font: 700 .58rem var(--font-ui);
+  letter-spacing: .04em;
 }
 
 .disc-number {
-  margin: 3px 0;
-  color: var(--ink);
-  font-size: .95rem;
-  font-weight: 700;
+  font: 700 .95rem var(--font-mono);
 }
 
 .disc-year {
-  color: var(--muted);
-  font-size: .62rem;
+  font: .7rem var(--font-mono);
 }
 
 .disc-copy {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
 .disc-label {
-  font-family: system-ui, sans-serif;
-  font-size: 1.05rem;
+  font-size: 1rem;
   white-space: nowrap;
 }
 
 .disc-count {
-  color: var(--cyan);
-  font-size: .78rem;
+  color: var(--accent);
+  font: .8rem var(--font-mono);
 }
 
 .disc-action {
-  color: var(--muted);
-  font-size: .72rem;
+  color: var(--text-muted);
+  font-size: .8rem;
+}
+
+.disc-card:focus-visible .disc-count,
+.disc-card:focus-visible .disc-action {
+  color: var(--select-text);
 }
 
 .collection-note {
-  margin-top: 48px;
+  margin-top: 24px;
 }
 
-.collection-note p {
-  margin: 0;
+.collection-note h2 {
+  font-size: 1rem;
 }
 
 .collection-sources {
-  margin: 0 0 32px;
-  color: var(--muted);
-  font-size: .78rem;
+  margin: 16px 0 20px;
+  font-size: .85rem;
 }
 
 .collection-sources h2 {
-  font-size: .9rem;
-  color: var(--muted);
+  font-size: .95rem;
 }
 
 .collection-sources ul {
@@ -320,26 +438,42 @@ a:focus-visible {
   padding-left: 1.2em;
 }
 
-.collection-sources a {
-  color: #b7c1c6;
-}
-
 .collection-exits,
 .medium-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 24px;
+  gap: 8px 12px;
 }
 
+/* Exits are buttons along the bottom edge, like a dialog's button row. */
 .collection-exits {
-  margin: 0 0 48px;
-  font-size: .85rem;
+  margin: 20px 0 4px;
+}
+
+.collection-exits a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 7px 16px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.collection-exits a:active {
+  box-shadow: var(--pressed);
+}
+
+.collection-exits a:focus-visible {
+  outline: 1px dotted var(--text);
+  outline-offset: -5px;
 }
 
 .medium-links,
 .collection-jump {
-  margin: 14px 0 0;
-  font-size: .85rem;
+  margin: 10px 0 0;
+  font-size: .9rem;
 }
 
 .medium-links[hidden] {
@@ -347,13 +481,31 @@ a:focus-visible {
 }
 
 .entry-archive-link {
-  margin: 12px 0 0;
-  font-size: .85rem;
+  margin: 8px 0 0;
+  font-size: .9rem;
+}
+
+@media (max-width: 720px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .boot-log {
+    min-height: 0;
+  }
+
+  .breadcrumbs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+  }
 }
 
 @media (max-width: 520px) {
-  .collection-feature {
-    padding: 20px;
+  .collection-feature > :not(.eyebrow) {
+    margin-left: 10px;
+    margin-right: 10px;
   }
 
   .disc-grid {
@@ -361,7 +513,12 @@ a:focus-visible {
   }
 
   .disc-card {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .collection-exits a {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
@@ -373,5 +530,9 @@ a:focus-visible {
   .disc-card:hover,
   .disc-card:focus-visible {
     transform: none;
+  }
+
+  .boot-line {
+    animation: none;
   }
 }
