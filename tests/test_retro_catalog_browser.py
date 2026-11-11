@@ -51,7 +51,7 @@ class CatalogMarkupTests(unittest.TestCase):
             with self.subTest(name):
                 html = (ROOT / name).read_text(encoding="utf-8")
                 sheets = re.findall(r'<link rel="stylesheet" href="([^"]+)"', html)
-                self.assertEqual(sheets[-1], "catalog.css?v=retro-catalog1", "catalog.css overrides, so it comes last")
+                self.assertEqual(sheets[-1], "catalog.css?v=retro-catalog2", "catalog.css overrides, so it comes last")
                 self.assertNotIn("window-buttons", html, "no fake window buttons")
                 self.assertNotIn("<marquee", html.lower())
                 external = re.findall(r'<(?:script[^>]*\ssrc|link rel="(?:stylesheet|preload|icon)"[^>]*\shref)="((?:https?:)?//[^"]*)"', html)
@@ -63,7 +63,7 @@ class CatalogMarkupTests(unittest.TestCase):
                 self.assertNotIn("catalog.css", (ROOT / name).read_text(encoding="utf-8"))
 
     def test_changed_scripts_carry_a_new_cache_version(self):
-        self.assertIn('src="archive.js?v=retro-catalog1"', (ROOT / "archive.html").read_text(encoding="utf-8"))
+        self.assertIn('src="archive.js?v=archive-sort1"', (ROOT / "archive.html").read_text(encoding="utf-8"))
         self.assertIn('src="collection.js?v=retro-catalog1"', (ROOT / "collection.html").read_text(encoding="utf-8"))
 
     def test_catalog_css_is_released_and_self_contained(self):
