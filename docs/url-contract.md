@@ -24,7 +24,9 @@ eller en tilfeldig post. En ukjent eller ugyldig `collection` gir «Fant ikke sa
 og en ukjent `medium` i arkivet sier fra og viser alle kildeposter. ID-er valideres før de
 brukes i filstier; samlingsnøkkelen brukes aldri i en filsti.
 
-Arkivets filtre (`q`, `medium`, `status`, `sort`) står i adressen. Derfor bevarer
+Arkivets filtre (`q`, `medium`, `status`, `type`, `year`, `sort`) står i adressen, for eksempel
+`archive.html?type=game&sort=year-desc` og `archive.html?type=course&year=2001`. Gyldige verdier og
+reglene for ugyldige parametre står i [archive-sort-filter.md](archive-sort-filter.md). Derfor bevarer
 nettleserens tilbakeknapp valgt CD og søk, og lenker kan kopieres og åpnes i ny fane.
 
 ## Oppdagelse og deling

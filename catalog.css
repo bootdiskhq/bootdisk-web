@@ -442,7 +442,8 @@ footer {
 .archive-hero { padding-bottom: 4px; }
 .archive-tools {
   display: grid;
-  grid-template-columns: minmax(12rem, 2fr) repeat(3, minmax(0, 1fr)) auto;
+  /* To rader: søk, CD og status; så innholdstype, CD-år, sortering og Nullstill. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: end;
   gap: 6px 10px;
   margin: 6px 0 0;
@@ -457,7 +458,8 @@ footer {
   color: var(--ink);
   font: 700 .75rem/1.6 var(--ui);
 }
-.archive-search { min-width: 0; }
+.archive-search { min-width: 0; grid-column: span 2; }
+.archive-tools > button { justify-self: start; }
 .archive-filter { display: block; min-width: 0; }
 .archive-tools input,
 .archive-tools select { width: 100%; }
@@ -467,6 +469,9 @@ footer {
   font: .75rem var(--ui);
   white-space: normal;
 }
+.archive-empty[hidden] { display: none; }
+.archive-kind-basis { white-space: nowrap; }
+.archive-empty p { margin: 0 0 8px; }
 .archive-empty {
   margin: 8px 0;
   padding: 12px;

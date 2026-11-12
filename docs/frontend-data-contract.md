@@ -17,6 +17,11 @@ Rotobjektet skal inneholde:
 
 Hver indekspost skal minst ha en unik `entry` på formen `K<nummer>` og `curation_status` lik `identified` eller `pending`. `editorial_title`, `software_name`, `version` og `icon` kan være `null`; nettleseren skal aldri finne på manglende identitet.
 
+En indekspost kan ha `menu_groups`: en uendret kopi av detaljpostens
+`source_context.menu_groups.value`, satt ved bygging (`scripts/archive_index.py`). Feltet er valgfritt;
+finnes det, skal det være lik observasjonen. Arkivet bruker det til innholdstype når `content_kind`
+mangler (se [archive-sort-filter.md](archive-sort-filter.md)).
+
 ## `data/k<nummer>.json`
 
 Det skal finnes nøyaktig ett detaljdokument per indekspost. Dokumentets `entry`, `publication` og `medium` skal samsvare med indeksen. `software` og `assets` er alltid lister, også når de er tomme.

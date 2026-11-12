@@ -12,6 +12,11 @@ Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
 
 # Upubliserte endringer
 
+- Arkivet: filter for innholdstype og CD-år, og sortering på innholdstype og CD-år (nyeste/eldste
+  først) i tillegg til kilderekkefølge og navn. Typen kommer fra Catalogs `content_kind`, ellers fra
+  CD-ens egne menygrupper (merket «(CD-meny)»). Indeksen får `menu_groups` ved bygging;
+  `scripts/archive_index.py` utvider allerede bygde data. Nye URL-parametre `type` og `year`; gamle
+  lenker virker som før. Se [docs/archive-sort-filter.md](docs/archive-sort-filter.md).
 - Retro-katalog: de offentlige sidene har fått et lyst, kompakt katalogutseende fra rundt år 2000
   (`catalog.css`, bare på offentlige sider), felles toppfelt med meny og søk, CD-oversikten som
   hovedinnhold på samlingssiden, arkivet som tett tabell (tittel, CD, år, innhold, status) og

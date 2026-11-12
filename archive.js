@@ -28,37 +28,166 @@ const ARCHIVE_STATUS = {
   source_documented: ["▣", "Oppgitt på CD-en"],
   pending: ["○", "Venter på identifisering"],
 };
-const ARCHIVE_CONTENT_KINDS = { application: "Program", game: "Spill", course: "Kurs / veiledning", image_collection: "Bildesamling", font_collection: "Skriftpakke", reference: "Oppslagsverk" };
+const ARCHIVE_CONTENT_KINDS = { application: "Program", game: "Spill", course: "Kurs / veiledning", image_collection: "Bildesamling", font_collection: "Skriftpakke", reference: "Oppslagsverk", article: "Artikkel" };
 const ARCHIVE_DISTRIBUTION_KINDS = { full: "fullversjon", demo: "demo", trial: "prøveversjon", update: "oppdatering" };
+// Program, Spill and Kurs / veiledning are always offered, so «Spill» is an explicit choice
+// even on an index where no entry is a game yet; other types appear when the data has them.
+const ARCHIVE_CENTRAL_KINDS = ["application", "game", "course"];
+const ARCHIVE_UNKNOWN = "unknown";
+const ARCHIVE_SORTS = ["source", "name", "type", "year-desc", "year-asc"];
 
-function filterEntries(entries, query, status, medium = "all") {
+/* The CD's own menu group may group an entry for browsing when Catalog has no content
+ * kind. Only these exact source values count (docs/archive-sort-filter.md); «Demoer»,
+ * «Barn», «Bonus», «Aktuelt» and every other group say nothing about the type on their
+ * own. Mirrored by scripts/archive_index.py, which reports the distribution. */
+const ARCHIVE_MENU_GROUP_KINDS = {
+  "Spill": "game", "Spil": "game", "games": "game",
+  "Videokurs": "course",
+  "KProgram": "application", "programs": "application", "Software": "application",
+  "Artikler": "article",
+};
+
+/* One archive type per entry, used alike by filter, sort and row:
+ * 1. a known Catalog content_kind (basis "catalog");
+ * 2. otherwise the mapped menu groups, if they all agree (basis "menu");
+ * 3. otherwise unknown: no group, only unmapped groups, or groups that disagree.
+ * Titles, file names and descriptions are never read here. An older index without
+ * `menu_groups` simply falls through to unknown. */
+function archiveKind(entry) {
+  const known = entry.content_kind;
+  if (typeof known === "string" && Object.hasOwn(ARCHIVE_CONTENT_KINDS, known) && known !== "article") return { kind: known, basis: "catalog" };
+  const groups = Array.isArray(entry.menu_groups) ? entry.menu_groups : [];
+  const kinds = new Set();
+  for (const group of groups) {
+    const kind = typeof group === "string" && Object.hasOwn(ARCHIVE_MENU_GROUP_KINDS, group.trim()) ? ARCHIVE_MENU_GROUP_KINDS[group.trim()] : null;
+    if (kind) kinds.add(kind);
+  }
+  if (kinds.size === 1) return { kind: [...kinds][0], basis: "menu" };
+  return { kind: ARCHIVE_UNKNOWN, basis: kinds.size > 1 ? "conflict" : "none" };
+}
+
+function archiveKindLabel(kind) {
+  return ARCHIVE_CONTENT_KINDS[kind] ?? "Ikke oppgitt";
+}
+
+/* The year and issue of the CD itself, from its label («K-CD 10/2001»), never the
+ * program version or the date it was published here. */
+function archiveIssue(entry) {
+  return typeof parseIssue === "function" ? parseIssue(entry.medium) : null;
+}
+
+function archiveYearParameter(value) {
+  if (value === ARCHIVE_UNKNOWN) return value;
+  return /^[0-9]{4}$/.test(String(value ?? "")) ? String(value) : null;
+}
+
+function archiveTypeParameter(value) {
+  if (value === ARCHIVE_UNKNOWN) return value;
+  return typeof value === "string" && Object.hasOwn(ARCHIVE_CONTENT_KINDS, value) ? value : null;
+}
+
+function archiveSortParameter(value) {
+  return ARCHIVE_SORTS.includes(value) ? value : "source";
+}
+
+/* Filter choices come from the data: every type and CD year that occurs, plus
+ * «Ikke oppgitt» when some entry has none. */
+function archiveTypeOptions(entries) {
+  const present = new Set(entries.map(entry => archiveKind(entry).kind));
+  const others = Object.keys(ARCHIVE_CONTENT_KINDS).filter(kind => !ARCHIVE_CENTRAL_KINDS.includes(kind) && present.has(kind))
+    .sort((left, right) => archiveCollator.compare(archiveKindLabel(left), archiveKindLabel(right)));
+  const options = [...ARCHIVE_CENTRAL_KINDS, ...others].map(kind => ({ value: kind, label: archiveKindLabel(kind) }));
+  if (present.has(ARCHIVE_UNKNOWN)) options.push({ value: ARCHIVE_UNKNOWN, label: "Ikke oppgitt" });
+  return options;
+}
+
+function archiveYearOptions(entries) {
+  const years = new Set();
+  let unknown = false;
+  for (const entry of entries) {
+    const year = archiveIssue(entry)?.year;
+    if (year) years.add(year); else unknown = true;
+  }
+  const options = [...years].sort((left, right) => right - left).map(year => ({ value: String(year), label: String(year) }));
+  if (unknown) options.push({ value: ARCHIVE_UNKNOWN, label: "Ikke oppgitt" });
+  return options;
+}
+
+function filterEntries(entries, query, status, medium = "all", type = "all", year = "all") {
   const needle = normalized(query.trim());
   return entries.filter(entry => {
     const effectiveStatus = archiveStatus(entry);
     const matchesStatus = status === "all" || effectiveStatus === status;
     const haystack = [entry.entry, entry.editorial_title, entry.software_name, entry.version, entry.medium, entry.source_entry].map(normalized).join(" ");
-    return matchesStatus && (medium === "all" || entry.medium_id === medium) && haystack.includes(needle);
+    if (!(matchesStatus && (medium === "all" || entry.medium_id === medium) && haystack.includes(needle))) return false;
+    if (type !== "all" && archiveKind(entry).kind !== type) return false;
+    if (year !== "all") {
+      const entryYear = archiveIssue(entry)?.year;
+      if (year === ARCHIVE_UNKNOWN ? Boolean(entryYear) : String(entryYear) !== year) return false;
+    }
+    return true;
   });
 }
 
+const archiveCollator = new Intl.Collator("nb", { sensitivity: "base" });
+
+function archiveName(entry) {
+  return entry.software_name ?? entry.editorial_title ?? entry.entry;
+}
+
+function sourcePosition(entry) {
+  return entry.source_order ?? Number(String(entry.entry).replace(/^.*?(\d+)$/, "$1"));
+}
+
+// Last resort for a total, stable order: source position, then the unique entry id.
+function sourceTieBreak(left, right) {
+  return (sourcePosition(left) - sourcePosition(right)) || (left.entry < right.entry ? -1 : left.entry > right.entry ? 1 : 0);
+}
+
+/* Sorting only orders; it never adds or removes an entry (filterEntries decides that).
+ * Unknown type or year goes last in both directions. */
 function sortEntries(entries, sort) {
-  return [...entries].sort((left, right) => {
-    if (sort === "name") {
-      const leftName = left.software_name ?? left.editorial_title ?? left.entry;
-      const rightName = right.software_name ?? right.editorial_title ?? right.entry;
-      return leftName.localeCompare(rightName, "no", { sensitivity: "base" });
-    }
-    return (left.source_order ?? Number(left.entry.slice(1))) - (right.source_order ?? Number(right.entry.slice(1)));
-  });
+  const comparators = {
+    name: (left, right) => archiveCollator.compare(archiveName(left), archiveName(right)),
+    type: (left, right) => {
+      const a = archiveKind(left).kind, b = archiveKind(right).kind;
+      if ((a === ARCHIVE_UNKNOWN) !== (b === ARCHIVE_UNKNOWN)) return a === ARCHIVE_UNKNOWN ? 1 : -1;
+      return archiveCollator.compare(archiveKindLabel(a), archiveKindLabel(b)) || archiveCollator.compare(archiveName(left), archiveName(right));
+    },
+    "year-desc": (left, right) => compareIssues(archiveIssue(left), archiveIssue(right), -1) || archiveCollator.compare(left.medium ?? "", right.medium ?? ""),
+    "year-asc": (left, right) => compareIssues(archiveIssue(left), archiveIssue(right), 1) || archiveCollator.compare(left.medium ?? "", right.medium ?? ""),
+  };
+  const compare = comparators[sort] ?? (() => 0);
+  return [...entries].sort((left, right) => compare(left, right) || sourceTieBreak(left, right));
+}
+
+// Year, then issue number as a number (2 before 10), in the same direction.
+function compareIssues(a, b, direction) {
+  if (!a || !b) return a ? -1 : b ? 1 : 0;
+  return direction * (a.year - b.year || a.issue - b.issue);
 }
 
 function contentLabel(entry) {
-  const kind = ARCHIVE_CONTENT_KINDS[entry.content_kind];
+  const { kind, basis } = archiveKind(entry);
+  const label = kind === ARCHIVE_UNKNOWN ? null : basis === "menu" ? `${archiveKindLabel(kind)} (CD-meny)` : archiveKindLabel(kind);
   const edition = ARCHIVE_DISTRIBUTION_KINDS[entry.distribution_kind];
-  if (kind && edition) return `${kind}, ${edition}`;
-  if (kind) return kind;
+  if (label && edition) return `${label}, ${edition}`;
+  if (label) return label;
   if (edition) return edition.charAt(0).toLocaleUpperCase("no") + edition.slice(1);
   return null;
+}
+
+// «(CD-meny)» stays on one line so a narrow row never breaks it at the hyphen.
+function kindContent(label) {
+  const marker = " (CD-meny)";
+  if (!label || !label.includes(marker)) return label;
+  const [kind, rest] = label.split(marker);
+  const basis = document.createElement("span");
+  basis.className = "archive-kind-basis";
+  basis.textContent = "(CD-meny)";
+  const fragment = document.createDocumentFragment();
+  fragment.append(`${kind} `, basis, rest);
+  return fragment;
 }
 
 function cell(className, label, content) {
@@ -121,7 +250,7 @@ function card(entry) {
   title.className = "archive-title-cell";
   title.append(icon, copy);
 
-  const year = typeof parseIssue === "function" ? parseIssue(entry.medium)?.year : null;
+  const year = archiveIssue(entry)?.year;
   const effectiveStatus = archiveStatus(entry);
   const [mark, label] = ARCHIVE_STATUS[effectiveStatus] ?? ["?", "Ukjent"];
   const status = document.createElement("span");
@@ -133,11 +262,18 @@ function card(entry) {
   symbol.textContent = mark;
   status.append(symbol, label);
 
+  const typeCell = cell("archive-cell-kind", "Innhold", kindContent(contentLabel(entry)));
+  if (Array.isArray(entry.menu_groups) && entry.menu_groups.includes("Skole")) {
+    const source = document.createElement("small");
+    source.className = "archive-source-title";
+    source.textContent = "På CD-en: Skole";
+    typeCell.append(source);
+  }
   row.append(
     cell("archive-cell-title", null, title),
     cell("archive-cell-medium", "CD", entry.medium ?? null),
     cell("archive-cell-year", "År", year ? String(year) : null),
-    cell("archive-cell-kind", "Innhold", contentLabel(entry)),
+    typeCell,
     cell("archive-cell-status", null, status));
   return row;
 }
@@ -208,6 +344,15 @@ function renderArchiveContext(context) {
   document.title = context.medium ? `${context.title}${context.collection ? ` — ${context.collection.title}` : ""} — Bootdisk` : "Arkiv — Bootdisk";
 }
 
+function fillOptions(select, options) {
+  for (const item of options) {
+    const option = document.createElement("option");
+    option.value = item.value;
+    option.textContent = item.label;
+    select.append(option);
+  }
+}
+
 async function render() {
   const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
   const response = await fetch("data/index.json", { cache: "no-cache" });
@@ -220,26 +365,44 @@ async function render() {
   const search = document.querySelector("#archive-search");
   const status = document.querySelector("#archive-status");
   const medium = document.querySelector("#archive-medium");
-  for (const item of data.media ?? []) {
-    const option = document.createElement("option");
-    option.value = item.id; option.textContent = item.medium; medium.append(option);
-  }
+  const type = document.querySelector("#archive-type");
+  const year = document.querySelector("#archive-year");
   const sort = document.querySelector("#archive-sort");
   const reset = document.querySelector("#archive-reset");
+  const emptyReset = document.querySelector("#archive-empty-reset");
+  fillOptions(medium, (data.media ?? []).map(item => ({ value: item.id, label: item.medium })));
+  const typeOptions = archiveTypeOptions(data.entries);
+  fillOptions(year, archiveYearOptions(data.entries));
+
+  /* Every parameter is read on its own: one that is unknown falls back to «all» and
+   * says so, without clearing the others. */
   const parameters = new URLSearchParams(window.location.search);
+  const problems = [];
   const requestedMedium = parameters.get("medium");
   medium.value = (data.media ?? []).some(item => item.id === requestedMedium) ? requestedMedium : "all";
-  if (requestedMedium !== null && medium.value === "all") {
-    const notice = document.querySelector("#archive-notice");
-    notice.textContent = "Fant ikke CD-en i lenken. Viser alle kildeposter i stedet.";
-    notice.hidden = false;
-  }
+  if (requestedMedium !== null && medium.value === "all") problems.push("Fant ikke CD-en i lenken. Viser alle CD-er i stedet.");
+  const requestedType = parameters.get("type");
+  const typeValue = archiveTypeParameter(requestedType);
+  // A valid type the data does not have yet still selects; the result is then empty.
+  if (typeValue && !typeOptions.some(item => item.value === typeValue)) typeOptions.push({ value: typeValue, label: archiveKindLabel(typeValue) });
+  fillOptions(type, typeOptions);
+  type.value = typeValue ?? "all";
+  if (requestedType !== null && !typeValue) problems.push("Ukjent innholdstype i lenken. Viser alle typer.");
+  const requestedYear = parameters.get("year");
+  const yearValue = archiveYearParameter(requestedYear);
+  year.value = yearValue && [...year.options].some(option => option.value === yearValue) ? yearValue : "all";
+  if (requestedYear !== null && year.value === "all") problems.push("Fant ikke CD-året i lenken. Viser alle år.");
   search.value = parameters.get("q") ?? "";
   status.value = archiveStatusParameter(parameters.get("status"));
-  sort.value = parameters.get("sort") === "name" ? "name" : "source";
+  sort.value = archiveSortParameter(parameters.get("sort"));
+  const notice = document.querySelector("#archive-notice");
+  if (problems.length) {
+    notice.textContent = problems.join(" ");
+    notice.hidden = false;
+  }
 
   function update() {
-    const entries = sortEntries(filterEntries(data.entries, search.value, status.value, medium.value), sort.value);
+    const entries = sortEntries(filterEntries(data.entries, search.value, status.value, medium.value, type.value, year.value), sort.value);
     grid.replaceChildren(...(entries.length ? [archiveTable(entries.map(card))] : []));
     empty.hidden = entries.length !== 0;
     count.textContent = `${entries.length} av ${data.entries.length} poster`;
@@ -247,23 +410,28 @@ async function render() {
     if (search.value.trim()) next.set("q", search.value.trim());
     if (medium.value !== "all") next.set("medium", medium.value);
     if (status.value !== "all") next.set("status", status.value);
+    if (type.value !== "all") next.set("type", type.value);
+    if (year.value !== "all") next.set("year", year.value);
     if (sort.value !== "source") next.set("sort", sort.value);
     renderArchiveContext(archiveContext(data, registry, medium.value));
     const query = next.toString();
     window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   }
+  for (const control of [status, medium, type, year, sort]) control.addEventListener("change", update);
   search.addEventListener("input", update);
-  status.addEventListener("change", update);
-  medium.addEventListener("change", update);
-  sort.addEventListener("change", update);
-  reset.addEventListener("click", () => {
+  function clear() {
     search.value = "";
     status.value = "all";
     medium.value = "all";
+    type.value = "all";
+    year.value = "all";
     sort.value = "source";
+    notice.hidden = true;
     update();
     search.focus();
-  });
+  }
+  reset.addEventListener("click", clear);
+  emptyReset?.addEventListener("click", clear);
   update();
 }
 

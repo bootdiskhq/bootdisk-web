@@ -10,6 +10,7 @@ import re
 import shutil
 import tempfile
 from frontend_contract import validate_frontend_data, require
+from archive_index import project_menu_groups
 
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 MANIFEST = re.compile(r"sha256:[0-9a-f]{64}")
@@ -64,6 +65,7 @@ def build_collection(config_path: Path, output: Path):
                 asset["entry"] = route
             projected = deepcopy(summary)
             projected.update(metadata)
+            project_menu_groups(projected, document)
             if projected.get("icon"):
                 projected["icon"]["entry"] = route
             summaries.append(projected)

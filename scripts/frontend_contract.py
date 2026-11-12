@@ -161,6 +161,12 @@ def validate_frontend_data(root: Path, expected_entries: int | None = None) -> d
                 title = source_catalog.get("title") or {}
                 require(title.get("value") == document.get("editorial_title"), "source catalog title mismatch")
                 require(all(title.get("source_ref", {}).get(k) == v for k, v in source_catalog["key"].items()), "cross-source catalog title")
+        # Optional archive extension (scripts/archive_index.py): the CD's menu groups,
+        # copied unchanged from this entry's own source observation. Older indexes lack it.
+        if "menu_groups" in summary:
+            observed = (document.get("source_context") or {}).get("menu_groups")
+            require(observed is not None and summary["menu_groups"] == observed.get("value"),
+                    f"{path.name}: index menu_groups differ from the entry's source observation")
         require(isinstance(document.get("software"), list), f"{path.name}: software must be an array")
         for position, software in enumerate(document["software"]):
             validate_software(software, f"{path.name}.software[{position}]")

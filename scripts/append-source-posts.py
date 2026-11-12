@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import tempfile
 from frontend_contract import validate_frontend_data, require
+from archive_index import project_menu_groups
 
 spec=importlib.util.spec_from_file_location('collection_builder',Path(__file__).with_name('build-collection.py'))
 collection=importlib.util.module_from_spec(spec);spec.loader.exec_module(collection)
@@ -17,6 +18,9 @@ collection=importlib.util.module_from_spec(spec);spec.loader.exec_module(collect
 def append_posts(base, config_path, output):
     base=Path(base).resolve();config_path=Path(config_path).resolve();output=Path(output).absolute()
     index=deepcopy(validate_frontend_data(base))
+    # Earlier rows get their menu groups from their own (unchanged) entry documents too.
+    for summary in index['entries']:
+        project_menu_groups(summary,json.loads((base/(summary['entry'].lower()+'.json')).read_text()))
     require(index.get('schema')=='bootdisk-web-collection-1','base must be a collection')
     require(not output.exists() and not output.is_symlink(),'output must be new')
     config=json.loads(config_path.read_text());inputs=config.get('media',[])
