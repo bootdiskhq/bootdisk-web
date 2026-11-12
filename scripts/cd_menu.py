@@ -719,10 +719,13 @@ def write_menu(site: Path, medium: str, build: MenuBuild, report: dict) -> Path:
     parent = site / MENU_DIR
     parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=f".{medium}-", dir=parent))
+    # Compare canonical paths on both sides: on macOS the temporary folder is often
+    # reached through an alias (/var → /private/var), and only the target was resolved.
+    boundary = temporary.resolve()
     try:
         for name, data in build.files.items():
             target = temporary / name
-            if temporary not in target.resolve().parents:
+            if boundary not in target.resolve().parents:
                 raise BuildBlocked(f"utdata utenfor menymappen: {name}")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)

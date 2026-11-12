@@ -126,8 +126,13 @@ filer som fortsatt kopieres.
    (cd RELEASE && python3 -m http.server 8791)   # http://127.0.0.1:8791/archive.html
    ```
 
-4. For publisering lister du bare godkjente medier: `--approve kcd-18-2013,kcd-5-2012`
-   i stedet for `--preview-all`.
+4. For publiseringspakken gir du bare godkjente medier: `--approve kcd-18-2013,kcd-5-2012`
+   i stedet for `--preview-all`. Da skrives bare de godkjente menyene under `cd-meny/`.
+   De andre bygges og kontrolleres i minnet og står i rapporten med `published: false`.
+   Menyer fra en tidligere forhåndsvisning i samme mappe fjernes. Ligger det noe annet i
+   `cd-meny/` enn menyer og midlertidige mapper fra dette verktøyet, stopper kjøringen
+   før bygging, og ingenting endres. Bruk helst en egen kopi av release-mappen for
+   forhåndsvisning.
 
 `RELEASE` er mappen fra `build-release.py`. Menyene bygges etter release-bygget, fordi
 `build-release.py` erstatter hele utdatamappen. `rapport/RAPPORT.md` har én linje per

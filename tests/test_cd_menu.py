@@ -296,6 +296,84 @@ class BlockingTests(unittest.TestCase):
         self.assertEqual(sorted(menus["media"]), [FIRST, SECOND])
 
 
+def run_matrix(fixture, site, report, *options):
+    return subprocess.run([sys.executable, str(ROOT / "scripts/cd-menu-matrix.py"), "--config", str(fixture["config"]),
+                           "--index", str(fixture["index"]), "--site", str(site), "--report-dir", str(report), *options],
+                          capture_output=True, text=True)
+
+
+class PublishingTests(unittest.TestCase):
+    """What ends up under cd-meny/ in the package, and building through path aliases."""
+
+    def test_alias_path_to_the_site_is_accepted(self):
+        # macOS reaches its temporary folder through /var → /private/var. The boundary
+        # check must compare canonical paths on both sides.
+        with tempfile.TemporaryDirectory() as temporary:
+            real = Path(temporary) / "real"
+            real.mkdir()
+            alias = Path(temporary) / "alias"
+            alias.symlink_to(real, target_is_directory=True)
+            fixture = synthetic.build(alias / "site", (alias / "work"))
+            self.assertNotEqual(alias / "site", (alias / "site").resolve())
+            report = cd_menu.build_medium(FIRST, fixture["menus"][FIRST]["manifest"], fixture["menus"][FIRST]["source"],
+                                          json.loads(fixture["index"].read_text(encoding="utf-8")), alias / "site")
+            self.assertEqual(report["status"], "review", report.get("blocked"))
+            self.assertTrue((real / "site/cd-meny" / FIRST / "html/program1.html").is_file())
+            leftovers = [path.name for path in (real / "site/cd-meny").iterdir() if path.name.startswith(".")]
+            self.assertEqual(leftovers, [], "no temporary folder left behind")
+
+    def test_output_outside_the_menu_folder_is_still_refused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            work = root / "work"
+            work.mkdir()
+            fixture = synthetic.build(root / "site", work)
+            build = cd_menu.MenuBuild(FIRST, fixture["menus"][FIRST]["manifest"], fixture["menus"][FIRST]["source"],
+                                      json.loads(fixture["index"].read_text(encoding="utf-8")))
+            report = build.build()
+            build.files["../escape.html"] = b"x"
+            with self.assertRaises(cd_menu.BuildBlocked):
+                cd_menu.write_menu(root / "site", FIRST, build, report)
+            self.assertFalse((root / "site/cd-meny/escape.html").exists())
+            self.assertEqual([path.name for path in (root / "site/cd-meny").iterdir()], ["menus.json"], "the temporary folder is cleaned up")
+
+    def test_only_approved_media_are_in_the_package_even_after_a_preview(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            work, site = root / "work", root / "site"
+            work.mkdir()
+            fixture = synthetic.build(site, work)
+            outside = tree_hashes(site, skip="cd-meny")
+            preview = run_matrix(fixture, site, root / "preview", "--preview-all")
+            self.assertEqual(preview.returncode, 0, preview.stderr)
+            self.assertEqual(sorted(path.name for path in (site / "cd-meny").iterdir()), ["menus.json", FIRST, SECOND])
+
+            package = run_matrix(fixture, site, root / "package", "--approve", FIRST)
+            self.assertEqual(package.returncode, 0, package.stderr)
+            self.assertEqual(sorted(path.name for path in (site / "cd-meny").iterdir()), ["menus.json", FIRST],
+                             "the preview menu of the unapproved medium is gone")
+            self.assertEqual(sorted(json.loads((site / "cd-meny/menus.json").read_text(encoding="utf-8"))["media"]), [FIRST])
+            self.assertEqual(tree_hashes(site, skip="cd-meny"), outside, "nothing outside cd-meny/ changes")
+            report = json.loads((root / "package/report.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["published"], [FIRST])
+            rows = {row["medium_id"]: row for row in report["media"]}
+            self.assertEqual((rows[SECOND]["status"], rows[SECOND]["published"]), ("review", False), "still built and checked, not written")
+            self.assertEqual(len(rows[SECOND]["routes"]), 4)
+            self.assertIn(f"Godkjent og med i `cd-meny/`: {FIRST}.", (root / "package/RAPPORT.md").read_text(encoding="utf-8"))
+
+            again = run_matrix(fixture, site, root / "package2", "--approve", FIRST)
+            self.assertEqual(again.returncode, 0, again.stderr)
+            self.assertEqual(sorted(path.name for path in (site / "cd-meny").iterdir()), ["menus.json", FIRST])
+
+            (site / "cd-meny/notes.txt").write_text("ikke vårt", encoding="utf-8")
+            before = tree_hashes(site / "cd-meny")
+            stopped = run_matrix(fixture, site, root / "package3", "--approve", SECOND)
+            self.assertEqual(stopped.returncode, 1)
+            self.assertIn("stoppet før bygging: ukjent innhold", stopped.stdout)
+            self.assertEqual(tree_hashes(site / "cd-meny"), before, "stopped before building: nothing written, removed or registered")
+            self.assertEqual(sorted(json.loads((site / "cd-meny/menus.json").read_text(encoding="utf-8"))["media"]), [FIRST])
+
+
 class FindManifestTests(unittest.TestCase):
     def test_finds_manifests_by_hash_never_by_name(self):
         with tempfile.TemporaryDirectory() as temporary:
