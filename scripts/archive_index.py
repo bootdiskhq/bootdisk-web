@@ -32,7 +32,7 @@ KIND_LABELS = {"application": "Program", "game": "Spill", "course": "Kurs / veil
                "font_collection": "Skriftpakke", "reference": "Oppslagsverk", "article": "Artikkel", "unknown": "Ikke oppgitt"}
 ARCHIVE_MENU_GROUP_KINDS = {
     "Spill": "game", "Spil": "game", "games": "game",
-    "Skole": "course", "Videokurs": "course",
+    "Videokurs": "course",
     "KProgram": "application", "programs": "application", "Software": "application",
     "Artikler": "article",
 }

@@ -53,14 +53,14 @@ KIND_CASES = [
     ({"menu_groups": ["games"]}, "game", "menu"),
     ({"menu_groups": ["Spil", "Barn"]}, "game", "menu"),
     ({"menu_groups": ["Spill", "games"]}, "game", "menu"),
-    ({"menu_groups": ["Skole"]}, "course", "menu"),
+    ({"menu_groups": ["Skole"]}, "unknown", "none"),
     ({"menu_groups": ["Videokurs"]}, "course", "menu"),
     ({"menu_groups": ["KProgram"]}, "application", "menu"),
     ({"menu_groups": ["programs"]}, "application", "menu"),
     ({"menu_groups": ["Software", "KProgram"]}, "application", "menu"),
     ({"menu_groups": ["Artikler"]}, "article", "menu"),
     ({"menu_groups": ["KProgram", "Spil"]}, "unknown", "conflict"),
-    ({"menu_groups": ["Skole", "games"]}, "unknown", "conflict"),
+    ({"menu_groups": ["Skole", "games"]}, "game", "menu"),
     ({"menu_groups": ["Demoer"]}, "unknown", "none"),
     ({"menu_groups": ["Demoer"], "distribution_kind": "demo"}, "unknown", "none"),
     ({"menu_groups": ["Barn"]}, "unknown", "none"),
@@ -102,7 +102,7 @@ for (const [entry, kind, basis] of DATA.cases) {
 const label = js('contentLabel');
 assert.equal(label({content_kind: 'game', distribution_kind: 'full'}), 'Spill, fullversjon');
 assert.equal(label({menu_groups: ['Spil']}), 'Spill (CD-meny)');
-assert.equal(label({menu_groups: ['Skole']}), 'Kurs / veiledning (CD-meny)');
+assert.equal(label({menu_groups: ['Skole']}), null);
 assert.equal(label({menu_groups: ['Demoer'], distribution_kind: 'demo'}), 'Demo');
 assert.equal(label({menu_groups: ['KProgram', 'Spil']}), null);
 assert.equal(label({}), null);
@@ -117,7 +117,7 @@ assert.equal(label({}), null);
             row("e", "Uten år", 4, "Prøvepost: Øving", menu_groups=["games"]),
             row("f", "K-CD 10/2001", 5, "Prøvepost: Zebra", content_kind="game"),
             row("g", "K-CD 1/2013", 6, "Prøvepost: Aktuelt", menu_groups=["Aktuelt"]),
-            row("h", "K-CD 2/2001", 7, "Prøvepost: Bok", menu_groups=["Skole"]),
+            row("h", "K-CD 2/2001", 7, "Prøvepost: Bok", menu_groups=["Videokurs"]),
             row("i", "K-CD 10/2001", 8, "Prøvepost: Konflikt", menu_groups=["Spil", "KProgram"]),
         ]
         node("""
@@ -147,7 +147,7 @@ for (const s of ['name','type','year-desc','year-asc']) assert.deepEqual(sort(s,
 
     def test_filters_combine_and_options_come_from_the_data(self):
         rows = [
-            row("a", "K-CD 2/2001", 0, "Prøvepost: Kurs", menu_groups=["Skole"]),
+            row("a", "K-CD 2/2001", 0, "Prøvepost: Kurs", menu_groups=["Videokurs"]),
             row("b", "K-CD 10/2001", 1, "Prøvepost: Kurs to", content_kind="course", curation_status="identified"),
             row("c", "K-CD 5/2000", 2, "Prøvepost: Kurs gammel", menu_groups=["Videokurs"]),
             row("d", "Uten år", 3, "Prøvepost: Ukjent", menu_groups=["Demoer"]),
@@ -350,7 +350,7 @@ class ArchiveBrowserTests(unittest.TestCase):
 
     def test_course_without_content_kind_and_cd_year(self):
         with self.page("/archive.html?type=course&year=2001") as page:
-            self.assertEqual([r["title"] for r in self.rows(page)], ["Prøvepost: Kurs fra Skole"])
+            self.assertEqual([r["title"] for r in self.rows(page)], ["Prøvepost: Videokurs"])
             self.assertEqual(self.rows(page)[0]["kind"], "Kurs / veiledning (CD-meny)")
         with self.page("/archive.html?type=course") as page:
             self.assertEqual({r["kind"] for r in self.rows(page)}, {"Kurs / veiledning (CD-meny)", "Kurs / veiledning"})
@@ -518,15 +518,23 @@ class RealArchiveAcceptance(unittest.TestCase):
         self.assertEqual(sorted(h for h, _ in rows), sorted(page.eval_on_selector_all(".archive-card", "a => a.map(x => x.getAttribute('href'))")))
         page.close()
 
-    def test_skole_post_without_content_kind_is_found_as_course(self):
-        skole = [e for e in self.after["entries"] if not e.get("content_kind") and archive_index.archive_kind(e) == ("course", "menu")
-                 and "Skole" in (e.get("menu_groups") or [])]
-        self.assertTrue(skole, "the data has a Skole entry without content_kind")
+    def test_school_menu_is_not_proof_of_a_course(self):
+        entries = self.after["entries"]
+        acrobat = next(e for e in entries if e["medium_id"] == "kcd-11-2001"
+                       and "Acrobat Reader" in (e.get("software_name") or e["editorial_title"])
+                       and "Skole" in e["menu_groups"])
         page = self.browser.new_page()
         page.goto(self.base + "/archive.html?type=course", wait_until="networkidle")
-        page.wait_for_selector(".archive-card")
-        hrefs = set(page.eval_on_selector_all(".archive-card", "a => a.map(x => x.getAttribute('href'))"))
-        self.assertIn(f"index.html?entry={skole[0]['entry']}", hrefs)
+        hrefs = set(page.locator(".archive-card").evaluate_all("a => a.map(x => x.getAttribute('href'))"))
+        link = lambda e: "index.html?entry=" + e["entry"]
+        self.assertNotIn(link(acrobat), hrefs)
+        for e in entries:
+            if e.get("content_kind") == "course" or archive_index.archive_kind(e) == ("course", "menu"):
+                self.assertIn(link(e), hrefs)
+        page.goto(self.base + "/archive.html?medium=kcd-11-2001", wait_until="networkidle")
+        cell = page.locator("tr").filter(has=page.locator('a[href="' + link(acrobat) + '"]')).locator(".archive-cell-kind")
+        self.assertIn("På CD-en: Skole", cell.inner_text())
+        self.assertNotIn("Kurs / veiledning", cell.inner_text())
         page.close()
 
 

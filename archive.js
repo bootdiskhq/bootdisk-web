@@ -42,7 +42,7 @@ const ARCHIVE_SORTS = ["source", "name", "type", "year-desc", "year-asc"];
  * own. Mirrored by scripts/archive_index.py, which reports the distribution. */
 const ARCHIVE_MENU_GROUP_KINDS = {
   "Spill": "game", "Spil": "game", "games": "game",
-  "Skole": "course", "Videokurs": "course",
+  "Videokurs": "course",
   "KProgram": "application", "programs": "application", "Software": "application",
   "Artikler": "article",
 };
@@ -262,11 +262,18 @@ function card(entry) {
   symbol.textContent = mark;
   status.append(symbol, label);
 
+  const typeCell = cell("archive-cell-kind", "Innhold", kindContent(contentLabel(entry)));
+  if (Array.isArray(entry.menu_groups) && entry.menu_groups.includes("Skole")) {
+    const source = document.createElement("small");
+    source.className = "archive-source-title";
+    source.textContent = "På CD-en: Skole";
+    typeCell.append(source);
+  }
   row.append(
     cell("archive-cell-title", null, title),
     cell("archive-cell-medium", "CD", entry.medium ?? null),
     cell("archive-cell-year", "År", year ? String(year) : null),
-    cell("archive-cell-kind", "Innhold", kindContent(contentLabel(entry))),
+    typeCell,
     cell("archive-cell-status", null, status));
   return row;
 }

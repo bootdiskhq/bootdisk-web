@@ -40,7 +40,7 @@ MEDIA = [("kcd-2-2001", "K-CD 2/2001"), ("kcd-10-2001", "K-CD 10/2001"), ("kcd-5
 ENTRIES = [
     ("kcd-2-2001", "Prøvepost: Bekreftet spill", ["Spil"], "game", "full"),
     ("kcd-2-2001", "Prøvepost: Spill fra menyen", ["Spill"], None, None),
-    ("kcd-2-2001", "Prøvepost: Kurs fra Skole", ["Skole"], None, None),
+    ("kcd-2-2001", "Prøvepost: Videokurs", ["Videokurs"], None, None),
     ("kcd-2-2001", "Prøvepost: Samme navn", ["KProgram"], None, None),
     ("kcd-2-2001", "Prøvepost: Bare demo", ["Demoer"], None, None),
     ("kcd-2-2001", "Prøvepost: Ærfugl", ["Spil", "Barn"], None, None),

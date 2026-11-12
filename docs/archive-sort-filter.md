@@ -17,7 +17,7 @@ arkivtype, og den samme typen brukes i filter, sortering og rad:
    | Menygruppe på CD-en | Arkivtype |
    |---|---|
    | `Spill`, `Spil`, `games` | Spill |
-   | `Skole`, `Videokurs` | Kurs / veiledning |
+   | `Videokurs` | Kurs / veiledning |
    | `KProgram`, `programs`, `Software` | Program |
    | `Artikler` | Artikkel |
 
@@ -113,9 +113,7 @@ at skallmiljøet startet, så detaljpostene kunne bare hentes enkeltvis. Utvidel
 37 ekte detaljposter (stikkprøve over CD-ene): 4 Spill og 4 Program fra Catalog, 1 Skriftpakke,
 3 Spill, 3 Kurs, 2 Program og 1 Artikkel fra CD-menyen, 19 «Ikke oppgitt». Funn i stikkprøven:
 
-- **«Skole» er ikke alltid kurs.** Acrobat Reader 5.0 på K-CD 11/2001 ligger under «Skole» og
-  «Tilbehør» og blir «Kurs / veiledning (CD-meny)» etter tabellen. Samme program på K-CD 15/2001
-  er Program fordi Catalog kjenner typen. Grunnlaget vises i raden, men tabellen bør vurderes.
+- «Skole» beskriver menyplassering og vises som «På CD-en: Skole». Det gir ikke kurs alene. En dokumentert type eller en entydig gruppe som «Videokurs» avgjør typen.
 - CD-ene fra 2008 har tomme menygrupper, så de blir «Ikke oppgitt» uansett.
 - Hyppige grupper uten type: `Tilbehør`, `Internet`, `Galleri`, `Værksted`, `tools`,
   `Verktøykassa`, `Sikkerhetssenteret`, `Demoer`, `Aktuelt`.
@@ -142,8 +140,7 @@ BOOTDISK_ARCHIVE_DATA=/Users/stian/Bootdisk/local-results/releases/bootdisk-web-
 Den leser bare rc27-mappen, utvider en kopi i en midlertidig mappe, skriver typefordelingen
 før og etter, og kontrollerer: kildefilene er byte-identiske etterpå, samme poster og
 fingeravtrykk, `?type=game&sort=year-desc` har både registrert spill og spill fra CD-menyen og
-ingen rene «Demoer»-poster, A–Å gir samme treff, og en «Skole»-post uten `content_kind` finnes
-med kursfilteret. For å se siden selv: kjør `scripts/archive_index.py` som over, legg den nye
+ingen rene «Demoer»-poster, A–Å gir samme treff, og Acrobat Reader under «Skole» utelates fra kursfilteret. For å se siden selv: kjør `scripts/archive_index.py` som over, legg den nye
 datamappen i en kopi av rc27-pakken med denne grenens sider, og åpn `archive.html?type=game&sort=year-desc`.
 
 ## Skjermbilder
