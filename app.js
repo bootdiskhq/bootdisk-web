@@ -199,6 +199,14 @@ function renderCdMenuLink(entry, menus) {
   link.href = route;
   link.className = "disc-menu-launch";
   link.textContent = "Åpne omtalen i CD-menyen →";
+  const digest = menus.media[entry.medium_id].articles?.[entry.entry];
+  if (typeof digest === "string" && /^[a-f0-9]{64}$/.test(digest)) {
+    const article = document.createElement("a");
+    article.className = "disc-menu-launch";
+    article.href = `artikler/${digest}.pdf`;
+    article.textContent = "Les artikkelen (PDF)";
+    paragraph.append(article, " · ");
+  }
   paragraph.append(link);
   document.querySelector(".entry-head").append(paragraph);
 }

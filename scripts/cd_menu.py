@@ -261,6 +261,7 @@ class MenuBuild:
         self.disabled = Counter()
         self.deviations: list[dict] = []
         self.layout: dict[str, str] = {}
+        self.articles: dict[str, str] = {}
         self.routes: dict[str, str] = {}
         self.unbound: list[dict] = []
         self.broken_pages: dict[str, str] = {}
@@ -436,6 +437,9 @@ class MenuBuild:
     def render(self, node, page: str, extras: dict) -> str:
         if isinstance(node, str):
             return html.escape(node, quote=False)
+        replacement = extras.get(id(node), {}).get("article_control")
+        if replacement:
+            return replacement
         tag, attrs = node.tag, node.attrs
         if tag in DROPPED_TAGS or attrs.get("id") in DROPPED_IDS:
             return ""
@@ -601,6 +605,22 @@ class MenuBuild:
                 anchor = "post-" + entry["sid"]
                 extras[page][id(block)] = {"id": anchor, "class": "bd-anchor", "before": "",
                                            "after": f'<p class="bd-post"><a href="{html.escape(self.entry_href(page, entry["key"]))}">← Til kildeposten i Bootdisk: {html.escape(entry["title"])}</a></p>'}
+                digest = self.articles.get(entry["key"])
+                if digest:
+                    href = self.site_href(page, f"artikler/{digest}.pdf")
+                    for control in block.walk():
+                        label = clean(control.attrs.get("value") or control.text()).casefold()
+                        if control.tag == "input" and not label and re.fullmatch(
+                                r"window\.open\('\.\./pdfarticle/[0-9]+/[^/'\\]+\.(?:html|pdf)'\);?",
+                                control.attrs.get("onclick", ""), re.I):
+                            label = "les veiledning"
+                        if control.tag in ("a", "input") and label in ("les veiledning", "last ned pdf"):
+                            download = label == "last ned pdf"
+                            attribute = " download" if download else ""
+                            caption = "Last ned PDF" if download else "Les artikkelen (PDF)"
+                            extras[page][id(control)] = {
+                                "article_control": f'<a href="{href}"{attribute}>{caption}</a>'
+                            }
                 self.routes[entry["key"]] = page + "#" + anchor
 
         for page in sorted(trees):
@@ -632,6 +652,9 @@ class MenuBuild:
                 '<p>Dette er en statisk arkivvisning av menyen slik den ble levert på CD-en. Tekst, rekkefølge, menybilder og '
                 'utforming kommer fra platen, også feil som sto i originalen. Bootdisk-feltet øverst og merknadene i parentes er lagt til av arkivet.</p>'
                 '<p>Installasjon, søk, videoavspilling, PDF-filer og lenker til nettsteder er ikke aktive. Ingen programmer eller skript fra CD-en kjøres.</p>')
+        if self.articles:
+            body = body.replace("videoavspilling, PDF-filer og", "videoavspilling og")
+            body += "<p>Artikler med en kontrollert PDF kan leses direkte fra omtalen.</p>"
         published = {row.get("entry") for row in self.index.get("entries", []) if row.get("medium_id") == self.medium}
         rows = [row for row in self.unbound if row["entry"] in published]
         if rows:
@@ -681,6 +704,7 @@ class MenuBuild:
                 "disabled": sum(self.disabled.values()),
             },
             "routes": dict(sorted(self.routes.items())),
+            **({"articles": self.articles} if self.articles else {}),
             "shared_pages": self.shared_pages,
             "unbound": sorted(self.unbound, key=lambda row: row["entry"]),
             "broken_pages": self.broken_pages,
@@ -755,6 +779,7 @@ def register(site: Path, menus: list[dict]) -> Path:
         media[report["medium_id"]] = {
             "manifest": report["manifest"],
             "start": prefix + report["start"],
+            **({"articles": report["articles"]} if report.get("articles") else {}),
             "routes": {key: prefix + route for key, route in report["routes"].items()},
         }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -762,11 +787,33 @@ def register(site: Path, menus: list[dict]) -> Path:
     return path
 
 
-def build_medium(medium: str, manifest: Path, source: Path | None, index: dict, site: Path | None, dry_run: bool = False) -> dict:
+def build_medium(medium: str, manifest: Path, source: Path | None, index: dict, site: Path | None, dry_run: bool = False, article_files=None) -> dict:
     try:
         if source is None and not dry_run:
             raise BuildBlocked("kildeutvalget mangler; bare tørrkjøring er mulig fra manifestet")
         build = MenuBuild(medium, manifest, source, index)
+        if article_files and site is not None:
+            for entry in build.manifest["entries"]:
+                sid = entry["source_id"]
+                if sid not in article_files:
+                    continue
+                observation = entry["evidence"]["html_menu"]["observation"]
+                path = article_files[sid]
+                folder = posixpath.dirname(observation.get("image") or "")
+                if (observation.get("category") != "Artikler" or not re.fullmatch(r"pdfarticle/[0-9]+", folder)
+                        or posixpath.dirname(path) != folder or not path.lower().endswith(".pdf")):
+                    raise BuildBlocked(f"ugyldig artikkeltilknytning for {sid}")
+                record = build.source.inventory.get(path, {})
+                digest = record.get("sha256", "")
+                if not re.fullmatch(r"[0-9a-f]{64}", digest):
+                    raise BuildBlocked(f"mangler PDF i manifestet for {sid}")
+                pdf = site / "artikler" / (digest + ".pdf")
+                if not pdf.is_file() or pdf.is_symlink():
+                    raise BuildBlocked(f"mangler artikkel-PDF for {sid}")
+                raw = pdf.read_bytes()
+                if not raw.startswith(b"%PDF-") or len(raw) != record["size"] or sha256(raw) != digest:
+                    raise BuildBlocked(f"artikkelfilen stemmer ikke for {sid}")
+                build.articles[f"{medium}--{sid}"] = digest
         report = build.build()
         if source is None:
             # Only the entry pages embedded in the manifest were read. Missing files are
