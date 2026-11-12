@@ -111,7 +111,7 @@ CD-år i rc27: 2000: 229, 2001: 959, 2002: 339, 2008: 246, 2009: 137, 2012: 212,
 Fordelingen *etter* utvidelse er ikke målt på hele rc27: Macen hadde for lite ledig plass til
 at skallmiljøet startet, så detaljpostene kunne bare hentes enkeltvis. Utvidelsen er prøvd på
 37 ekte detaljposter (stikkprøve over CD-ene): 4 Spill og 4 Program fra Catalog, 1 Skriftpakke,
-3 Spill, 3 Kurs, 2 Program og 1 Artikkel fra CD-menyen, 19 «Ikke oppgitt». Funn i stikkprøven:
+3 Spill, 2 Kurs, 2 Program og 1 Artikkel fra CD-menyen, 20 «Ikke oppgitt». Funn i stikkprøven:
 
 - «Skole» beskriver menyplassering og vises som «På CD-en: Skole». Det gir ikke kurs alene. En dokumentert type eller en entydig gruppe som «Videokurs» avgjør typen.
 - CD-ene fra 2008 har tomme menygrupper, så de blir «Ikke oppgitt» uansett.
@@ -149,7 +149,7 @@ I `docs/archive-sort-filter/`. Ikonene er fjernet i bildene fra rc27 (butikken v
 
 1. rc27, gammel indeks: Spill, nyeste CD først (13 treff, bare Catalog-typer).
 2. rc27 med menygrupper for de 37 stikkprøvene: Spill, nyeste først (16 treff, tre fra CD-menyen).
-3. Samme, 375 px: Kurs / veiledning + 2001 (åtte treff, deriblant Acrobat Reader-funnet).
+3. Samme, 375 px: Kurs / veiledning + 2001 (sju treff; Acrobat Reader under «Skole» er ikke med).
 4. Samme, 320 px: Spill, Navn A–Å.
 5. PRØVEDATA: Spill, nyeste først.
 6. PRØVEDATA, 375 px: gyldig kombinasjon uten treff.
