@@ -9,6 +9,7 @@ import tempfile
 from xml.sax.saxutils import escape
 from pathlib import Path, PurePosixPath
 
+from cd_menu import register as register_cd_menus
 from collection_registry import collection_urls
 from frontend_contract import validate_frontend_data
 from public_updates import FEED_NAME, fingerprint, load_projection, load_register, validate_register
@@ -151,6 +152,9 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
         for name in STATIC_FILES:
             shutil.copy2(ROOT / name, stage / name)
         shutil.copy2(collections, stage / "collections.json")
+        # An empty menu register, so pages that look for original CD menus get an answer
+        # instead of a 404. scripts/cd-menu-matrix.py replaces it with approved menus.
+        register_cd_menus(stage, [])
         discovery_files(stage, entry_ids, base_url, collection_pages, updates=register is not None)
         shutil.copy2(frontend_data / "index.json", stage / "data" / "index.json")
         if register is not None:

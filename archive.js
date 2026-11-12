@@ -306,7 +306,7 @@ function archiveTable(rows) {
 
 /* A medium filter shows one CD as a place of its own: its name, its collection and a
  * way back to both the collection and the whole archive. */
-function archiveContext(data, registry, mediumId) {
+function archiveContext(data, registry, mediumId, menus = null) {
   const medium = (data.media ?? []).find(item => item.id === mediumId);
   if (!medium) return { title: "Programvarearkivet", eyebrow: `${data.publication} · ${data.medium}`, trail: [{ label: "Bootdisk", href: "./" }, { label: "Alle kildeposter" }], links: [] };
   const collection = registry ? collectionForPublication(registry, medium.publication) : null;
@@ -316,6 +316,8 @@ function archiveContext(data, registry, mediumId) {
   trail.push({ label: medium.medium });
   const links = collection ? [{ label: `← Tilbake til ${collection.title}`, href: collectionHref(collection) }] : [];
   links.push({ label: "Alle kildeposter", href: "archive.html" });
+  const menuStart = typeof cdMenuStart === "function" ? cdMenuStart(menus, medium.id) : null;
+  if (menuStart) links.unshift({ label: "Bla i CD-menyen →", href: menuStart, className: "disc-menu-launch" });
   return { title: medium.medium, eyebrow: collection ? collection.title.toLocaleUpperCase("no") : medium.publication, trail, links, medium, collection };
 }
 
@@ -339,7 +341,7 @@ function renderArchiveContext(context) {
     return element;
   }));
   const links = document.querySelector("#medium-links");
-  links.replaceChildren(...context.links.map(item => Object.assign(document.createElement("a"), { href: item.href, textContent: item.label })));
+  links.replaceChildren(...context.links.map(item => Object.assign(document.createElement("a"), { href: item.href, textContent: item.label }, item.className ? { className: item.className } : {})));
   links.hidden = context.links.length === 0;
   document.title = context.medium ? `${context.title}${context.collection ? ` — ${context.collection.title}` : ""} — Bootdisk` : "Arkiv — Bootdisk";
 }
@@ -355,10 +357,12 @@ function fillOptions(select, options) {
 
 async function render() {
   const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
+  const menusRequest = typeof loadCdMenus === "function" ? loadCdMenus() : Promise.resolve(null);
   const response = await fetch("data/index.json", { cache: "no-cache" });
   if (!response.ok) throw new Error(`Cannot load archive index: ${response.status}`);
   const data = await response.json();
   const registry = await registryRequest;
+  const menus = await menusRequest;
   const grid = document.querySelector("#archive-grid");
   const count = document.querySelector("#archive-count");
   const empty = document.querySelector("#archive-empty");
@@ -413,7 +417,7 @@ async function render() {
     if (type.value !== "all") next.set("type", type.value);
     if (year.value !== "all") next.set("year", year.value);
     if (sort.value !== "source") next.set("sort", sort.value);
-    renderArchiveContext(archiveContext(data, registry, medium.value));
+    renderArchiveContext(archiveContext(data, registry, medium.value, menus));
     const query = next.toString();
     window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   }

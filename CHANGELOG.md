@@ -12,6 +12,11 @@ Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
 
 # Upubliserte endringer
 
+- Originalmenyer fra K-CD: en statisk, filtrert kopi av HTML-menyen på CD-ene fra 2012 og
+  utover under `cd-meny/<medium>/`, med «Bla i CD-menyen» på CD-oversikten og «Åpne omtalen i
+  CD-menyen» på kildeposten. Lenker vises bare for medier i `cd-meny/menus.json` og bare når
+  manifestet er det samme som kildepostens. `build-release.py` legger med en tom `menus.json`.
+  Ingen kildedata endres. Se [docs/cd-menu.md](docs/cd-menu.md).
 - Arkivet: filter for innholdstype og CD-år, og sortering på innholdstype og CD-år (nyeste/eldste
   først) i tillegg til kilderekkefølge og navn. Typen kommer fra Catalogs `content_kind`, ellers fra
   CD-ens egne menygrupper (merket «(CD-meny)»). Indeksen får `menu_groups` ved bygging;

@@ -437,6 +437,20 @@ footer {
   font-size: .875rem;
 }
 .medium-links { font-size: .875rem; }
+/* Lenke til den statiske originalmenyen fra CD-en (cd-meny/). */
+.disc-menu-launch, .disc-menu-launch:visited {
+  display: inline-block;
+  margin: .35em .5em .25em 0;
+  padding: .3em .7em;
+  border: 1px solid #71819c;
+  background: #e7edf5;
+  color: #142a52;
+  font-weight: bold;
+  text-decoration: underline;
+}
+.disc-menu-launch:hover { background: #fff3c4; }
+.disc-menu-launch:focus-visible { outline: 3px solid #e07b00; outline-offset: 2px; }
+.disc-menu-links { margin: 6px 0 0; font-size: .875rem; }
 
 /* ---------- Arkiv: verktøylinje og tett tabell ---------- */
 .archive-hero { padding-bottom: 4px; }
