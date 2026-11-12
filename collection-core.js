@@ -170,3 +170,44 @@ async function loadIndex(fetcher = fetch) {
   if (problem) throw new Error(problem);
   return index;
 }
+
+/* Original CD menus (cd-meny/menus.json, written by scripts/cd_menu.py) are an optional
+ * extra. A link is offered only when the menu was built from the same manifest as the
+ * source post, and only to a page inside that medium's own menu folder, so one CD can
+ * never open another CD's description. A missing or invalid file means no links. */
+const CD_MENU_SCHEMA = "bootdisk-cd-menu-index-1";
+const CD_MENU_PAGE = /^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.html(?:#post-[A-Za-z0-9_-]+)?$/;
+
+function cdMenuFor(menus, mediumId) {
+  if (!menus || menus.schema !== CD_MENU_SCHEMA || typeof mediumId !== "string" || !COLLECTION_SLUG.test(mediumId)) return null;
+  const menu = menus.media && Object.prototype.hasOwnProperty.call(menus.media, mediumId) ? menus.media[mediumId] : null;
+  if (!menu || typeof menu !== "object" || typeof menu.manifest !== "string" || !/^sha256:[0-9a-f]{64}$/.test(menu.manifest)) return null;
+  return menu;
+}
+
+function cdMenuPath(mediumId, value) {
+  const prefix = `cd-meny/${mediumId}/`;
+  return typeof value === "string" && value.startsWith(prefix) && CD_MENU_PAGE.test(value.slice(prefix.length)) ? value : null;
+}
+
+function cdMenuStart(menus, mediumId) {
+  const menu = cdMenuFor(menus, mediumId);
+  return menu ? cdMenuPath(mediumId, menu.start) : null;
+}
+
+function cdMenuRoute(menus, entry) {
+  if (!entry || typeof entry.entry !== "string") return null;
+  const menu = cdMenuFor(menus, entry.medium_id);
+  if (!menu || entry.source_manifest !== menu.manifest || !entry.entry.startsWith(`${entry.medium_id}--`)) return null;
+  const routes = menu.routes && typeof menu.routes === "object" ? menu.routes : {};
+  return Object.prototype.hasOwnProperty.call(routes, entry.entry) ? cdMenuPath(entry.medium_id, routes[entry.entry]) : null;
+}
+
+async function loadCdMenus(fetcher = fetch) {
+  try {
+    const menus = await loadJson("cd-meny/menus.json", fetcher);
+    return menus && menus.schema === CD_MENU_SCHEMA ? menus : null;
+  } catch (error) {
+    return null;
+  }
+}

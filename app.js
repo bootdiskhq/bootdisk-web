@@ -188,11 +188,27 @@ function sourceInvestigationExplanation(entry) {
   return typeof text === "string" && text.trim() ? text : null;
 }
 
+/* «Åpne omtalen i CD-menyen» only when the static menu was built from this post's own
+ * manifest (see cdMenuRoute in collection-core.js). Otherwise the post is unchanged. */
+function renderCdMenuLink(entry, menus) {
+  const route = typeof cdMenuRoute === "function" ? cdMenuRoute(menus, entry) : null;
+  if (!route) return;
+  const paragraph = document.createElement("p");
+  paragraph.className = "disc-menu-links";
+  const link = document.createElement("a");
+  link.href = route;
+  link.className = "disc-menu-launch";
+  link.textContent = "Åpne omtalen i CD-menyen →";
+  paragraph.append(link);
+  document.querySelector(".entry-head").append(paragraph);
+}
+
 async function render() {
   const entryId = requestedEntry();
   if (!entryId) return;
   const dataUrl = `data/${entryId}.json`;
   const registryRequest = typeof loadRegistry === "function" ? loadRegistry().catch(error => { console.warn(error); return null; }) : Promise.resolve(null);
+  const menusRequest = typeof loadCdMenus === "function" ? loadCdMenus() : Promise.resolve(null);
   const [response, indexResponse] = await Promise.all([fetch(dataUrl, { cache: "no-cache" }), fetch("data/index.json", { cache: "no-cache" })]);
   if (!response.ok) throw Object.assign(new Error(`Cannot load ${dataUrl}: ${response.status}`), { unknownEntry: response.status === 404 });
   if (!indexResponse.ok) throw new Error(`Cannot load archive index: ${indexResponse.status}`);
@@ -270,6 +286,7 @@ async function render() {
     screenshot.alt = `Bilde fra CD-menyen: ${name}`;
     document.querySelector("#screenshot-frame").hidden = false;
   }
+  renderCdMenuLink(entry, await menusRequest);
   document.querySelector("main").setAttribute("aria-busy", "false");
 }
 
