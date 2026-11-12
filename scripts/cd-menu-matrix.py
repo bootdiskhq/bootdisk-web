@@ -129,7 +129,7 @@ def main(argv=None) -> int:
                 # When publishing, a medium that is not approved is built and checked in
                 # memory only; nothing of it is written under the public cd-meny/.
                 target = args.site if not publishing or medium["id"] in wanted else None
-                rows.append(cd_menu.build_medium(medium["id"], manifest, source, index, target, args.dry_run))
+                rows.append(cd_menu.build_medium(medium["id"], manifest, source, index, target, args.dry_run, medium.get("article_files")))
             except Exception as error:  # one medium must not stop the matrix
                 rows.append({"medium_id": medium["id"], "status": "error", "error": f"{type(error).__name__}: {error}",
                              "trace": traceback.format_exc(limit=3)})

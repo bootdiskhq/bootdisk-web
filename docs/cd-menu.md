@@ -159,3 +159,17 @@ python -m unittest tests.test_cd_menu -v
   hører hjemme i en egen PR i Publish.
 - **Ingest:** observe-manifestet bygger bare inn sidene som har kildeposter. Forsiden, stilarket og bildene har bare størrelse og SHA-256 i inventaret, så de
   kontrolleres først når kildeutvalget fra ISO-en finnes. Dette er en observasjon, ikke et ønske om endring.
+
+## Artikler fra CD-en
+
+For å tilgjengeliggjøre en original artikkel kan en oppføring i matrisen ha
+`article_files`, et objekt som knytter kilde-ID til PDF-sti i CD-manifestet.
+Legg den verifiserte PDF-en i `SITE/artikler/<sha256>.pdf`. Bruk en egen
+publiseringsmappe med bare de valgte dokumentene. Samme fil kan brukes av
+flere utgaver. Behold separate filer når kontrollsummene er forskjellige.
+
+Bruk PDF-referansen fra artikkelomtalen. Dersom CD-en bare lenker til den
+gamle HTML-leseren, kontroller dokumentet i artikkelens mappe før du tar det
+med. Byggeren sjekker artikkelkategori, mappe, filstørrelse og SHA-256.
+Kildeposten og den tilhørende omtalen i originalmenyen bruker samme PDF.
+En vanlig menybygging uten `article_files` trenger ingen artikkelfiler.
