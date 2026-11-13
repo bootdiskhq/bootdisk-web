@@ -262,6 +262,7 @@ class MenuBuild:
         self.deviations: list[dict] = []
         self.layout: dict[str, str] = {}
         self.articles: dict[str, str] = {}
+        self.pdf_pages = {}
         self.routes: dict[str, str] = {}
         self.unbound: list[dict] = []
         self.broken_pages: dict[str, str] = {}
@@ -384,6 +385,13 @@ class MenuBuild:
         if not inner.strip():
             return ""
         lowered = target.strip().lower()
+        # Some discs open the document through a button instead of a normal href.
+        literal = re.fullmatch(r"window\.open\('([^']+)'\);?", onclick)
+        if literal:
+            resolved, _ = self.source.resolve(page, literal[1])
+            digest = self.pdf_pages.get(page, {}).get(resolved)
+            if digest:
+                return f'<a href="{self.site_href(page, "store/pdf/" + digest + ".pdf")}">{inner}</a>'
         if lowered.startswith("javascript:") or (onclick and lowered in ("", "#")):
             if "print" in (lowered + onclick).lower():
                 return self.off(text, "utskrift er ikke tilgjengelig i arkivvisningen")
@@ -396,6 +404,10 @@ class MenuBuild:
         if path is None:
             return self.off(text, OFF_EXTERNAL if reason == "ekstern" else OFF_PAGE)
         fragment = urlsplit(target).fragment
+        digest = self.pdf_pages.get(page, {}).get(path)
+        if digest:
+            href = self.site_href(page, "store/pdf/" + digest + ".pdf")
+            return f'<a href="{href}">{inner}</a>'
         if path in self.broken_pages:
             return self.off(text, OFF_BROKEN)
         if path in self.page_set and not onclick:
@@ -814,6 +826,24 @@ def build_medium(medium: str, manifest: Path, source: Path | None, index: dict, 
                 if not raw.startswith(b"%PDF-") or len(raw) != record["size"] or sha256(raw) != digest:
                     raise BuildBlocked(f"artikkelfilen stemmer ikke for {sid}")
                 build.articles[f"{medium}--{sid}"] = digest
+        if site:
+            for entry in build.manifest.get("entries", []):
+                key = medium + "--" + entry["source_id"]
+                if not SAFE_TOKEN.fullmatch(key):
+                    continue
+                docpath = site / "data" / (key.lower() + ".json")
+                if not docpath.is_file():
+                    continue
+                doc = json.loads(docpath.read_text())
+                if doc.get("entry") != key or doc.get("source_manifest") != build.manifest_ref:
+                    continue
+                page = entry.get("evidence", {}).get("html_menu", {}).get("page")
+                for pdf in doc.get("source_pdfs", []):
+                    path, digest = pdf["source_path"], pdf["sha256"]
+                    if (re.fullmatch(r"[a-f0-9]{64}", digest)
+                            and build.source.inventory.get(path, {}).get("sha256") == digest
+                            and (site / "store/pdf" / (digest + ".pdf")).is_file()):
+                        build.pdf_pages.setdefault(page, {})[path] = digest
         report = build.build()
         if source is None:
             # Only the entry pages embedded in the manifest were read. Missing files are

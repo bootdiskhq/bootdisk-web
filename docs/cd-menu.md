@@ -173,3 +173,9 @@ gamle HTML-leseren, kontroller dokumentet i artikkelens mappe før du tar det
 med. Byggeren sjekker artikkelkategori, mappe, filstørrelse og SHA-256.
 Kildeposten og den tilhørende omtalen i originalmenyen bruker samme PDF.
 En vanlig menybygging uten `article_files` trenger ingen artikkelfiler.
+
+PDF-er i kildepostens filregister blir også tatt med under ordinær innlesing.
+Innleseren kjører scripts/source_pdfs.py mens CD-mappen fortsatt er tilgjengelig.
+Filen må stemme med kontrollsummen i posten. Pakken lagrer én kopi per kontrollsum
+under store/pdf, og hver forekomst beholder filstien fra sin egen plate.
+K-web bruker disse koblingene når den bygger originalsidene.

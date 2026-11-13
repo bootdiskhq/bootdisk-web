@@ -42,6 +42,11 @@ def referenced_assets(document: dict) -> set[PurePosixPath]:
                 paths.add(checked_asset_path(candidate["public_path"]))
     for doc in document.get("source_documents", []):
         paths.add(checked_asset_path(doc["original"]["public_path"]))
+    for pdf in document.get("source_pdfs", []):
+        if not any(o["artifact_id"] == "artifact:sha256:" + pdf["sha256"] and o["path"] == pdf["source_path"]
+                   for o in document["occurrences"]):
+            raise ValueError("Unbound source PDF")
+        paths.add(checked_asset_path("store/pdf/" + pdf["sha256"] + ".pdf"))
     return paths
 
 
