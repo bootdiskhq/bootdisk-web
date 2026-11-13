@@ -304,6 +304,18 @@ async function render() {
     link.textContent = entry.course_pdf ? "Les kurset (PDF)" : "Les artikkelen (PDF)";
     document.querySelector(".entry-head").append(link);
   }
+  for (const pdf of entry.source_pdfs ?? []) {
+    if (!/^[a-f0-9]{64}$/.test(pdf.sha256) || !entry.occurrences?.some(
+      o => o.path === pdf.source_path && o.artifact_id === "artifact:sha256:" + pdf.sha256
+    ) || [entry.course_pdf?.sha256, entry.article_pdf?.sha256].includes(pdf.sha256)) continue;
+    const paragraph = document.createElement("p");
+    const link = document.createElement("a");
+    link.href = `store/pdf/${pdf.sha256}.pdf`;
+    link.textContent = /årsregister/i.test(entry.editorial_title) ? "Les årsregisteret (PDF)" :
+      `Åpne PDF: ${pdf.source_path.split("/").pop()}`;
+    paragraph.append(link);
+    document.querySelector(".entry-head").append(paragraph);
+  }
   renderCdMenuLink(entry, await menusRequest);
   document.querySelector("main").setAttribute("aria-busy", "false");
 }
