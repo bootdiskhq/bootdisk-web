@@ -294,14 +294,14 @@ async function render() {
     screenshot.alt = `Bilde fra CD-menyen: ${name}`;
     document.querySelector("#screenshot-frame").hidden = false;
   }
-  const course = entry.course_pdf;
+  const course = entry.course_pdf ?? entry.article_pdf;
   if (course && /^[a-f0-9]{64}$/.test(course.sha256) && entry.occurrences?.some(
     file => file.path === course.source_path && file.artifact_id === "artifact:sha256:" + course.sha256
   )) {
     const link = document.createElement("a");
     link.className = "disc-menu-launch";
-    link.href = `kurs/${course.sha256}.pdf`;
-    link.textContent = "Les kurset (PDF)";
+    link.href = `${entry.course_pdf ? "kurs" : "artikler"}/${course.sha256}.pdf`;
+    link.textContent = entry.course_pdf ? "Les kurset (PDF)" : "Les artikkelen (PDF)";
     document.querySelector(".entry-head").append(link);
   }
   renderCdMenuLink(entry, await menusRequest);
