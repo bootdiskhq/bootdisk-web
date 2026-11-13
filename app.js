@@ -223,14 +223,16 @@ async function render() {
   const [entry, index] = await Promise.all([response.json(), indexResponse.json()]);
   const software = entry.software?.[0];
   const name = software?.software_name ?? entry.editorial_title ?? entry.entry;
-  const knownVersion = software?.version && software.version !== "unknown" ? software.version : null;
+  const curatedVersion = software?.version && software.version !== "unknown" ? software.version : null;
+  const discVersion = entry.source_context?.version?.value;
+  const knownVersion = curatedVersion || discVersion;
   const version = knownVersion ?? "Ikke oppgitt";
   const description = entry.source_context?.description?.value ?? preferredDescription(software);
   const sourceEntry = sourceLabel(entry);
 
   document.querySelector("#source-context").textContent = `${entry.publication ?? "KOMPUTER FOR ALLE"} · ${entry.medium ?? "K-CD 15/2001"} · ${sourceEntry}`;
   document.querySelector("#software-name").textContent = name;
-  document.querySelector("#software-version").textContent = knownVersion ? `versjon ${version}` : version;
+  document.querySelector("#software-version").textContent = !curatedVersion && discVersion ? `Versjon oppgitt på CD-en: ${discVersion}` : knownVersion ? `versjon ${version}` : version;
   const descriptionElement = document.querySelector("#software-description");
   if (description) descriptionElement.textContent = description;
   else descriptionElement.textContent = "Ingen entydig omtale er hentet fra CD-en ennå.";
