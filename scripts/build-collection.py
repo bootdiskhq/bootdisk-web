@@ -50,7 +50,7 @@ def build_collection(config_path: Path, output: Path):
             if manifest_ref is None:
                 manifest_ref = key["manifest"]
             require(key["manifest"] == manifest_ref, "one medium contains multiple manifests")
-            for field in ("description", "menu_groups", "issues"):
+            for field in ("description", "menu_groups", "issues", "version"):
                 observation = document["source_context"].get(field)
                 if observation is not None:
                     ref = observation.get("source_ref", {})

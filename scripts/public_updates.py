@@ -148,7 +148,7 @@ def visible_projection(document: dict) -> dict:
     return {
         "status": status,
         "software_name": _known(software.get("software_name")),
-        "version": _known(software.get("version")),
+        "version": _known(software.get("version")) or _known((context.get("version") or {}).get("value")),
         "content_kind": software.get("content_kind") if software.get("content_kind") in CONTENT_KINDS else None,
         "distribution_kind": software.get("distribution_kind") if software.get("distribution_kind") in DISTRIBUTION_KINDS else None,
         "menu_title": _known(document.get("editorial_title")),
