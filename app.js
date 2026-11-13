@@ -190,7 +190,7 @@ function sourceInvestigationExplanation(entry) {
 
 /* «Åpne omtalen i CD-menyen» only when the static menu was built from this post's own
  * manifest (see cdMenuRoute in collection-core.js). Otherwise the post is unchanged. */
-function renderCdMenuLink(entry, menus) {
+function renderCdMenuLink(entry, menus, addGuide) {
   const route = typeof cdMenuRoute === "function" ? cdMenuRoute(menus, entry) : null;
   if (!route) return;
   const paragraph = document.createElement("p");
@@ -205,7 +205,7 @@ function renderCdMenuLink(entry, menus) {
     article.className = "disc-menu-launch";
     article.href = `artikler/${digest}.pdf`;
     article.textContent = "Les artikkelen (PDF)";
-    paragraph.append(article, " · ");
+    addGuide(article);
   }
   paragraph.append(link);
   document.querySelector(".entry-head").append(paragraph);
@@ -309,8 +309,7 @@ async function render() {
     link.className = "disc-menu-launch";
     link.href = `${entry.course_pdf ? "kurs" : "artikler"}/${course.sha256}.pdf`;
     link.textContent = entry.course_pdf ? "Les kurset (PDF)" : "Les artikkelen (PDF)";
-    if (entry.course_pdf) addGuide(link);
-    else document.querySelector(".entry-head").append(link);
+    addGuide(link);
   }
   for (const pdf of entry.source_pdfs ?? []) {
     if (!/^[a-f0-9]{64}$/.test(pdf.sha256) || !entry.occurrences?.some(
@@ -322,7 +321,7 @@ async function render() {
       entry.source_pdfs.length === 1 ? `Les ${name} (PDF)` : pdf.source_path.split("/").pop();
     addGuide(link);
   }
-  renderCdMenuLink(entry, await menusRequest);
+  renderCdMenuLink(entry, await menusRequest, addGuide);
   document.querySelector("main").setAttribute("aria-busy", "false");
 }
 
