@@ -12,6 +12,11 @@ Kurateringsprototypen nedenfor følger fortsatt ikke med den offentlige pakken.
 
 # Upubliserte endringer
 
+- «Om prosjektet» (`om-prosjektet.html`) etter «Siste endringer» i fellesmenyen, med tekst om
+  hvorfor programmene bevares sammen med CD-menyer, skjermbilder, omtaler og kurs, og
+  «Kontakt oss»-skjema. Mottaket `api/kontakt.php` sender bare med privat konfig utenfor
+  webroten; uten den tar skjemaet ikke imot meldinger. Ikke satt i drift. Se
+  [docs/kontaktskjema.md](docs/kontaktskjema.md).
 - Originalmenyer fra K-CD: en statisk, filtrert kopi av HTML-menyen på CD-ene fra 2012 og
   utover under `cd-meny/<medium>/`, med «Bla i CD-menyen» på CD-oversikten og «Åpne omtalen i
   CD-menyen» på kildeposten. Lenker vises bare for medier i `cd-meny/menus.json` og bare når

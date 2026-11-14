@@ -580,7 +580,10 @@ class CounterReleaseTests(unittest.TestCase):
     def test_release_has_exactly_the_public_counter_files_and_no_backend_or_data(self):
         counter = {name for name in self.files if "visit" in name or "besok" in name or "counter" in name}
         self.assertEqual(counter, PUBLIC_COUNTER_FILES)
+        # Kontaktskjemaets mottak er den eneste PHP-filen i pakken (docs/kontaktskjema.md).
         for name in self.files:
+            if name == "api/kontakt.php":
+                continue
             self.assertFalse(name.endswith((".php", ".sqlite", ".sql", ".db")), name)
 
     def test_packaged_counter_is_switched_off_until_hosting_is_confirmed(self):

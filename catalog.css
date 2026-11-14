@@ -1,7 +1,7 @@
 /* Bootdisk som en ryddig program-/CD-katalog fra rundt år 2000.
  *
  * Lastes bare av de offentlige sidene (forside, kildepost, samling, arkiv, oppdateringer,
- * 404), og alltid som siste stilark. Kuratorverktøyene laster den ikke og beholder sitt
+ * om prosjektet, 404), og alltid som siste stilark. Kuratorverktøyene laster den ikke og beholder sitt
  * mørke uttrykk. Fargevariablene fra styles.css overstyres her, slik at publication.css,
  * updates.css og de andre offentlige stilarkene følger den lyse paletten. Ingen fonter,
  * bilder eller skript hentes utenfra. Se docs/retro-catalog.md. */
@@ -737,11 +737,14 @@ footer {
   .archive-table tr > td:nth-child(2) { margin-left: 42px; }
   .archive-table td.archive-cell-status { margin-left: 42px; }
   .disc-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  /* Fire menyvalg som et 2 × 2-rutenett i stedet for en ujevn ombrytning. */
+  /* Menyvalgene i to kolonner i stedet for en ujevn ombrytning. Et odde siste valg
+   * («Om prosjektet») får hele bredden. */
   .site-nav ul { display: grid; grid-template-columns: 1fr 1fr; }
   .site-nav li:nth-child(odd) a { border-right: 1px solid var(--line); }
   .site-nav li:nth-child(even) a { border-right: 0; }
-  .site-nav li:nth-child(-n+2) a { border-bottom: 1px solid var(--line); }
+  .site-nav li:not(:last-child) a { border-bottom: 1px solid var(--line); }
+  .site-nav li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .site-nav li:last-child:nth-child(odd) a { border-right: 0; }
   footer { flex-direction: column; gap: 6px; }
 }
 @media (max-width: 340px) {
@@ -790,4 +793,89 @@ footer {
   outline: 2px solid var(--ink);
   outline-offset: 1px;
   box-shadow: 0 0 0 5px var(--focus);
+}
+
+/* ---------- Om prosjektet og kontaktskjemaet ---------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.about-page { display: grid; gap: 18px; margin: 8px 0 16px; }
+.about-text p, .about-text ul { max-width: 72ch; }
+.about-text ul { padding-left: 1.4em; }
+.about-text li + li { margin-top: 2px; }
+.about-sources {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 72ch);
+  gap: 6px 14px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-left: 4px solid var(--navy);
+  background: #f3f1ea;
+}
+.about-sources dt { color: var(--navy-dark); font: 700 .875rem/1.5 var(--ui); }
+.about-sources dd { margin: 0; }
+.contact { max-width: 46rem; }
+.contact-form {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.contact-intro, .contact-privacy { margin: 0; color: var(--muted); font-size: .8125rem; }
+.contact-field { display: grid; gap: 4px; }
+.contact-field label { color: var(--ink); font: 700 .8125rem/1.4 var(--ui); }
+.contact-field input,
+.contact-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 7px;
+  border: 2px inset #d8d4c8;
+  background: #fff;
+  color: var(--ink);
+  font: .9375rem/1.45 var(--text);
+}
+.contact-field textarea { min-height: 10rem; resize: vertical; }
+.contact-field input[aria-invalid="true"],
+.contact-field textarea[aria-invalid="true"],
+.contact-captcha[data-invalid="true"] { border-color: var(--warn); box-shadow: 0 0 0 2px #f4c98a; }
+.contact-field input:focus-visible,
+.contact-field textarea:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 5px var(--focus);
+}
+.contact-hint { margin: 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; }
+.contact-hint code { font: .8125rem var(--mono); }
+.contact-count { justify-self: end; }
+.contact-count[data-over="true"] { color: var(--warn); font-weight: 700; }
+.contact-captcha { display: grid; gap: 6px; padding: 6px 0; border: 1px solid transparent; }
+.contact-captcha-widget:empty { display: none; }
+.contact-captcha[data-state="error"] .contact-hint,
+.contact-captcha[data-state="expired"] .contact-hint,
+.contact-captcha[data-state="unavailable"] .contact-hint { color: var(--warn); }
+.contact-actions { margin: 0; }
+.contact-actions button { min-height: 36px; padding: 4px 18px; font-weight: 700; }
+.contact-actions button[disabled] { cursor: progress; opacity: .7; }
+.contact-feedback { margin: 0; padding: 8px 10px; border: 1px solid var(--line); border-left-width: 4px; }
+.contact-feedback[data-state="error"] { border-color: var(--warn); background: #fff7e8; color: var(--warn); }
+.contact-feedback[data-state="sent"] { border-color: var(--ok); background: #eef6ec; color: var(--ok); }
+.contact-feedback[data-state="sending"] { color: var(--muted); }
+.contact-feedback:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; box-shadow: 0 0 0 5px var(--focus); }
+.contact-feedback[hidden] { display: none; }
+/* Fellefeltet for roboter står utenfor skjermen og nås ikke med tastaturet. */
+.contact-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+@media (max-width: 720px) {
+  .about-sources { grid-template-columns: minmax(0, 1fr); gap: 0 0; }
+  .about-sources dd { margin-bottom: 8px; }
+  .contact-form { padding: 10px; }
+  /* 16 px hindrer at mobilnettlesere zoomer inn når feltet får fokus. */
+  .contact-field input, .contact-field textarea { font-size: 1rem; }
+  .contact-actions button { width: 100%; min-height: 44px; }
 }

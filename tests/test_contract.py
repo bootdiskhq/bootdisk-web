@@ -291,6 +291,7 @@ assert.equal(ids('all').length, 3);
             sitemap = ET.parse(output / "sitemap.xml")
             urls = [node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
             self.assertEqual(urls, ["https://bootdisk.no/", "https://bootdisk.no/archive.html",
+                                    "https://bootdisk.no/om-prosjektet.html",
                                     "https://bootdisk.no/collection.html?collection=testsamling",
                                     "https://bootdisk.no/index.html?entry=K1"])
 

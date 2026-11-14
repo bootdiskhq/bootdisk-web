@@ -19,9 +19,26 @@ STATIC_FILES = ("index.html", "archive.html", "collection.html", "404.html", "st
                 "entry-controls.css", "publication.css", "app.js", "archive.js", "landing.js", "collection.js", "collection-core.js",
                 "visit-counter.css", "visit-counter-config.js", "visit-counter-core.js", "visit-counter-adapter.js",
                 "visit-counter.js", "updates.html", "updates.css", "updates-core.js", "updates.js", "landing-updates.js",
+                "om-prosjektet.html", "contact-core.js", "contact.js", "api/kontakt.php",
                 "VERSION")
 DEFAULT_COLLECTIONS = ROOT / "collections.json"
 DEFAULT_BASE_URL = "https://bootdisk.no/"
+
+
+# Navn og innhold som bare finnes i den private serverkonfigurasjonen (docs/kontaktskjema.md).
+# Pakken bygges fra en fast liste, så de kan ikke komme med; dette er siste kontroll før kopiering.
+PRIVATE_CONFIG_NAMES = ("kontakt-config.php", "bootdisk-privat")
+PRIVATE_CONFIG_KEYS = ("'client_salt' =>", "'recipient' =>")
+
+
+def refuse_private_config(stage: Path) -> None:
+    for path in stage.rglob("*"):
+        if any(part in PRIVATE_CONFIG_NAMES for part in path.relative_to(stage).parts):
+            raise ValueError(f"Private server configuration in release: {path.relative_to(stage)}")
+        if path.is_file() and path.suffix == ".php":
+            text = path.read_text(encoding="utf-8", errors="replace")
+            if any(key in text for key in PRIVATE_CONFIG_KEYS):
+                raise ValueError(f"Release file looks like a private configuration: {path.relative_to(stage)}")
 
 
 def checked_asset_path(value: object) -> PurePosixPath:
@@ -54,7 +71,7 @@ def discovery_files(stage: Path, entry_ids: list[str], base_url: str, collection
     base_url = base_url.rstrip("/") + "/"
     # The update overview is a public page only when a validated history is packaged with it.
     pages = [f"{base_url}updates.html"] if updates else []
-    urls = [base_url, f"{base_url}archive.html", *pages, *collection_pages, *(f"{base_url}index.html?entry={entry_id}" for entry_id in entry_ids)]
+    urls = [base_url, f"{base_url}archive.html", *pages, f"{base_url}om-prosjektet.html", *collection_pages, *(f"{base_url}index.html?entry={entry_id}" for entry_id in entry_ids)]
     sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     sitemap += "".join(f"  <url><loc>{escape(url)}</loc></url>\n" for url in urls)
     sitemap += "</urlset>\n"
@@ -155,6 +172,7 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
         stage = Path(temporary) / output.name
         (stage / "data").mkdir(parents=True)
         for name in STATIC_FILES:
+            (stage / name).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / name, stage / name)
         shutil.copy2(collections, stage / "collections.json")
         # An empty menu register, so pages that look for original CD menus get an answer
@@ -171,6 +189,7 @@ def package(frontend_data: Path, publish_root: Path, output: Path, expected_entr
             target = stage / Path(*path.parts)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(publish_root / Path(*path.parts), target)
+        refuse_private_config(stage)
         if output.exists():
             shutil.rmtree(output)
         shutil.copytree(stage, output)
