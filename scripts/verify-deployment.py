@@ -25,8 +25,28 @@ NOT_PUBLIC = ("curate.html", "curate.js", "curate-adapter.js", "curate-live-adap
               "automation.html", "automation.css", "automation.js", "automation-core.js", "automation-adapter.js",
               "automation-sample.js", "tests/fixtures/automation-queue-v1.json", "docs/automation-queue-v1.md",
               "counter/besok.php", "counter/schema.sql", "scripts/visit-counter-db.py",
-              "scripts/public_updates.py", "tests/synthetic_updates.py")
+              "scripts/public_updates.py", "tests/synthetic_updates.py",
+              "docs/examples/kontakt-config.example.php", "docs/kontaktskjema.md", "scripts/check-private-config.py")
 UPDATES_CANONICAL = '<link rel="canonical" href="https://bootdisk.no/updates.html">'
+ABOUT_CANONICAL = '<link rel="canonical" href="https://bootdisk.no/om-prosjektet.html">'
+
+
+def check_contact(base_url: str, require: bool) -> str:
+    """The contact endpoint must run as PHP; its source is never served as text."""
+    body = fetch(base_url, "api/kontakt.php")
+    if b"<?php" in body:
+        if require:
+            raise RuntimeError("api/kontakt.php is served as source text: PHP does not run here")
+        return "not running (PHP source served; expected only on a static preview)"
+    try:
+        setup = json.loads(body)
+    except json.JSONDecodeError:
+        raise RuntimeError("api/kontakt.php does not answer with JSON") from None
+    if not isinstance(setup, dict) or not isinstance(setup.get("ready"), bool):
+        raise RuntimeError("api/kontakt.php answers without a ready flag")
+    if require and not setup["ready"]:
+        raise RuntimeError("api/kontakt.php runs, but reports that its private configuration is missing")
+    return "ready" if setup["ready"] else "running, not configured"
 
 
 def fetch(base_url: str, path: str, expected_status: int = 200) -> bytes:
@@ -70,6 +90,8 @@ def main() -> None:
     parser.add_argument("--expected-entries", type=int, default=39)
     parser.add_argument("--workers", type=int, default=12)
     parser.add_argument("--require-updates", action="store_true", help="Fail when no public update history is deployed")
+    parser.add_argument("--require-contact", action="store_true",
+                        help="Fail unless api/kontakt.php runs as PHP and reports a complete private configuration")
     args = parser.parse_args()
 
     archive = fetch(args.base_url, "archive.html").decode("utf-8")
@@ -80,6 +102,10 @@ def main() -> None:
         if ROOT_CANONICAL not in front or "window.location.replace" in front:
             raise RuntimeError(f"Front page at /{path} lacks the root canonical URL or redirects")
     fetch(args.base_url, "index.html?entry=K37")
+    about = fetch(args.base_url, "om-prosjektet.html").decode("utf-8")
+    if ABOUT_CANONICAL not in about or 'src="contact.js' not in about:
+        raise RuntimeError("om-prosjektet.html lacks its canonical URL or the contact form script")
+    contact_state = check_contact(args.base_url, args.require_contact)
     updates_page = fetch(args.base_url, "updates.html").decode("utf-8")
     if UPDATES_CANONICAL not in updates_page or 'src="updates.js' not in updates_page:
         raise RuntimeError("updates.html lacks its canonical URL or script")
@@ -109,11 +135,11 @@ def main() -> None:
     sitemap_locations = [node.text for node in sitemap.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
     sitemap_urls = set(sitemap_locations)
     detail_urls = {f"{PRODUCTION}index.html?entry={entry['entry']}" for entry in entries}
-    expected_urls = {PRODUCTION, f"{PRODUCTION}archive.html", *collection_pages, *detail_urls}
+    expected_urls = {PRODUCTION, f"{PRODUCTION}archive.html", f"{PRODUCTION}om-prosjektet.html", *collection_pages, *detail_urls}
     if register is not None:
         expected_urls.add(f"{PRODUCTION}updates.html")
     if len(sitemap_locations) != len(sitemap_urls) or sitemap_urls != expected_urls:
-        raise RuntimeError("Sitemap URLs do not match the front page, archive, collections and archive index")
+        raise RuntimeError("Sitemap URLs do not match the front page, archive, about page, collections and archive index")
     if {url for url in sitemap_urls if "index.html?entry=" in url} != detail_urls:
         raise RuntimeError("Sitemap detail links do not match the archive index exactly")
 
@@ -150,6 +176,7 @@ def main() -> None:
     print(f"deployment assets: {len(assets)}")
     print(f"deployment collections: {len(collection_pages)}")
     print(f"deployment update events: {len(register['events'])}" if register is not None else "deployment update history: none")
+    print(f"deployment contact form: {contact_state}")
     print("deployment verification: passed")
 
 

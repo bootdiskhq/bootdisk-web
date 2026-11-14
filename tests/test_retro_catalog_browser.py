@@ -29,7 +29,7 @@ try:
 except ImportError:  # pragma: no cover - environment dependent
     sync_playwright = None
 
-PUBLIC_PAGES = ("index.html", "archive.html", "collection.html", "updates.html", "404.html")
+PUBLIC_PAGES = ("index.html", "archive.html", "collection.html", "updates.html", "om-prosjektet.html", "404.html")
 LOCAL_TOOLS = ("curate.html", "overview.html", "automation.html")
 STATUS_LABELS = {"identified": "Identifisert", "interpreted": "Foreløpig identifisering",
                  "source_documented": "Oppgitt på CD-en", "pending": "Venter på identifisering"}
@@ -51,7 +51,7 @@ class CatalogMarkupTests(unittest.TestCase):
             with self.subTest(name):
                 html = (ROOT / name).read_text(encoding="utf-8")
                 sheets = re.findall(r'<link rel="stylesheet" href="([^"]+)"', html)
-                self.assertEqual(sheets[-1], "catalog.css?v=cdmenu1", "catalog.css overrides, so it comes last")
+                self.assertEqual(sheets[-1], "catalog.css?v=om-prosjektet1", "catalog.css overrides, so it comes last")
                 self.assertNotIn("window-buttons", html, "no fake window buttons")
                 self.assertNotIn("<marquee", html.lower())
                 external = re.findall(r'<(?:script[^>]*\ssrc|link rel="(?:stylesheet|preload|icon)"[^>]*\shref)="((?:https?:)?//[^"]*)"', html)
@@ -190,7 +190,7 @@ class RetroCatalogBrowserTests(unittest.TestCase):
 
     def test_header_search_and_menu_lead_into_the_archive(self):
         with self.page("/collection.html?collection=komputer-for-alle") as page:
-            self.assertEqual(page.locator(".site-nav a").all_text_contents(), ["Forside", "Samlinger", "Alle kildeposter", "Siste endringer"])
+            self.assertEqual(page.locator(".site-nav a").all_text_contents(), ["Forside", "Samlinger", "Alle kildeposter", "Siste endringer", "Om prosjektet"])
             page.fill("#site-search-q", "fjordspill")
             page.press("#site-search-q", "Enter")
             page.wait_for_selector(".archive-card")
@@ -218,7 +218,7 @@ class RetroCatalogBrowserTests(unittest.TestCase):
 
     def test_no_horizontal_scroll_at_common_widths_and_200_percent_zoom(self):
         paths = ("/", "/collection.html?collection=komputer-for-alle", "/archive.html?q=skrive", "/index.html?entry=K2",
-                 "/updates.html", "/404.html")
+                 "/updates.html", "/om-prosjektet.html", "/404.html")
         # 200 % zoom on a 1280 px window lays the page out at 640 CSS px.
         for width in (320, 375, 640, 768, 1280):
             for path in paths:

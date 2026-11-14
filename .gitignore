@@ -6,3 +6,8 @@ __pycache__/
 *.py[cod]
 /build/
 /dist/
+
+# Privat serveroppsett for kontaktskjemaet (docs/kontaktskjema.md). Den ekte filen ligger
+# på webhotellet utenfor webroten og skal aldri inn i Git eller i en releasepakke.
+kontakt-config.php
+bootdisk-privat/

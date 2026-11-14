@@ -153,6 +153,7 @@ class SyntheticReleaseTests(unittest.TestCase):
         self.assertEqual(len(urls), len(set(urls)))
         details = {f"https://bootdisk.no/index.html?entry={entry['entry']}" for entry in self.index["entries"]}
         self.assertEqual(set(urls), {"https://bootdisk.no/", "https://bootdisk.no/archive.html",
+                                     "https://bootdisk.no/om-prosjektet.html",
                                      "https://bootdisk.no/collection.html?collection=komputer-for-alle", *details})
         self.assertIn("https://bootdisk.no/index.html?entry=K37", urls)
         self.assertIn("https://bootdisk.no/index.html?entry=kcd-1-2001--K37", urls)
